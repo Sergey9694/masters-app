@@ -1,0 +1,119 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  MASTER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(uuid())
+  telegramId    BigInt?   @unique
+  phone         String    @unique
+  role          Role      @default(USER)
+  firstName     String
+  lastName      String?
+  avatar        String?
+  
+  // Гео-точка пользователя (дом/работа)
+  // Мы используем Unsupported для PostGIS типов в Prisma
+  location      Unsupported("geometry(Point, 4326)")? 
+
+  masterProfile MasterProfile?
+  tasksCreated  TaskRequest[]
+  reviewsLeft   Review[]      @relation("Author")
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model MasterProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+  bio         String?
+  
+  categories  MasterCategory[]
+  
+  isVerified  Boolean  @default(false) // Ручная верификация админом
+  isLocal     Boolean  @default(false) // Проверка на проживание в районе
+  rating      Float    @default(5.0)
+  
+  responses   TaskResponse[]
+  reviews     Review[] @relation("MasterReviews")
+}
+
+model TaskRequest {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    User     @relation(fields: [customerId], references: [id])
+  
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  
+  title       String
+  description String
+  images      String[]
+  status      TaskStatus @default(OPEN)
+  
+  // Где именно нужна услуга (гео-точка)
+  taskLocation Unsupported("geometry(Point, 4326)")?
+  
+  responses   TaskResponse[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+model TaskResponse {
+  id        String      @id @default(cuid())
+  taskId    String
+  task      TaskRequest @relation(fields: [taskId], references: [id])
+  masterId  String
+  master    MasterProfile @relation(fields: [masterId], references: [id])
+  
+  price     Float?
+  message   String?
+  createdAt DateTime    @default(now())
+}
+
+model Category {
+  id      String   @id @default(cuid())
+  name    String   @unique // "Сантехник", "Электрик"
+  icon    String?  
+  tasks   TaskRequest[]
+  masters MasterCategory[]
+}
+
+model MasterCategory {
+  masterId   String
+  categoryId String
+  master     MasterProfile @relation(fields: [masterId], references: [id])
+  category   Category      @relation(fields: [categoryId], references: [id])
+  @@id([masterId, categoryId])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  masterId  String
+  master    MasterProfile @relation("MasterReviews", fields: [masterId], references: [id])
+  authorId  String
+  author    User     @relation("Author", fields: [authorId], references: [id])
+  rating    Int
+  text      String?
+  createdAt DateTime @default(now())
+}

@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+    # --- БАЗА ДАННЫХ (PostgreSQL + PostGIS) ---
+    db:
+        image: postgis/postgis:15-3.3-alpine
+        container_name: masters_db
+        restart: always
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-admin}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
+            POSTGRES_DB: ${POSTGRES_DB:-masters_db}
+        volumes:
+            - ./postgres_data:/var/lib/postgresql/data
+        ports:
+            - "5434:5432" # Используем другой порт, чтобы не конфликтовать с fin-you-app
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U admin -d masters_db"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - masters_network
+
+    # --- ПРИЛОЖЕНИЕ ---
+    app:
+        container_name: masters_app
+        build:
+            context: .
+            dockerfile: Dockerfile
+        restart: always
+        env_file: .env
+        environment:
+            DATABASE_URL: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin_pass}@db:5432/${POSTGRES_DB:-masters_db}?schema=public"
+            NODE_ENV: production
+            JWT_SECRET: ${JWT_SECRET}
+        volumes:
+            - ./uploads:/app/uploads
+        networks:
+            - masters_network
+        depends_on:
+            db:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+            interval: 20s
+            timeout: 10s
+            retries: 10
+            start_period: 120s
+
+networks:
+    masters_network:
+        driver: bridge
