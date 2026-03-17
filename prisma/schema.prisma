@@ -5,7 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // В Prisma 7 URL больше не указывается здесь, он берется из prisma.config.ts
 }
 
 enum Role {
@@ -24,7 +24,6 @@ model User {
   avatar        String?
   
   // Гео-точка пользователя (дом/работа)
-  // Мы используем Unsupported для PostGIS типов в Prisma
   location      Unsupported("geometry(Point, 4326)")? 
 
   masterProfile MasterProfile?
@@ -43,8 +42,8 @@ model MasterProfile {
   
   categories  MasterCategory[]
   
-  isVerified  Boolean  @default(false) // Ручная верификация админом
-  isLocal     Boolean  @default(false) // Проверка на проживание в районе
+  isVerified  Boolean  @default(false)
+  isLocal     Boolean  @default(false)
   rating      Float    @default(5.0)
   
   responses   TaskResponse[]
@@ -93,7 +92,7 @@ model TaskResponse {
 
 model Category {
   id      String   @id @default(cuid())
-  name    String   @unique // "Сантехник", "Электрик"
+  name    String   @unique
   icon    String?  
   tasks   TaskRequest[]
   masters MasterCategory[]
