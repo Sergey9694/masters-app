@@ -40,7 +40,8 @@ export async function loginWithTelegram(initData: string) {
           firstName: tgUser.first_name,
           lastName: tgUser.last_name,
           avatar: tgUser.photo_url,
-          role: "USER" // По умолчанию все пользователи
+          role: "USER" as const,
+          phone: undefined
         },
       });
     }

@@ -1,65 +1,84 @@
-import Image from "next/image";
+import { TelegramAuth } from "@/features/auth/ui/TelegramAuth";
+import { Button } from "@/shared/ui/button";
+import { Card } from "@/shared/ui/card";
+import { ShieldCheck, MapPin, Users, Hammer } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 overflow-hidden">
+      {/* Автоматический вход через Telegram */}
+      <TelegramAuth />
+
+      {/* Эффект свечения на фоне */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-500/10 blur-[120px] pointer-events-none" />
+
+      <div className="relative max-w-md mx-auto px-6 py-16 flex flex-col items-center text-center pt-24">
+        {/* Анимированная иконка */}
+        <div className="mb-10 relative">
+          <div className="absolute inset-0 bg-blue-600 blur-2xl opacity-20 animate-pulse" />
+          <div className="relative p-5 bg-blue-600 rounded-3xl shadow-2xl shadow-blue-500/40 transform rotate-6 hover:rotate-0 transition-transform duration-500">
+            <Hammer className="w-12 h-12 text-white" />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        
+        <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-6 leading-[1.1]">
+          Районный <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500 font-black">
+            Мастер
+          </span>
+        </h1>
+        
+        <p className="text-lg text-slate-600 dark:text-slate-400 mb-10 leading-relaxed max-w-[280px]">
+          Лучшие специалисты района в 15 минутах от вашей двери.
+        </p>
+
+        {/* Сетка преимуществ */}
+        <div className="grid gap-4 w-full mb-12 text-left">
+          <FeatureCard 
+            icon={<MapPin className="w-5 h-5 text-blue-500" />}
+            title="Только рядом"
+            desc="Мастера в радиусе 15 минут езды. Минимум времени на ожидание."
+          />
+          <FeatureCard 
+            icon={<ShieldCheck className="w-5 h-5 text-emerald-500" />}
+            title="Проверено соседями"
+            desc="Ручная верификация документов и честный рейтинг."
+          />
+          <FeatureCard 
+            icon={<Users className="w-5 h-5 text-violet-500" />}
+            title="Свои люди"
+            desc="Поддержите местных профи и забудьте о рисках с улицы."
+          />
         </div>
-      </main>
-    </div>
+
+        {/* Кнопка действия */}
+        <div className="w-full space-y-6">
+          <Button asChild size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 transition-all active:scale-[0.98] font-bold">
+             <Link href="https://t.me/your_bot_name">Запустить Сервис</Link>
+          </Button>
+          
+          <div className="flex items-center justify-center gap-2 text-slate-400">
+             <div className="h-px w-8 bg-slate-200" />
+             <span className="text-[10px] uppercase tracking-widest font-semibold text-slate-400">Telegram Web App</span>
+             <div className="h-px w-8 bg-slate-200" />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+  return (
+    <Card className="p-4 border-none shadow-sm bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl flex gap-4 items-start border border-white/20 dark:border-slate-800 transition-all hover:translate-x-1 duration-300 group">
+      <div className="p-2.5 bg-blue-50 dark:bg-slate-700 rounded-xl shadow-inner group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      <div className="space-y-1">
+        <h3 className="font-bold text-slate-900 dark:text-white text-sm">{title}</h3>
+        <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-snug">{desc}</p>
+      </div>
+    </Card>
   );
 }
