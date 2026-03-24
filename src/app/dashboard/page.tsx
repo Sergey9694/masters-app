@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Hammer, Bell, MapPin, Search, PlusCircle } from "lucide-react";
-import { CategoryGrid } from "@/widgets/CategoryGrid";
+import { CategoryGrid } from "@/widgets/CategoryGrid/index";
+import { db } from "@/shared/lib/db";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -11,6 +12,13 @@ export default async function DashboardPage() {
   if (!user) {
     redirect("/");
   }
+
+  // Fetch categories for the widget (RSC data loading)
+  const categories = await db.category.findMany({
+
+    orderBy: { name: 'asc' }
+  });
+
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 px-4 py-8 pb-24">
@@ -49,7 +57,7 @@ export default async function DashboardPage() {
       <div className="space-y-10">
         
         {/* Widget: Service Selection */}
-        <CategoryGrid />
+        <CategoryGrid initialCategories={categories} />
 
         {/* Action Cards (Main Operations) */}
         <div className="space-y-4">
@@ -85,31 +93,45 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Floating Navigation */}
-      <div className="fixed bottom-6 left-4 right-4 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl flex items-center justify-around px-4 z-50">
-          <Button variant="ghost" size="icon" className="text-blue-600"><Hammer className="w-6 h-6" /></Button>
-          <Button variant="ghost" size="icon" className="text-slate-400"><Search className="w-6 h-6" /></Button>
-          <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center -mt-12 shadow-lg shadow-blue-500/40 text-white cursor-pointer active:scale-90 transition-transform">
-              <PlusCircle className="w-8 h-8" />
+      {/* Floating Navigation (2026 Signature Style) */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-[92%] max-w-[400px] h-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-[32px] border border-white/20 dark:border-slate-800 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15)] flex items-center justify-around px-2 z-50">
+          <NavItem icon={<Hammer className="w-6 h-6" />} active />
+          <NavItem icon={<Search className="w-6 h-6" />} />
+          
+          <div className="relative -mt-12 group">
+              <div className="absolute inset-x-0 bottom-[-10px] h-8 bg-blue-600/40 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-xl shadow-blue-500/40 text-white cursor-pointer hover:scale-105 active:scale-90 transition-all border-4 border-slate-50 dark:border-slate-950 relative z-10">
+                  <PlusCircle className="w-10 h-10" />
+              </div>
           </div>
-          <Button variant="ghost" size="icon" className="text-slate-400"><Bell className="w-6 h-6" /></Button>
-          <Button variant="ghost" size="icon" className="text-slate-400"><MapPin className="w-6 h-6" /></Button>
+
+          <NavItem icon={<Bell className="w-6 h-6" />} />
+          <NavItem icon={<MapPin className="w-6 h-6" />} />
       </div>
+    </div>
+  );
+}
+
+function NavItem({ icon, active = false }: { icon: React.ReactNode, active?: boolean }) {
+  return (
+    <div className={`p-3 rounded-2xl transition-all cursor-pointer ${active ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"}`}>
+      {icon}
     </div>
   );
 }
 
 function ActionCard({ title, desc, icon, color }: { title: string, desc: string, icon: React.ReactNode, color: string }) {
   return (
-    <Card className="p-4 border-none shadow-sm bg-white dark:bg-slate-900 flex items-center gap-5 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer group active:scale-[0.98]">
-      <div className={`${color} p-4 rounded-[20px] text-white shadow-lg shadow-${color.split('-')[1]}-500/20 group-hover:scale-105 transition-transform`}>
+    <Card className="p-4 border-none shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none bg-white dark:bg-slate-900 flex items-center gap-5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all cursor-pointer group active:scale-[0.98] rounded-[28px]">
+      <div className={`${color} p-4 rounded-[22px] text-white shadow-xl shadow-blue-500/10 group-hover:scale-105 transition-transform`}>
         {icon}
       </div>
       <div className="flex-1">
-        <h3 className="font-black text-slate-900 dark:text-white uppercase text-[11px] tracking-widest mb-0.5 leading-none">{title}</h3>
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{desc}</p>
+        <h3 className="font-black text-slate-900 dark:text-white uppercase text-[10px] tracking-[0.15em] mb-1 leading-none">{title}</h3>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-tight">{desc}</p>
       </div>
     </Card>
   );
 }
+
 
