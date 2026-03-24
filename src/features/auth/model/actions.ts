@@ -41,7 +41,7 @@ export async function loginWithTelegram(initData: string) {
           lastName: tgUser.last_name,
           avatar: tgUser.photo_url,
           role: "USER" as const,
-          phone: undefined
+          phone: null as any
         },
       });
     }
