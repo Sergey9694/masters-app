@@ -3,6 +3,7 @@ import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { ShieldCheck, MapPin, Users, Hammer } from "lucide-react";
 import Link from "next/link";
+import { mockLogin } from "@/features/auth/model/actions";
 
 export default function Home() {
   return (
@@ -57,6 +58,14 @@ export default function Home() {
           <Button asChild size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 transition-all active:scale-[0.98] font-bold">
              <Link href="https://t.me/your_bot_name">Запустить Сервис</Link>
           </Button>
+
+          {process.env.NODE_ENV === "development" && (
+            <form action={mockLogin}>
+              <Button variant="ghost" className="w-full text-slate-400 text-xs hover:text-blue-500 transition-colors">
+                 Войти как Тестовый Админ (Dev Only)
+              </Button>
+            </form>
+          )}
           
           <div className="flex items-center justify-center gap-2 text-slate-400">
              <div className="h-px w-8 bg-slate-200" />

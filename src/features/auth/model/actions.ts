@@ -55,3 +55,27 @@ export async function loginWithTelegram(initData: string) {
     return { error: "Database error during login" };
   }
 }
+
+export async function mockLogin() {
+  // Добавляем проверку на dev-режим для безопасности
+  if (process.env.NODE_ENV !== "development") return;
+
+  let user = await db.user.findFirst({
+    where: { firstName: "Админ" }
+  });
+
+  if (!user) {
+    user = await db.user.create({
+      data: {
+        firstName: "Админ",
+        lastName: "Разраб",
+        role: "ADMIN",
+        phone: "70000000000"
+      }
+    });
+  }
+
+  await createSession(user.id, user.role);
+  redirect("/dashboard");
+}
+

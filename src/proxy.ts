@@ -27,15 +27,15 @@ export async function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    // Иначе редирект на вход
-    return NextResponse.redirect(new URL("/login", request.url));
+    // Иначе редирект на главную (где лежит лендинг)
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   // 3. Проверяем валидность токена
   try {
     await decrypt(session);
   } catch {
-    const res = NextResponse.redirect(new URL("/login", request.url));
+    const res = NextResponse.redirect(new URL("/", request.url));
     res.cookies.set("session", "", { expires: new Date(0) });
     return res;
   }
