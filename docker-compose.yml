@@ -13,7 +13,7 @@ services:
         volumes:
             - ./postgres_data:/var/lib/postgresql/data
         ports:
-            - "5434:5432" # Используем другой порт, чтобы не конфликтовать с fin-you-app
+            - "5435:5432" # Используем порт 5435, т.к. 5434 занят fin-you-app!
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U admin -d masters_db"]
             interval: 10s
