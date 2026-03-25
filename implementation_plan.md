@@ -133,16 +133,16 @@ model TaskRequest {
 
 ## 6. План разработки по фазам (Roadmap)
 
-### Фаза 1: Фундамент (Неделя 1)
-- [ ] Инициализация проекта: `npx create-next-app` + FSD Folders.
-- [ ] Настройка Docker: Postgres + PostGIS + Nginx Proxy.
-- [ ] Prisma: Миграции базы данных и настройка пространственных типов.
-- [ ] Auth: Реализация Telegram Login (валидация подписи) + JWT Session.
+### Фаза 1: Фундамент (Неделя 1) — ВЫПОЛНЕНО ✅
+- [x] Инициализация проекта: `npx create-next-app` + FSD Folders.
+- [x] Настройка Docker: Postgres + PostGIS + Nginx Proxy.
+- [x] Prisma: Миграции базы данных и настройка пространственных типов (Prisma 7 + Driver Adapter).
+- [x] Auth: Реализация Telegram Login (валидация подписи) + JWT Session.
 
-### Фаза 2: Механика Заказов (Неделя 2)
-- [ ] Shared UI: Настройка Tailwind 4 и Shadcn компонентов.
+### Фаза 2: Механика Заказов (Неделя 2) — В ПРОЦЕССЕ 🌓
+- [x] Shared UI: Настройка Tailwind 4 и Shadcn компонентов.
 - [ ] Features: Создание задачи (upload фото в S3/Local + Zod).
-- [ ] Entities: Профили мастеров и логика категорий.
+- [x] Entities: Профили мастеров и логика категорий (Seeding + Grid Widget).
 - [ ] Geo-Logic: Написание SQL-функций для поиска в радиусе (ST_DWithin).
 
 ### Фаза 3: Telegram & Реальное время (Неделя 3)

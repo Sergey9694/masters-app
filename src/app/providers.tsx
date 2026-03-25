@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import Script from "next/script";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 interface TWAContextType {
   ready: boolean;
@@ -23,11 +24,18 @@ export function TWAProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <TWAContext.Provider value={{ ready }}>
-      <Script
-        src="https://telegram.org/js/telegram-web-app.js"
-        strategy="beforeInteractive"
-      />
-      {children}
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="dark"
+        enableSystem
+        disableTransitionOnChange
+      >
+        <Script
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+        />
+        {children}
+      </NextThemesProvider>
     </TWAContext.Provider>
   );
 }

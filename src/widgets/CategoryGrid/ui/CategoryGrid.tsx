@@ -52,7 +52,7 @@ export function CategoryGrid({ initialCategories }: { initialCategories: Categor
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-4 gap-x-4 gap-y-7"
+        className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-x-4 gap-y-10"
       >
         {initialCategories.map((cat) => {
            const Icon = (Icons as any)[cat.icon || "Hammer"] || Icons.Hammer;
@@ -68,14 +68,17 @@ export function CategoryGrid({ initialCategories }: { initialCategories: Categor
                 {/* Glow Effect */}
                 <div className="absolute inset-0 bg-blue-500/10 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10" />
                 
-                {/* Icon Container with Glassmorphism */}
-                <div className="w-16 h-16 rounded-[24px] bg-white/40 dark:bg-slate-900/40 backdrop-blur-md border border-white/20 dark:border-slate-800 shadow-lg shadow-slate-200/20 dark:shadow-none flex items-center justify-center text-slate-600 dark:text-slate-400 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-blue-500/40 transition-all duration-300">
-                  <Icon className="w-7 h-7 stroke-[1.5]" />
+                {/* Icon Container with Enhanced Visibility */}
+                <div className="w-16 h-16 rounded-[24px] bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 shadow-[0_8px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.5)] flex items-center justify-center text-slate-800 dark:text-white group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-500 group-hover:shadow-blue-500/40 transition-all duration-300 relative overflow-hidden">
+                  {/* Subtle inner gradient for premium look */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 dark:opacity-100 pointer-events-none" />
+                  <Icon className="w-7 h-7 stroke-[1.8]" />
                 </div>
 
-                <span className="text-[10px] font-black text-slate-900 dark:text-white text-center leading-[1.3] uppercase tracking-wide opacity-80 group-hover:opacity-100 transition-opacity max-w-[70px]">
+                <span className="text-[10px] font-black text-slate-900 dark:text-slate-100 text-center leading-[1.3] uppercase tracking-wider group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors max-w-[70px]">
                   {cat.name.replace(' и ', ' & ')}
                 </span>
+
              </motion.div>
            )
         })}
