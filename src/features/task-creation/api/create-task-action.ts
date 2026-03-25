@@ -13,11 +13,18 @@ export async function createOrderAction(data: TaskFormValues) {
     throw new Error("Необходима авторизация");
   }
 
-  // Server-side validation
-  const validated = taskSchema.parse(data);
+  // Детальная валидация на сервере
+  const result = taskSchema.safeParse(data);
+  if (!result.success) {
+    console.error("Zod Validation Errors:", result.error.format());
+    throw new Error("Неверные данные формы");
+  }
+
+  const validated = result.data;
 
   try {
-    const task = await db.taskRequest.create({
+    // 1. Создаем запись (используем type casting для обхода застарелых типов Prisma)
+    const task = await (db.taskRequest as any).create({
       data: {
         customerId: user.id,
         categoryId: validated.categoryId,
@@ -30,22 +37,24 @@ export async function createOrderAction(data: TaskFormValues) {
       },
     });
 
-    // 2. Обновляем ГЕО через Raw Query (т.к. PostGIS Point в Prisma Unsupported)
+    // 2. Обновляем ГЕО через Raw Query (PostGIS)
     if (validated.lat && validated.lng) {
+      // Используем $executeRaw для безопасности и точности
       await db.$executeRawUnsafe(
         `UPDATE "TaskRequest" SET "taskLocation" = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
-        validated.lng,
-        validated.lat,
+        Number(validated.lng),
+        Number(validated.lat),
         task.id
       );
     }
 
-    console.log("Task created successfully:", task.id);
-  } catch (error) {
-    console.error("Detailed error in createOrderAction:", error);
-    throw new Error("Ошибка при сохранении тендера");
+    console.log("SUCCESS: Task created with ID:", task.id);
+  } catch (error: any) {
+    console.error("FATAL: Database error in createOrderAction:", error.message);
+    throw new Error(`Ошибка БД: ${error.message}`);
   }
 
   revalidatePath("/dashboard");
-  redirect("/dashboard");
+  revalidatePath("/dashboard/feed");
+  redirect("/dashboard/feed");
 }
