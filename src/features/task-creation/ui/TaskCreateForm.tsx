@@ -157,11 +157,11 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-6 sm:px-12 pb-16">
+    <div className="container-standard">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 sm:space-y-12">
           
-          <Card className="glass-premium border-none p-6 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative space-y-8 overflow-visible group/card">
+          <Card className="glass-premium border-none p-6 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative overflow-visible group/card">
             {/* Ambient Multi-Accent Glows */}
             <div className="absolute top-0 right-0 w-32 sm:w-48 h-32 sm:h-48 bg-cyan-500/10 blur-[60px] sm:blur-[100px] -mr-12 sm:-mr-24 -mt-12 sm:-mt-24 pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-32 sm:w-48 h-32 sm:h-48 bg-indigo-500/10 blur-[60px] sm:blur-[100px] -ml-12 sm:-ml-24 -mb-12 sm:-mb-24 pointer-events-none" />
@@ -285,8 +285,8 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                          </span>
                       )}
                     </FormLabel>
-                    <div className="flex gap-2">
-                       <FormControl>
+                    <div className="flex items-center gap-3">
+                       <FormControl className="flex-1">
                          <Input 
                             {...field}
                             ref={(node) => {
@@ -295,6 +295,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                             }}
                             autoComplete="off"
                             placeholder="Локация?" 
+                            className="w-full flex-1"
                             onChange={(e) => { 
                               field.onChange(e); 
                               fetchSuggest(e.target.value); 
@@ -305,7 +306,14 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                             }}
                          />
                        </FormControl>
-                       <Button type="button" variant="outline" size="icon" className="w-[var(--ui-input-h-mobile)] h-[var(--ui-input-h-mobile)] sm:w-[var(--ui-input-h-desktop)] sm:h-[var(--ui-input-h-desktop)] rounded-[var(--ui-radius-premium)] border-white/10 bg-white/5 transition-all active:scale-95 group/geo" onClick={handleGeo} disabled={isLocating}>
+                       <Button 
+                         type="button" 
+                         variant="outline" 
+                         size="icon" 
+                         className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-[var(--ui-radius-premium)] border-white/10 bg-white/5 transition-all active:scale-95 group/geo" 
+                         onClick={handleGeo} 
+                         disabled={isLocating}
+                       >
                          {isLocating ? <Loader2 className="w-5 h-5 animate-spin text-cyan-400" /> : <MapPin className="w-5 h-5 group-hover/geo:text-emerald-400 transition-colors" />}
                        </Button>
                     </div>
@@ -348,7 +356,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                variant="premium"
                size="xl" 
                disabled={isPending || isUploading} 
-               className="w-full relative group rounded-[var(--ui-radius-premium)] mt-8"
+               className="w-full relative group rounded-[var(--ui-radius-premium)] mt-6"
             >
                {isPending || isUploading ? (
                  <Loader2 className="w-7 h-7 animate-spin" />
@@ -361,7 +369,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
             </Button>
             
-            <footer className="pt-4 flex justify-center opacity-30 relative z-10">
+            <footer className="pt-3 flex justify-center opacity-30 relative z-10">
                <div className="flex items-center gap-6">
                  <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-cyan-500/50" />
                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />

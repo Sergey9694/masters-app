@@ -17,14 +17,14 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        premium: "bg-gradient-to-tr from-cyan-600 via-cyan-400 to-indigo-600 text-white font-black uppercase tracking-[0.25em] shadow-xl shadow-cyan-500/30 active:scale-95 hover:shadow-cyan-400/50 transition-all border-none relative overflow-hidden rounded-full ring-2 ring-white/10",
-        emerald: "bg-gradient-to-tr from-emerald-600 via-emerald-400 to-teal-600 text-white font-black uppercase tracking-[0.2em] shadow-xl shadow-emerald-500/30 active:scale-95 transition-all border-none rounded-full ring-2 ring-white/10",
+        premium: "bg-gradient-to-tr from-cyan-600 via-cyan-400 to-indigo-600 text-white font-black uppercase tracking-[0.12em] shadow-xl shadow-cyan-500/30 active:scale-95 hover:shadow-cyan-400/50 transition-all border-none relative overflow-hidden rounded-full ring-2 ring-white/10",
+        emerald: "bg-gradient-to-tr from-emerald-600 via-emerald-400 to-teal-600 text-white font-black uppercase tracking-[0.1em] shadow-xl shadow-emerald-500/30 active:scale-95 transition-all border-none rounded-full ring-2 ring-white/10",
       },
       size: {
         default: "h-[var(--ui-input-h-mobile)] sm:h-[var(--ui-input-h-desktop)] px-8 py-2 text-[14px] sm:text-[16px]",
         sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-12 sm:h-14 rounded-2xl px-10 text-[14px] sm:text-[16px]",
-        xl: "h-14 sm:h-18 rounded-full px-10 sm:px-16 text-[14px] sm:text-[18px]",
+        xl: "h-14 sm:h-18 rounded-full px-8 sm:px-16 text-[14px] sm:text-[16px]", // FIXED: Reduced mobile font-size and padding
         icon: "size-10",
         "icon-sm": "size-8",
       },

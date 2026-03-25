@@ -7,14 +7,19 @@ import { mockLogin } from "@/features/auth/model/actions";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900 overflow-hidden">
       {/* Автоматический вход через Telegram */}
       <TelegramAuth />
 
       {/* Эффект свечения на фоне */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-500/10 blur-[120px] pointer-events-none" />
 
-      <div className="relative max-w-md mx-auto px-6 py-16 flex flex-col items-center text-center pt-24">
+      {/* 
+          CENTRAL STANDARD CONTAINER 
+          Using .container-standard ensures 15px/30px padding on mobile 
+          and eliminates redundant padding layers (px-6/py-16 removed).
+      */}
+      <div className="container-standard relative flex flex-col items-center text-center pt-24 min-h-screen">
         {/* Анимированная иконка */}
         <div className="mb-10 relative">
           <div className="absolute inset-0 bg-blue-600 blur-2xl opacity-20 animate-pulse" />
@@ -69,12 +74,12 @@ export default function Home() {
           
           <div className="flex items-center justify-center gap-2 text-slate-400">
              <div className="h-px w-8 bg-slate-200" />
-             <span className="text-[10px] uppercase tracking-widest font-semibold text-slate-400">Telegram Web App</span>
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-slate-400">Telegram Web App</span>
              <div className="h-px w-8 bg-slate-200" />
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
 

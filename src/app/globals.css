@@ -29,46 +29,33 @@
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
-  --animate-shimmer: shimmer 2.5s infinite linear;
-
-  @keyframes accordion-down {
-    from { height: 0; }
-    to { height: var(--radix-accordion-content-height); }
-  }
-  @keyframes accordion-up {
-    from { height: var(--radix-accordion-content-height); }
-    to { height: 0; }
-  }
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
 }
 
 @layer base {
   :root {
-    /* TYPOGRAPHY */
+    /* TYPOGRAPHY - STABLE 14PX MOBILE / 16PX DESKTOP */
     --ui-font-size-mobile: 14px;
     --ui-font-size-desktop: 16px;
     --ui-radius-premium: 1.25rem;
     
-    /* LAYOUT - REFINED GLOBAL WIDTHS */
-    --ui-container-max-w: 896px; /* Optimized 4xl for ideal content density */
-    --ui-container-form: 896px; 
+    /* LAYOUT (SSOT) */
+    --ui-container-max-w: 896px; 
+    
+    /* MOBILE PAD - SYMMETRICAL 15PX (REQUESTED) */
+    --ui-mobile-px: 15px;
+    --ui-mobile-py: 15px;
+    
+    /* DESKTOP PAD */
+    --ui-desktop-px: 48px;
+    --ui-desktop-py: 48px;
 
-    /* INPUTS */
-    --ui-input-text: #f1f5f9;
-    --ui-input-h-mobile: 48px;
-    --ui-input-h-desktop: 56px;
-
-    /* REFINED PILLARS OF COLOR (TRIDENT SYSTEM) */
+    /* REFINED PILLARS OF COLOR */
     --ui-accent-cyan: #22d3ee;
     --ui-accent-indigo: #818cf8; 
     --ui-accent-emerald: #34d399; 
     
     /* GRADIENTS */
     --ui-grad-main: linear-gradient(to tr, #0891b2, #4f46e5); 
-    --ui-grad-master: linear-gradient(to tr, #059669, #0d9488); 
   }
 
   * { @apply border-border; }
@@ -82,6 +69,11 @@
       radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.02), transparent 60%);
   }
 
+  /* Keep 16px for form inputs to prevent zoom, regardless of body size */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
   @media (min-width: 640px) {
     body { font-size: var(--ui-font-size-desktop); }
   }
@@ -92,9 +84,20 @@
 }
 
 @layer utilities {
-  .container-premium {
-    @apply mx-auto px-6 sm:px-12 md:px-16;
+  /* THE GLOBAL STANDARD BLOCK WRAPPER (SSOT) */
+  .container-standard {
+    @apply mx-auto w-full transition-all duration-300;
     max-width: var(--ui-container-max-w);
+    
+    /* SYMMETRICAL 15PX ON MOBILE (REQUESTED) */
+    padding: var(--ui-mobile-py) var(--ui-mobile-px);
+  }
+
+  @media (min-width: 640px) {
+    .container-standard {
+      /* Balanced desktop spacing */
+      padding: var(--ui-desktop-py) var(--ui-desktop-px);
+    }
   }
 
   .glass-premium {
@@ -104,8 +107,4 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
   }
-
-  .accent-glow-cyan { box-shadow: 0 0 30px 0 rgba(34, 211, 238, 0.12); }
-  .accent-glow-indigo { box-shadow: 0 0 30px 0 rgba(129, 140, 248, 0.12); }
-  .accent-glow-emerald { box-shadow: 0 0 30px 0 rgba(52, 211, 153, 0.12); }
 }

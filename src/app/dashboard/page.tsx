@@ -20,12 +20,12 @@ export default async function DashboardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background px-4 py-8 pb-32 relative overflow-hidden">
+    <div className="relative overflow-hidden">
       {/* Ambient Glows (Apple Style) */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 blur-[120px] rounded-full animate-slow-glow pointer-events-none" />
       <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-indigo-600/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="max-w-4xl mx-auto px-6 sm:px-12 relative z-10">
+      <div className="container-standard relative z-10">
         {/* Header Section */}
         <header className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-4">
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <div className="space-y-12">
+        <div className="space-y-12 pb-32"> {/* Kept pb-32 for floating nav comfort */}
           
           {/* Widget: Service Selection */}
           <CategoryGrid initialCategories={categories} />
@@ -161,7 +161,3 @@ function ActionCard({ title, desc, icon, color }: { title: string, desc: string,
     </Card>
   );
 }
-
-
-
-

@@ -17,31 +17,29 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   });
 
   return (
-    <div className="max-w-4xl mx-auto px-6 sm:px-12 space-y-12 pb-32">
+    <div className="container-standard space-y-12">
       {/* Search Header */}
       <div className="space-y-6">
-        <div className="flex flex-col gap-1 px-4">
+        <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Поиск заказов</h1>
           <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Найдите работу в вашем районе</p>
         </div>
 
-        <div className="px-4">
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-            <Input
-              placeholder="Поиск по названию или описанию..."
-              className="pl-12 h-14 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-slate-800 rounded-3xl text-base font-medium shadow-xl shadow-black/5"
-            />
-          </div>
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+          <Input
+            placeholder="Поиск по названию или описанию..."
+            className="pl-12 h-14 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-slate-800 rounded-3xl text-base font-medium shadow-xl shadow-black/5"
+          />
         </div>
       </div>
 
       {/* Categories Filter */}
       <div className="space-y-4">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center justify-center gap-2 px-4 italic opacity-70">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center justify-center gap-2 italic opacity-70">
           — Выберите нужную категорию —
         </h3>
-        <div className="flex overflow-x-auto gap-4 py-8 px-4 no-scrollbar scroll-smooth justify-center items-center">
+        <div className="flex overflow-x-auto gap-4 py-8 no-scrollbar scroll-smooth justify-center items-center">
           <Suspense fallback={<div className="h-24 bg-white/5 rounded-[32px] animate-pulse w-full max-lg mx-auto" />}>
             <CategoryGrid initialCategories={categories} />
           </Suspense>
@@ -49,7 +47,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       </div>
 
       {/* Main Feed Content */}
-      <div className="px-4">
+      <div>
         <Suspense fallback={
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (

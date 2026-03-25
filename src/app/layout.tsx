@@ -26,50 +26,66 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark">
       <body className={`${outfit.variable} ${jetbrainsMono.variable} font-sans`}>
-        {children}
         {/*
-           DESKTOP: bottom-right (Global default)
-           MOBILE: top-center (Handled by Sonner's internal responsive logic where possible or override)
+           GLOBAL APP ROOT:
+           All layout paddings are moved to .container-standard utility 
+           to prevent double-padding conflicts.
         */}
+        <main className="min-h-screen overflow-visible">
+          {children}
+        </main>
+
         <Toaster 
           theme="dark" 
           closeButton
-          // Desktop requirement: bottom-right
           position="bottom-right" 
+          expand={false} 
+          visibleToasts={1} 
           toastOptions={{
+            duration: 5000,
             style: {
-              background: 'rgba(13, 15, 22, 0.95)',
-              backdropFilter: 'blur(32px) saturate(200%)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'linear-gradient(to top right, #0891b2, #4f46e5)', 
               borderRadius: '24px',
               fontFamily: 'var(--font-outfit)',
-              fontSize: '14px',
-              fontWeight: '600',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+              fontSize: '15px',
+              fontWeight: '800',
+              padding: '18px 28px',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              boxShadow: '0 30px 70px -15px rgba(34, 211, 238, 0.65)', 
             },
-            className: "premium-toast",
-          }}
-          // Success styling with our Emerald accent
-          classNames={{
-            toast: "glass-premium font-sans",
-            success: "![border-color:var(--ui-accent-emerald)] ![color:var(--ui-accent-emerald)] bg-emerald-950/40",
-            info: "!border-blue-500/50 text-blue-400",
-            error: "!border-red-500/50 text-red-500",
+            classNames: {
+              toast: "glass-premium !text-white !rounded-[24px] overflow-hidden !transition-none", 
+              success: 
+                "!bg-gradient-to-tr !from-cyan-600 !to-indigo-600 !border-white/40 !text-white " +
+                "!shadow-[0_20px_50px_-10px_rgba(34,211,238,0.5)]",
+              info: "!bg-gradient-to-tr !from-cyan-600 !to-indigo-600 !border-white/40 !text-white",
+              error: "!bg-red-600 !border-white/30 !text-white !shadow-[0_15px_40px_-5px_rgba(239,68,68,0.5)]",
+            }
           }}
         />
-        {/* Global CSS override for mobile position since Sonner is client-side */}
+        {/* Global CSS override for dynamic mobile position & premium animations */}
         <style dangerouslySetInnerHTML={{ __html: `
           @media (max-width: 640px) {
             [data-sonner-toaster] {
-              top: 20px !important;
+              top: 64px !important; 
               left: 50% !important;
               transform: translateX(-50%) !important;
               bottom: auto !important;
             }
             [data-sonner-toast] {
-              width: 90% !important;
+              width: calc(100vw - 40px) !important;
               margin: 0 auto !important;
             }
+          }
+          [data-sonner-toast][data-mounted="true"] {
+            animation: toast-luxury-in 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+          }
+          @keyframes toast-luxury-in {
+            from { opacity: 0; transform: translateY(50px) scale(0.85); filter: blur(20px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+          }
+          [data-sonner-toast] {
+            --toast-transition-duration: 0ms !important;
           }
         `}} />
       </body>
