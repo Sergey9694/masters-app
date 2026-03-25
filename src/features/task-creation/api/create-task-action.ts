@@ -25,14 +25,25 @@ export async function createOrderAction(data: TaskFormValues) {
         description: validated.description,
         budget: validated.budget ? parseFloat(validated.budget) : null,
         address: validated.address,
+        images: validated.images || [],
         status: "OPEN",
       },
     });
 
+    // 2. Обновляем ГЕО через Raw Query (т.к. PostGIS Point в Prisma Unsupported)
+    if (validated.lat && validated.lng) {
+      await db.$executeRawUnsafe(
+        `UPDATE "TaskRequest" SET "taskLocation" = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
+        validated.lng,
+        validated.lat,
+        task.id
+      );
+    }
+
     console.log("Task created successfully:", task.id);
   } catch (error) {
-    console.error("Failed to create task:", error);
-    throw new Error("Не удалось сохранить задачу в базе данных");
+    console.error("Detailed error in createOrderAction:", error);
+    throw new Error("Ошибка при сохранении тендера");
   }
 
   revalidatePath("/dashboard");

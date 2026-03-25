@@ -11,9 +11,10 @@ export const taskSchema = z.object({
     .max(1000, { message: "Описание слишком длинное" }),
   categoryId: z.string().min(1, { message: "Пожалуйста, выберите категорию" }),
   budget: z.string().optional(),
-  address: z
-    .string()
-    .min(3, { message: "Укажите адрес или ориентир" }),
+  address: z.string().min(5, "Адрес слишком короткий"),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  images: z.array(z.string()).optional(),
 });
 
 export type TaskFormValues = z.infer<typeof taskSchema>;

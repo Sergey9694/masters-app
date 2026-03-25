@@ -77,6 +77,21 @@
     @apply backdrop-blur-3xl bg-white/5 border border-white/10 shadow-2xl;
   }
 
+  .glass-premium {
+    background: oklch(1 0 0 / 1.5%);
+    backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid oklch(1 0 0 / 10%);
+    box-shadow: 0 8px 32px 0 oklch(0 0 0 / 37%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   .apple-card {
     @apply transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)];
   }
