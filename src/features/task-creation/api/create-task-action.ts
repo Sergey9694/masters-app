@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { taskSchema, type TaskFormValues } from "../model/task-schema";
@@ -13,7 +12,6 @@ export async function createOrderAction(data: TaskFormValues) {
     throw new Error("Необходима авторизация");
   }
 
-  // Детальная валидация на сервере
   const result = taskSchema.safeParse(data);
   if (!result.success) {
     console.error("Zod Validation Errors:", result.error.format());
@@ -23,7 +21,6 @@ export async function createOrderAction(data: TaskFormValues) {
   const validated = result.data;
 
   try {
-    // 1. Создаем запись (используем type casting для обхода застарелых типов Prisma)
     const task = await (db.taskRequest as any).create({
       data: {
         customerId: user.id,
@@ -37,9 +34,7 @@ export async function createOrderAction(data: TaskFormValues) {
       },
     });
 
-    // 2. Обновляем ГЕО через Raw Query (PostGIS)
     if (validated.lat && validated.lng) {
-      // Используем $executeRaw для безопасности и точности
       await db.$executeRawUnsafe(
         `UPDATE "TaskRequest" SET "taskLocation" = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
         Number(validated.lng),
@@ -48,13 +43,13 @@ export async function createOrderAction(data: TaskFormValues) {
       );
     }
 
-    console.log("SUCCESS: Task created with ID:", task.id);
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/feed");
+    
+    // Return success instead of redirecting so client can show toast
+    return { success: true, redirect: "/dashboard/feed" };
   } catch (error: any) {
     console.error("FATAL: Database error in createOrderAction:", error.message);
     throw new Error(`Ошибка БД: ${error.message}`);
   }
-
-  revalidatePath("/dashboard");
-  revalidatePath("/dashboard/feed");
-  redirect("/dashboard/feed");
 }

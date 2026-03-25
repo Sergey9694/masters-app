@@ -1,137 +1,111 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
+  /* District Master 2026 Core Palette */
+  --color-background: #06070a;
+  --color-foreground: #ffffff;
+  --color-card: rgba(13, 15, 22, 0.85);
+  
+  /* Semantic Accent Palette */
+  --color-cyan: #22d3ee;
+  --color-indigo: #6366f1;
+  --color-emerald: #10b981;
+  
+  /* System Mapping */
+  --color-primary: var(--ui-accent-cyan);
+  --color-primary-foreground: #ffffff;
+  --color-border: rgba(255, 255, 255, 0.08); 
+  --color-input: rgba(255, 255, 255, 0.04);
+  --color-ring: rgba(34, 211, 238, 0.3);
 
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
+  --radius-lg: 1.25rem;
+  --radius-md: 1rem;
+  --radius-sm: 0.75rem;
 
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-shimmer: shimmer 2.5s infinite linear;
 
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.5);
-  --radius-2xl: calc(var(--radius) * 2);
-  --radius-3xl: calc(var(--radius) * 2.5);
-  --radius-4xl: calc(var(--radius) * 3);
-}
-
-:root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.1 0 0);
-  --card: oklch(1 0 0 / 0.8);
-  --card-foreground: oklch(0.1 0 0);
-  --primary: oklch(0.2 0 0);
-  --primary-foreground: oklch(0.99 0 0);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
-  --ring: oklch(0.5 0 0);
-  --radius: 1rem;
-}
-
-.dark {
-  /* Premium Midnight Gradient Foundation */
-  --background: oklch(0.14 0.02 250);
-  --foreground: oklch(0.99 0 0);
-  --card: oklch(1 0 0 / 5%);
-  /* Ultra-thin glass */
-  --card-foreground: oklch(0.99 0 0);
-  --primary: oklch(0.99 0 0);
-  --primary-foreground: oklch(0.1 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.4 0.2 250);
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  :root {
+    /* TYPOGRAPHY */
+    --ui-font-size-mobile: 14px;
+    --ui-font-size-desktop: 16px;
+    --ui-radius-premium: 1.25rem;
+    
+    /* LAYOUT - REFINED GLOBAL WIDTHS */
+    --ui-container-max-w: 896px; /* Optimized 4xl for ideal content density */
+    --ui-container-form: 896px; 
+
+    /* INPUTS */
+    --ui-input-text: #f1f5f9;
+    --ui-input-h-mobile: 48px;
+    --ui-input-h-desktop: 56px;
+
+    /* REFINED PILLARS OF COLOR (TRIDENT SYSTEM) */
+    --ui-accent-cyan: #22d3ee;
+    --ui-accent-indigo: #818cf8; 
+    --ui-accent-emerald: #34d399; 
+    
+    /* GRADIENTS */
+    --ui-grad-main: linear-gradient(to tr, #0891b2, #4f46e5); 
+    --ui-grad-master: linear-gradient(to tr, #059669, #0d9488); 
   }
 
+  * { @apply border-border; }
+  
   body {
-    @apply text-foreground antialiased selection:bg-blue-500/30;
-    /* Beautiful linear composite background */
-    background: radial-gradient(at 0% 0%, oklch(0.18 0.04 260) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, oklch(0.16 0.03 240) 0px, transparent 50%),
-      var(--background);
-    background-attachment: fixed;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: var(--ui-font-size-mobile);
+    background-image: 
+      radial-gradient(circle at 80% 10%, rgba(34, 211, 238, 0.06), transparent 45%),
+      radial-gradient(circle at 10% 90%, rgba(99, 102, 241, 0.06), transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.02), transparent 60%);
+  }
+
+  @media (min-width: 640px) {
+    body { font-size: var(--ui-font-size-desktop); }
+  }
+
+  button, [role="button"], select, .cursor-pointer-all {
+    cursor: pointer !important;
   }
 }
 
 @layer utilities {
-  .glass {
-    @apply backdrop-blur-3xl bg-white/5 border border-white/10 shadow-2xl;
+  .container-premium {
+    @apply mx-auto px-6 sm:px-12 md:px-16;
+    max-width: var(--ui-container-max-w);
   }
 
   .glass-premium {
-    background: oklch(1 0 0 / 1.5%);
-    backdrop-filter: blur(40px) saturate(180%);
-    border: 1px solid oklch(1 0 0 / 10%);
-    box-shadow: 0 8px 32px 0 oklch(0 0 0 / 37%);
+    background: rgba(13, 15, 22, 0.82);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
   }
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .apple-card {
-    @apply transition-all duration-500 ease-[cubic-bezier(0.2,0,0,1)];
-  }
-
-  .apple-card:hover {
-    @apply -translate-y-1.5 scale-[1.02] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)];
-  }
-
-  .text-gradient {
-    background: linear-gradient(135deg, oklch(0.9 0.05 240), oklch(0.7 0.1 280));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-}
-
-@keyframes slow-glow {
-
-  0%,
-  100% {
-    opacity: 0.3;
-    transform: scale(1) translate(0, 0);
-  }
-
-  50% {
-    opacity: 0.5;
-    transform: scale(1.1) translate(2%, 2%);
-  }
-}
-
-.animate-slow-glow {
-  animation: slow-glow 12s infinite ease-in-out;
-}
-
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite ease-in-out;
+  .accent-glow-cyan { box-shadow: 0 0 30px 0 rgba(34, 211, 238, 0.12); }
+  .accent-glow-indigo { box-shadow: 0 0 30px 0 rgba(129, 140, 248, 0.12); }
+  .accent-glow-emerald { box-shadow: 0 0 30px 0 rgba(52, 211, 153, 0.12); }
 }

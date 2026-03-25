@@ -25,7 +25,7 @@ export default async function DashboardPage() {
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 blur-[120px] rounded-full animate-slow-glow pointer-events-none" />
       <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-indigo-600/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <div className="max-w-5xl mx-auto relative z-10">
+      <div className="max-w-4xl mx-auto px-6 sm:px-12 relative z-10">
         {/* Header Section */}
         <header className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-4">
