@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loginWithTelegram } from "../model/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { MotionToast } from "@/shared/ui/motion-toast";
 
 export function TelegramAuth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -24,9 +25,8 @@ export function TelegramAuth() {
         const handleLogin = async () => {
           setIsLoading(true);
           const result = await loginWithTelegram(initData);
-          
           if (result.success) {
-            toast.success("Добро пожаловать!");
+            toast.custom(() => <MotionToast type="success">Добро пожаловать!</MotionToast>);
             router.push("/dashboard");
           } else if (result.error) {
             toast.error(result.error);

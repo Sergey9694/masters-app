@@ -1,5 +1,7 @@
 import { db } from "@/shared/lib/db";
 import { TaskCard } from "./TaskCard";
+import { StaggerWrap } from "@/shared/ui/stagger-wrap";
+import { StaggerItem } from "@/shared/ui/stagger-item";
 
 interface TaskFeedProps {
   categoryId?: string;
@@ -51,10 +53,10 @@ export async function TaskFeed({ categoryId }: TaskFeedProps) {
       </div>
     );
   }
-
+ 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between px-2 mb-8">
+    <StaggerWrap className="space-y-6">
+      <StaggerItem className="flex items-center justify-between px-2 mb-8">
         <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-3">
           Свежие тендеры
           <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
@@ -62,13 +64,13 @@ export async function TaskFeed({ categoryId }: TaskFeedProps) {
         <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider">
           {tasks.length} активных
         </span>
-      </div>
+      </StaggerItem>
 
-      <div className="grid grid-cols-1 gap-6 pb-10">
+      <StaggerWrap className="grid grid-cols-1 gap-6 pb-10">
         {tasks.map((task) => (
           <TaskCard key={task.id} task={task} />
         ))}
-      </div>
-    </div>
+      </StaggerWrap>
+    </StaggerWrap>
   );
 }

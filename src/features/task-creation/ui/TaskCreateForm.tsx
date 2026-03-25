@@ -17,7 +17,18 @@ import {
   CheckCircle2
 } from "lucide-react";
 
+import { 
+  TOAST_VARIANTS, 
+  SLIDE_UP, 
+  FADE_IN, 
+  ANIMATION_DURATION,
+  ANIMATION_EASING,
+  HOVER_GLOW,
+  CLICK_SCALE
+} from "@/shared/lib/motion";
+
 import { Button } from "@/shared/ui/button";
+import { MotionToast } from "@/shared/ui/motion-toast";
 import {
   Form,
   FormControl,
@@ -144,10 +155,12 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
         const res = await createOrderAction({ ...vals, images: urls });
         
         if (res.success) {
-          toast.success("Тендер успешно опубликован!");
+          toast.custom(() => (
+            <MotionToast type="success">Тендер успешно опубликован!</MotionToast>
+          ));
           setTimeout(() => {
             router.push(res.redirect);
-          }, 1500);
+          }, 1000);
         }
       } catch (err: any) {
         toast.error(err.message || "Publication error");
@@ -159,7 +172,13 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
   return (
     <div className="container-standard">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 sm:space-y-12">
+        <motion.form 
+          initial="initial"
+          animate="animate"
+          variants={SLIDE_UP}
+          onSubmit={form.handleSubmit(onSubmit)} 
+          className="space-y-8 sm:space-y-12"
+        >
           
           <Card className="glass-premium border-none p-6 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative overflow-visible group/card">
             {/* Ambient Multi-Accent Glows */}
@@ -321,9 +340,10 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                     {typeof document !== "undefined" && shSuggestions && suggestions.length > 0 && inputRect &&
                       createPortal(
                         <motion.div 
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
+                          initial="initial"
+                          animate="animate"
+                          exit="exit"
+                          variants={FADE_IN}
                           style={{
                             position: 'fixed',
                             top: inputRect.bottom + 8,
@@ -355,9 +375,14 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                type="submit" 
                variant="premium"
                size="xl" 
+               asChild
                disabled={isPending || isUploading} 
                className="w-full relative group rounded-[var(--ui-radius-premium)] mt-6"
             >
+               <motion.button 
+                 whileHover={HOVER_GLOW}
+                 whileTap={CLICK_SCALE}
+               >
                {isPending || isUploading ? (
                  <Loader2 className="w-7 h-7 animate-spin" />
                ) : (
@@ -367,6 +392,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                  </div>
                )}
                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
+               </motion.button>
             </Button>
             
             <footer className="pt-3 flex justify-center opacity-30 relative z-10">
@@ -377,7 +403,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                </div>
             </footer>
           </Card>
-        </form>
+        </motion.form>
       </Form>
     </div>
   );

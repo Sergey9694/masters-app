@@ -6,6 +6,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
+import { STAGGER_ITEM } from "@/shared/lib/motion";
 
 interface TaskCardProps {
   task: {
@@ -31,6 +32,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
   return (
     <motion.div
+      variants={STAGGER_ITEM}
       whileHover={{ y: -4, scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
       className="group cursor-pointer"

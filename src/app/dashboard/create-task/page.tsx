@@ -5,6 +5,8 @@ import Link from "next/link";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { TaskCreateForm } from "@/features/task-creation/ui/TaskCreateForm";
+import { StaggerWrap } from "@/shared/ui/stagger-wrap";
+import { StaggerItem } from "@/shared/ui/stagger-item";
 
 export const metadata: Metadata = {
   title: "Создать тендер | Районный Мастер",
@@ -18,9 +20,9 @@ export default async function CreateTaskPage() {
   });
 
   return (
-    <main className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
+    <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       {/* Header with Back Button */}
-      <div className="flex items-center gap-4 mb-10">
+      <StaggerItem className="flex items-center gap-4 mb-10">
         <Link 
           href="/dashboard"
           className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
@@ -31,12 +33,13 @@ export default async function CreateTaskPage() {
           <h1 className="text-2xl font-black tracking-tight">Новый тендер</h1>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Опишите задачу</p>
         </div>
-      </div>
+      </StaggerItem>
 
-      <TaskCreateForm 
-        categories={categories.map(c => ({ id: c.id, name: c.name }))} 
-        userId={user?.id || ""} 
-      />
-    </main>
+      <StaggerItem>
+        <TaskCreateForm 
+          categories={categories.map(c => ({ id: c.id, name: c.name }))} 
+        />
+      </StaggerItem>
+    </StaggerWrap>
   );
 }

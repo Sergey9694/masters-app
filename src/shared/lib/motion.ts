@@ -1,0 +1,188 @@
+ import { Variants, Transition } from "framer-motion";
+
+/**
+ * Глобальный конфиг анимаций District Master 2026.
+ * Используется для обеспечения консистентности (Single Source of Truth) и премиального UX.
+ * Все анимации базируются исключительно на Framer Motion (Motion).
+ */
+
+export const ANIMATION_DURATION = {
+  INSTANT: 0.1,
+  FAST: 0.2,
+  NORMAL: 0.4,
+  SLOW: 0.7,
+  DELUXE: 1.2,
+} as const;
+
+export const ANIMATION_EASING = {
+  // Ease Out Expo - Стандарт роскошных интерфейсов
+  PREMIUM: [0.19, 1, 0.22, 1],
+  // Стандартный Smooth
+  SMOOTH: [0.4, 0, 0.2, 1],
+  // Прыгучий эффект для кнопок и поп-апов
+  BOUNCE: [0.175, 0.885, 0.32, 1.275],
+  // Мягкое появление
+  SOFT: [0.25, 0.1, 0.25, 1],
+} as const;
+
+/**
+ * БАЗОВЫЕ ПРЕСЕТЫ ПЕРЕХОДОВ (Transitions)
+ */
+export const TRANSITIONS = {
+  PREMIUM: {
+    duration: ANIMATION_DURATION.SLOW,
+    ease: ANIMATION_EASING.PREMIUM,
+  } as Transition,
+  FAST: {
+    duration: ANIMATION_DURATION.FAST,
+    ease: "easeOut",
+  } as Transition,
+  SPRING: {
+    type: "spring",
+    stiffness: 300,
+    damping: 30,
+    restDelta: 0.001
+  } as Transition,
+  MOLASSES: {
+    duration: ANIMATION_DURATION.DELUXE,
+    ease: ANIMATION_EASING.PREMIUM,
+  } as Transition,
+};
+
+/**
+ * ВАРИАНТЫ АНИМАЦИЙ (Variants)
+ */
+
+export const FADE_IN: Variants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: TRANSITIONS.PREMIUM },
+  exit: { opacity: 0, transition: { duration: ANIMATION_DURATION.FAST } },
+};
+
+export const BLUR_IN: Variants = {
+  initial: { opacity: 0, filter: "blur(10px)", scale: 0.95 },
+  animate: { opacity: 1, filter: "blur(0px)", scale: 1, transition: TRANSITIONS.PREMIUM },
+  exit: { opacity: 0, filter: "blur(4px)", scale: 0.95, transition: { duration: ANIMATION_DURATION.FAST } },
+};
+
+export const SLIDE_UP: Variants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: TRANSITIONS.PREMIUM },
+  exit: { opacity: 0, y: 10, transition: { duration: ANIMATION_DURATION.FAST } },
+};
+
+export const SLIDE_DOWN: Variants = {
+  initial: { opacity: 0, y: -20 },
+  animate: { opacity: 1, y: 0, transition: TRANSITIONS.PREMIUM },
+  exit: { opacity: 0, y: -10, transition: { duration: ANIMATION_DURATION.FAST } },
+};
+
+export const SLIDE_IN_RIGHT: Variants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: TRANSITIONS.PREMIUM },
+  exit: { opacity: 0, x: 20, transition: { duration: ANIMATION_DURATION.FAST } },
+};
+
+export const SLIDE_IN_LEFT: Variants = {
+  initial: { opacity: 0, x: -20 },
+  animate: { opacity: 1, x: 0, transition: TRANSITIONS.PREMIUM },
+  exit: { opacity: 0, x: -20, transition: { duration: ANIMATION_DURATION.FAST } },
+};
+
+/**
+ * СЛОЖНЫЕ ПРЕСЕТЫ (Layout & Logic)
+ */
+
+// Для списков карточек
+export const STAGGER_CONTAINER: Variants = {
+  initial: {},
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+export const STAGGER_ITEM: Variants = {
+  initial: { opacity: 0, y: 24, scale: 0.98 },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1,
+    transition: TRANSITIONS.SPRING 
+  },
+};
+
+// Для Toaster / Notifications (Sonner Custom)
+export const TOAST_VARIANTS: Variants = {
+  initial: { 
+    opacity: 0, 
+    y: 100, 
+    scale: 0.9, 
+    filter: "blur(12px)" 
+  },
+  animate: { 
+    opacity: 1, 
+    y: 0, 
+    scale: 1, 
+    filter: "blur(0px)",
+    transition: TRANSITIONS.PREMIUM
+  },
+  exit: { 
+    opacity: 0, 
+    scale: 0.95, 
+    filter: "blur(6px)",
+    transition: { duration: 0.2, ease: "easeIn" }
+  },
+};
+
+// Для модальных окон (Dialogs)
+export const MODAL_VARIANTS = {
+  overlay: {
+    initial: { opacity: 0, backdropFilter: "blur(0px)" },
+    animate: { opacity: 1, backdropFilter: "blur(8px)", transition: { duration: 0.3 } },
+    exit: { opacity: 0, backdropFilter: "blur(0px)", transition: { duration: 0.2 } },
+  },
+  content: {
+    initial: { opacity: 0, scale: 0.96, y: 8, filter: "blur(4px)" },
+    animate: { 
+      opacity: 1, 
+      scale: 1, 
+      y: 0, 
+      filter: "blur(0px)",
+      transition: TRANSITIONS.SPRING 
+    },
+    exit: { 
+      opacity: 0, 
+      scale: 0.98, 
+      y: 8,
+      transition: { duration: 0.15 }
+    },
+  }
+};
+
+/**
+ * ИНТЕРАКТИВНЫЕ СОСТОЯНИЯ (States)
+ */
+
+export const HOVER_GLOW = {
+  scale: 1.015,
+  y: -2,
+  filter: "brightness(1.08)",
+  transition: { duration: 0.2, ease: ANIMATION_EASING.PREMIUM },
+} as const;
+
+export const CLICK_SCALE = {
+  scale: 0.965,
+  transition: { duration: 0.1, ease: "easeInOut" },
+} as const;
+
+/**
+ * PAGE TRANSITIONS
+ */
+export const PAGE_TRANSITION: Variants = {
+  initial: { opacity: 0, filter: "blur(6px)" },
+  animate: { opacity: 1, filter: "blur(0px)", transition: TRANSITIONS.PREMIUM },
+  exit: { opacity: 0, filter: "blur(6px)", transition: { duration: 0.2 } },
+};

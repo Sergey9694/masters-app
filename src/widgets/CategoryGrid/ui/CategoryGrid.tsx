@@ -3,6 +3,7 @@
 import * as Icons from "lucide-react";
 import { motion, Variants } from "framer-motion";
 import { cn } from "@/shared/lib/cn";
+import { STAGGER_CONTAINER, STAGGER_ITEM } from "@/shared/lib/motion";
 
 interface Category {
   id: string;
@@ -11,38 +12,10 @@ interface Category {
 }
 
 export function CategoryGrid({ initialCategories, className }: { initialCategories: Category[], className?: string }) {
-  // Stagger animation variants
-  const container: Variants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      }
-    }
-  };
-
-  const item: Variants = {
-    hidden: { opacity: 0, y: 20, scale: 0.9 },
-    show: { 
-      opacity: 1, 
-      y: 0, 
-      scale: 1, 
-      transition: { 
-        type: "spring" as const, 
-        stiffness: 300, 
-        damping: 20 
-      } 
-    }
-  };
-
   return (
     <div className={cn("w-full mb-8", className)}>
       <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
+        variants={STAGGER_CONTAINER}
         className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-x-4 gap-y-10"
       >
         {initialCategories.map((cat) => {
@@ -51,7 +24,7 @@ export function CategoryGrid({ initialCategories, className }: { initialCategori
            return (
              <motion.div 
                key={cat.id} 
-               variants={item}
+               variants={STAGGER_ITEM}
                whileHover={{ scale: 1.05 }}
                whileTap={{ scale: 0.9 }}
                className="flex flex-col items-center gap-3 group relative cursor-pointer"

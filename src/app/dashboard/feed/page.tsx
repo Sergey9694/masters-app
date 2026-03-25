@@ -4,6 +4,8 @@ import { CategoryGrid } from "@/widgets/CategoryGrid";
 import { Search } from "lucide-react";
 import { Input } from "@/shared/ui/input";
 import { db } from "@/shared/lib/db";
+import { StaggerWrap } from "@/shared/ui/stagger-wrap";
+import { StaggerItem } from "@/shared/ui/stagger-item";
 
 interface FeedPageProps {
   searchParams: Promise<{ categoryId?: string }>;
@@ -17,9 +19,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   });
 
   return (
-    <div className="container-standard space-y-12">
+    <StaggerWrap className="container-standard space-y-12">
       {/* Search Header */}
-      <div className="space-y-6">
+      <StaggerItem className="space-y-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Поиск заказов</h1>
           <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Найдите работу в вашем районе</p>
@@ -32,10 +34,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             className="pl-12 h-14 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-slate-800 rounded-3xl text-base font-medium shadow-xl shadow-black/5"
           />
         </div>
-      </div>
+      </StaggerItem>
 
       {/* Categories Filter */}
-      <div className="space-y-4">
+      <StaggerItem className="space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center justify-center gap-2 italic opacity-70">
           — Выберите нужную категорию —
         </h3>
@@ -44,10 +46,10 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             <CategoryGrid initialCategories={categories} />
           </Suspense>
         </div>
-      </div>
+      </StaggerItem>
 
-      {/* Main Feed Content */}
-      <div>
+      {/* Main Feed Content - TaskFeed already has its own internal StaggerWrap */}
+      <StaggerItem>
         <Suspense fallback={
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
@@ -58,7 +60,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           {/* @ts-ignore - Prisma types may be out of sync in IDE */}
           <TaskFeed categoryId={categoryId} />
         </Suspense>
-      </div>
-    </div>
+      </StaggerItem>
+    </StaggerWrap>
   );
 }
