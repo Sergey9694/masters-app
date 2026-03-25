@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { Hammer, Bell, MapPin, Search, PlusCircle } from "lucide-react";
@@ -73,12 +74,14 @@ export default async function DashboardPage() {
               <span className="w-1 h-1 rounded-full bg-indigo-600" />
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <ActionCard 
-                title="Озвучить проблему" 
-                desc="Создайте тендер и выберите лучшего мастера по цене и отзывам" 
-                icon={<PlusCircle className="w-6 h-6" />}
-                color="bg-blue-600"
-              />
+              <Link href="/dashboard/create-task" className="flex-1">
+                <ActionCard 
+                  title="Озвучить проблему" 
+                  desc="Создайте тендер и выберите лучшего мастера по цене и отзывам" 
+                  icon={<PlusCircle className="w-6 h-6" />}
+                  color="bg-blue-600"
+                />
+              </Link>
               <ActionCard 
                 title="Мои активные заказы" 
                 desc="Отслеживайте статус выполнения и общайтесь с исполнителями" 
