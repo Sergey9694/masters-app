@@ -23,6 +23,8 @@ export async function createOrderAction(data: TaskFormValues) {
         categoryId: validated.categoryId,
         title: validated.title,
         description: validated.description,
+        budget: validated.budget ? parseFloat(validated.budget) : null,
+        address: validated.address,
         status: "OPEN",
       },
     });

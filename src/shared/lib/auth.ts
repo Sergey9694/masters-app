@@ -4,12 +4,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { SessionPayload, Role } from "@/shared/types/auth";
 import crypto from "crypto";
 
-const secretKey = process.env.JWT_SECRET || "default_secret_change_me_in_production";
-const key = new TextEncoder().encode(secretKey);
+/**
+ * Получение секретного ключа (Lazy Evaluation по Правилу 6)
+ */
+function getSecretKey() {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("JWT_SECRET is not defined in production environment");
+    }
+    return new TextEncoder().encode("dev_fallback_secret_keep_it_safe");
+  }
+  return new TextEncoder().encode(secret);
+}
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
 
 export async function encrypt(payload: SessionPayload) {
+  const key = getSecretKey();
   return await new SignJWT(payload as any)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -18,6 +30,7 @@ export async function encrypt(payload: SessionPayload) {
 }
 
 export async function decrypt(input: string): Promise<SessionPayload> {
+  const key = getSecretKey();
   const { payload } = await jwtVerify(input, key, {
     algorithms: ["HS256"],
   });

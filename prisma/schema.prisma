@@ -61,6 +61,8 @@ model TaskRequest {
   title       String
   description String
   images      String[]
+  budget      Float?
+  address     String?
   status      TaskStatus @default(OPEN)
   
   // Где именно нужна услуга (гео-точка)

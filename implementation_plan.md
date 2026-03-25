@@ -139,9 +139,16 @@ model TaskRequest {
 - [x] Prisma: Миграции базы данных и настройка пространственных типов (Prisma 7 + Driver Adapter).
 - [x] Auth: Реализация Telegram Login (валидация подписи) + JWT Session.
 
-### Фаза 2: Механика Заказов (Неделя 2) — В ПРОЦЕССЕ 🌓
+### Фаза 2: Механика Заказов и Тендеров (В ПРОЦЕССЕ — 30%)
 - [x] Shared UI: Настройка Tailwind 4 и Shadcn компонентов.
-- [ ] Features: Создание задачи (upload фото в S3/Local + Zod).
+1.  **Создание тендера (DONE)**:
+    *   [x] Схема Zod для валидации (src/features/task-creation/model).
+    *   [x] Премиальная форма в стиле Apple (src/features/task-creation/ui).
+    *   [x] Server Action для сохранения в Prisma.
+2.  **Медиа & Фото**:
+    *   [ ] Загрузка фото (S3/Local) (Phase 2.2).
+3.  **Feed: Лента для Мастеров**:
+    *   [ ] Публичный список заказов по району (Hyperlocal).
 - [x] Entities: Профили мастеров и логика категорий (Seeding + Grid Widget).
 - [ ] Geo-Logic: Написание SQL-функций для поиска в радиусе (ST_DWithin).
 

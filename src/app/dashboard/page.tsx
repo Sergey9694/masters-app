@@ -82,17 +82,26 @@ export default async function DashboardPage() {
                   color="bg-blue-600"
                 />
               </Link>
-              <ActionCard 
-                title="Мои активные заказы" 
-                desc="Отслеживайте статус выполнения и общайтесь с исполнителями" 
-                icon={<Hammer className="w-6 h-6" />}
-                color="bg-indigo-600"
-              />
-              {!user.masterProfile && (
+              <Link href="/dashboard/feed" className="flex-1">
+                <ActionCard 
+                  title="Лента заказов" 
+                  desc="Найдите новые заказы и предложите свои услуги в районе" 
+                  icon={<Search className="w-6 h-6" />}
+                  color="bg-indigo-600"
+                />
+              </Link>
+              {!user.masterProfile ? (
                 <ActionCard 
                   title="Стать мастером" 
                   desc="Начните помогать своим соседям и зарабатывать в свободное время" 
                   icon={<Hammer className="w-6 h-6" />}
+                  color="bg-emerald-600"
+                />
+              ) : (
+                <ActionCard 
+                  title="Мои активные заказы" 
+                  desc="Отслеживайте статус выполнения и общайтесь с исполнителями" 
+                  icon={<Bell className="w-6 h-6" />}
                   color="bg-emerald-600"
                 />
               )}
