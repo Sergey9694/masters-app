@@ -70,7 +70,7 @@ export async function getTasksNearby(
       limit // $4
     );
 
-    return tasks.map(t => ({
+    return tasks.map((t: any) => ({
       id: t.id as string,
       title: t.title as string,
       description: t.description as string,
