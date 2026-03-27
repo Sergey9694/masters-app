@@ -24,6 +24,10 @@ COPY prisma ./prisma
 RUN npx prisma@7.5.0 generate
 COPY . .
 
+# Применяем переменные окружения для билда (клиентские NEXT_PUBLIC)
+ARG NEXT_PUBLIC_BOT_NAME
+ENV NEXT_PUBLIC_BOT_NAME=$NEXT_PUBLIC_BOT_NAME
+
 # 👇 Используем кэш Next.js (.next/cache)
 RUN --mount=type=cache,target=/app/.next/cache \
     npm run build
