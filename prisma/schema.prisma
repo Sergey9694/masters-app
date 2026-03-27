@@ -1,6 +1,6 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  provider = "prisma-client-js"
+  binaryTargets = ["native"]
 }
 
 datasource db {
@@ -23,7 +23,6 @@ model User {
   lastName      String?
   avatar        String?
   
-  // Гео-точка пользователя (дом/работа)
   location      Unsupported("geometry(Point, 4326)")? 
 
   masterProfile MasterProfile?
@@ -65,7 +64,6 @@ model TaskRequest {
   address     String?
   status      TaskStatus @default(OPEN)
   
-  // Где именно нужна услуга (гео-точка)
   taskLocation Unsupported("geometry(Point, 4326)")?
   
   responses   TaskResponse[]
