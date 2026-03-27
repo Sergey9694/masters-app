@@ -1,10 +1,13 @@
-version: "3.8"
+# --- СЕТЬ ДЛЯ ГЛОБАЛЬНОГО ПРОКСИ ---
+networks:
+    proxy_network:
+        external: true
 
 services:
     # --- БАЗА ДАННЫХ (PostgreSQL + PostGIS) ---
     db:
         image: postgis/postgis:15-3.3-alpine
-        container_name: masters_db
+        container_name: ${DB_CONTAINER_NAME:-masters_db}
         restart: always
         environment:
             POSTGRES_USER: ${POSTGRES_USER:-admin}
@@ -12,32 +15,31 @@ services:
             POSTGRES_DB: ${POSTGRES_DB:-masters_db}
         volumes:
             - ./postgres_data:/var/lib/postgresql/data
-        ports:
-            - "5435:5432" # Используем порт 5435, т.к. 5434 занят fin-you-app!
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U admin -d masters_db"]
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-masters_db}"]
             interval: 10s
             timeout: 5s
             retries: 5
         networks:
-            - masters_network
+            - proxy_network
 
-    # --- ПРИЛОЖЕНИЕ ---
+    # --- ПРИЛОЖЕНИЕ (Next.js) ---
     app:
-        container_name: masters_app
+        container_name: ${APP_CONTAINER_NAME:-masters_app}
+        image: ${DOCKERHUB_IMAGE:-masters-app}:${APP_VERSION:-latest}
         build:
             context: .
             dockerfile: Dockerfile
         restart: always
         env_file: .env
         environment:
-            DATABASE_URL: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin_pass}@db:5432/${POSTGRES_DB:-masters_db}?schema=public"
+            DATABASE_URL: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin_pass}@${DB_CONTAINER_NAME:-masters_db}:5432/${POSTGRES_DB:-masters_db}?schema=public"
             NODE_ENV: production
             JWT_SECRET: ${JWT_SECRET}
         volumes:
             - ./uploads:/app/uploads
         networks:
-            - masters_network
+            - proxy_network
         depends_on:
             db:
                 condition: service_healthy
@@ -48,6 +50,25 @@ services:
             retries: 10
             start_period: 120s
 
-networks:
-    masters_network:
-        driver: bridge
+    # --- АВТОМАТИЧЕСКИЕ БЭКАПЫ ---
+    db-backup:
+        image: postgis/postgis:15-3.3-alpine
+        container_name: ${BACKUP_CONTAINER_NAME:-masters_db_backup}
+        restart: unless-stopped
+        environment:
+            PGHOST: ${DB_CONTAINER_NAME:-masters_db}
+            PGUSER: ${POSTGRES_USER:-admin}
+            PGPASSWORD: ${POSTGRES_PASSWORD:-admin_pass}
+            PGDATABASE: ${POSTGRES_DB:-masters_db}
+        volumes:
+            - ./backups:/backups
+        networks:
+            - proxy_network
+        depends_on:
+            db:
+                condition: service_healthy
+        entrypoint: ["/bin/sh", "-c"]
+        command:
+            - |
+              echo "0 4 * * * pg_dump -Fc > /backups/masters_$$(date +\%Y\%m\%d_\%H\%M).dump && find /backups -name '*.dump' -mtime +7 -delete && echo Backup done" > /etc/crontabs/root
+              crond -f -l 2
