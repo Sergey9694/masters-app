@@ -21,7 +21,7 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat openssl
 COPY --from=deps /app/node_modules ./node_modules
 COPY prisma ./prisma
-RUN npx prisma@7.5.0 generate
+RUN npx prisma@5.10.0 generate
 COPY . .
 
 # Применяем переменные окружения для билда (клиентские NEXT_PUBLIC)
