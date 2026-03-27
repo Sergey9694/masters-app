@@ -8,6 +8,7 @@ import { Bell, MapPin, Search, PlusCircle, Hammer } from "lucide-react";
 import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
 import { ReactNode } from "react";
+import { useMainButton } from "@/shared/lib/telegram/use-main-button";
 
 interface DashboardContentProps {
   user: any;
@@ -15,6 +16,16 @@ interface DashboardContentProps {
 }
 
 export function DashboardContent({ user, categories }: DashboardContentProps) {
+  // Активируем главную кнопку Telegram для быстрого поиска
+  useMainButton({
+    text: "НАЙТИ МАСТЕРОВ РЯДОМ 🔍",
+    isVisible: true,
+    onClick: () => {
+      console.log("MainButton clicked: Searching for masters...");
+      // Здесь можно вызвать триггер поиска из LocationFilter
+    }
+  });
+
   return (
     <motion.div 
       className="container-standard relative z-10"
