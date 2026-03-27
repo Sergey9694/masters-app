@@ -7,6 +7,7 @@ import { ru } from "date-fns/locale";
 import { Card } from "@/shared/ui/card";
 import { Badge } from "@/shared/ui/badge";
 import { STAGGER_ITEM } from "@/shared/lib/motion";
+import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 
 interface TaskCardProps {
   task: {
@@ -35,12 +36,14 @@ const formatDistance = (m: number) => {
 
 export function TaskCard({ task }: TaskCardProps) {
   const { title, description, budget, address, createdAt, category, customer, images, distance } = task;
+  const haptics = useHaptics();
 
   return (
     <motion.div
       variants={STAGGER_ITEM}
       whileHover={{ y: -4, scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
+      onClick={haptics.selection}
       className="group cursor-pointer"
     >
       <Card className="p-0 border-none glass overflow-hidden rounded-[32px] hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">

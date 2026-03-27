@@ -7,6 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { BLUR_IN, CLICK_SCALE } from "@/shared/lib/motion";
 import { toast } from "sonner";
+import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 
 /**
  * Кнопка быстрого поиска заказов по геолокации.
@@ -16,12 +17,14 @@ export function LocationFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLocating, setIsLocating] = useState(false);
+  const haptics = useHaptics();
   
   const hasGeo = searchParams.has("lat") && searchParams.has("lng");
 
   const handleGeoSearch = () => {
     console.log("[GEO_DEBUG] Запуск стратегии 'Авто-выбор' (Двухэтапный поиск)...");
     setIsLocating(true);
+    haptics.impact("medium");
     
     if (!navigator.geolocation) {
       toast.error("Геолокация не поддерживается");
@@ -79,6 +82,7 @@ export function LocationFilter() {
       current.set("lng", lng.toString());
       router.push(`?${current.toString()}`);
       setIsLocating(false);
+      haptics.notification("success");
       toast.success("Локация обновлена!");
     };
 
@@ -87,6 +91,7 @@ export function LocationFilter() {
       if (err.code === 1) msg = "Доступ к геопозиции запрещен (проверьте настройки)";
       
       console.error(`[GEO_DEBUG] ФАТАЛЬНАЯ ОШИБКА: Code: ${err.code}, Msg: ${err.message}`);
+      haptics.notification("error");
       toast.error(msg);
       setIsLocating(false);
     };
@@ -98,6 +103,7 @@ export function LocationFilter() {
     const current = new URLSearchParams(Array.from(searchParams.entries()));
     current.delete("lat");
     current.delete("lng");
+    haptics.selection();
     router.push(`?${current.toString()}`);
   };
 
