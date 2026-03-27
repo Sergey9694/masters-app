@@ -12,7 +12,7 @@ function runSafe(cmd) {
 async function main() {
     console.log("[STARTUP] Инициализация базы данных...");
 
-    const PRISMA_CLI = "node ./node_modules/prisma/build/index.js";
+    const PRISMA_CLI = "prisma";
 
     console.log("[STARTUP] Накатываем актуальные миграции...");
     // В продакшене используем deploy

@@ -40,6 +40,8 @@ ENV NODE_ENV production
 
 # Добавляем необходимые пакеты
 RUN apk add --no-cache openssl libc6-compat curl
+# 👇 Устанавливаем Prisma глобально, чтобы она имела все свои зависимости для миграций
+RUN npm install -g prisma@7.5.0
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -53,7 +55,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder --chown=nextjs:nodejs /app/scripts/startup.js ./startup.js
 
 USER nextjs
