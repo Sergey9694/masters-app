@@ -5,23 +5,27 @@ import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { taskSchema, type TaskFormValues } from "../model/task-schema";
 
+/**
+ * Server Action: Create a new task request
+ * All errors are caught and returned as safe messages (no DB internals leak)
+ */
 export async function createOrderAction(data: TaskFormValues) {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error("Необходима авторизация");
+    return { error: "Необходима авторизация" };
   }
 
   const result = taskSchema.safeParse(data);
   if (!result.success) {
-    console.error("Zod Validation Errors:", result.error.format());
-    throw new Error("Неверные данные формы");
+    const firstError = result.error.issues[0]?.message || "Неверные данные формы";
+    return { error: firstError };
   }
 
   const validated = result.data;
 
   try {
-    const task = await (db.taskRequest as any).create({
+    const task = await db.taskRequest.create({
       data: {
         customerId: user.id,
         categoryId: validated.categoryId,
@@ -34,6 +38,7 @@ export async function createOrderAction(data: TaskFormValues) {
       },
     });
 
+    // PostGIS geo-point update (if coordinates provided)
     if (validated.lat && validated.lng) {
       await db.$executeRawUnsafe(
         `UPDATE "TaskRequest" SET "taskLocation" = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
@@ -45,11 +50,11 @@ export async function createOrderAction(data: TaskFormValues) {
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/feed");
-    
-    // Return success instead of redirecting so client can show toast
+
     return { success: true, redirect: "/dashboard/feed" };
-  } catch (error: any) {
-    console.error("FATAL: Database error in createOrderAction:", error.message);
-    throw new Error(`Ошибка БД: ${error.message}`);
+  } catch (error: unknown) {
+    console.error("FATAL: Database error in createOrderAction:", error);
+    // S2: Never expose DB error details to client
+    return { error: "Не удалось создать заказ. Попробуйте позже." };
   }
 }

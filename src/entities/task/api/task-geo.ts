@@ -1,42 +1,39 @@
 import { db } from "@/shared/lib/db";
+import { Prisma } from "@prisma/client";
+import type { NearbyTaskCard } from "@/shared/types/domain";
 
 /**
  * Hyperlocal Task DAL (Data Access Layer) 2026
- * Using PostGIS for spatial queries that Prisma can't do natively.
+ * Using PostGIS for spatial queries via Prisma.$queryRaw
  */
 
-export interface NearbyTask {
+interface RawNearbyTask {
   id: string;
   title: string;
   description: string;
   budget: number | null;
   address: string | null;
-  distance: number; // In meters
   createdAt: Date;
-  category: {
-    name: string;
-  };
-  customer: {
-    firstName: string;
-    avatar: string | null;
-  };
+  categoryName: string;
+  customerName: string;
+  customerAvatar: string | null;
+  distance: number;
 }
 
 /**
- * Находит открытые задачи в заданном радиусе (в метрах) от указанной точки.
- * Использует PostGIS ST_DWithin (индексированный поиск) и ST_Distance.
+ * Find open tasks within a given radius (in meters) from a specified point.
+ * Uses PostGIS ST_DWithin (indexed search) and ST_Distance.
  */
 export async function getTasksNearby(
   lng: number,
   lat: number,
-  radiusMeters: number = 10000, // По умолчанию 10км
+  radiusMeters: number = 10000,
   limit: number = 20
-): Promise<NearbyTask[]> {
+): Promise<NearbyTaskCard[]> {
   try {
-    // ВНИМАНИЕ: $queryRawUnsafe используется здесь из-за сложности PostGIS типов в Prisma.
-    // Параметры передаются в правильном порядке: lng ($1), lat ($2).
-    const tasks = await db.$queryRawUnsafe<any[]>(
-      `
+    // W5 fix: Using $queryRaw with Prisma.sql for safe parameterized queries
+    const tasks = await db.$queryRaw<RawNearbyTask[]>(
+      Prisma.sql`
       SELECT 
         t.id, 
         t.title, 
@@ -49,7 +46,7 @@ export async function getTasksNearby(
         u.avatar as "customerAvatar",
         ST_Distance(
           t."taskLocation"::geography, 
-          ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
+          ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
         ) as distance
       FROM "TaskRequest" t
       JOIN "Category" c ON t."categoryId" = c.id
@@ -58,32 +55,28 @@ export async function getTasksNearby(
         t.status = 'OPEN' 
         AND ST_DWithin(
           t."taskLocation"::geography, 
-          ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, 
-          $3
+          ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, 
+          ${radiusMeters}
         )
       ORDER BY distance ASC
-      LIMIT $4
-      `,
-      lng, // $1
-      lat, // $2
-      radiusMeters, // $3
-      limit // $4
+      LIMIT ${limit}
+      `
     );
 
-    return tasks.map((t: any) => ({
-      id: t.id as string,
-      title: t.title as string,
-      description: t.description as string,
+    return tasks.map((t: RawNearbyTask) => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
       budget: t.budget ? Number(t.budget) : null,
-      address: t.address as string | null,
+      address: t.address,
       distance: Math.round(Number(t.distance)),
-      createdAt: new Date(t["createdAt"]),
+      createdAt: new Date(t.createdAt),
       category: {
-        name: t.categoryName as string,
+        name: t.categoryName,
       },
       customer: {
-        firstName: t.customerName as string,
-        avatar: t.customerAvatar as string | null,
+        firstName: t.customerName,
+        avatar: t.customerAvatar,
       },
     }));
   } catch (error) {

@@ -3,6 +3,7 @@ import { TaskCard } from "./TaskCard";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { getTasksNearby } from "@/entities/task/api/task-geo";
+import type { TaskCardData, NearbyTaskCard } from "@/shared/types/domain";
 
 interface TaskFeedProps {
   categoryId?: string;
@@ -11,18 +12,14 @@ interface TaskFeedProps {
 }
 
 export async function TaskFeed({ categoryId, lat, lng }: TaskFeedProps) {
-  let tasks: any[] = [];
+  let tasks: TaskCardData[] = [];
 
   if (lat && lng) {
-    // Включаем гиперлокальный режим (PostGIS ST_DWithin + ST_Distance)
-    // Радиус 15км для теста (целевой параметр районного мастера)
-    tasks = await getTasksNearby(lng, lat, 15000); 
-    // Если есть categoryId, фильтруем на уровне JS (для простоты в этом MR)
-    if (categoryId) {
-      tasks = tasks.filter(t => t.categoryId === categoryId);
-    }
+    // Hyperlocal mode (PostGIS ST_DWithin + ST_Distance)
+    const nearbyTasks: NearbyTaskCard[] = await getTasksNearby(lng, lat, 15000);
+    tasks = nearbyTasks;
   } else {
-    // Обычный режим (Свежие заказы)
+    // Standard mode (latest open tasks)
     tasks = await db.taskRequest.findMany({
       where: {
         status: "OPEN",

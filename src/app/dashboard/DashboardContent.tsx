@@ -9,20 +9,15 @@ import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
 import { ReactNode } from "react";
 import { useMainButton } from "@/shared/lib/telegram/use-main-button";
+import type { DashboardPageData } from "@/shared/types/domain";
 
-interface DashboardContentProps {
-  user: any;
-  categories: any[];
-}
-
-export function DashboardContent({ user, categories }: DashboardContentProps) {
-  // Активируем главную кнопку Telegram для быстрого поиска
+export function DashboardContent({ user, categories }: DashboardPageData) {
+  // Activate Telegram MainButton for quick search
   useMainButton({
     text: "НАЙТИ МАСТЕРОВ РЯДОМ 🔍",
     isVisible: true,
     onClick: () => {
       console.log("MainButton clicked: Searching for masters...");
-      // Здесь можно вызвать триггер поиска из LocationFilter
     }
   });
 

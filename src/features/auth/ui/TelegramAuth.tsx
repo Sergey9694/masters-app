@@ -8,16 +8,14 @@ import { MotionToast } from "@/shared/ui/motion-toast";
 
 export function TelegramAuth() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     if (typeof window !== "undefined" && (window as any).Telegram?.WebApp) {
       const tg = (window as any).Telegram.WebApp;
       
-      // Сигнализируем, что мы готовы
+      // Signal readiness to Telegram
       tg.ready();
-      setIsReady(true);
 
       const initData = tg.initData;
 
@@ -48,13 +46,6 @@ export function TelegramAuth() {
     );
   }
 
-  if (!isReady && typeof window !== "undefined") {
-    return (
-      <div className="p-8 text-center">
-        <p className="text-muted-foreground">Пожалуйста, откройте это приложение в Telegram</p>
-      </div>
-    );
-  }
-
+  // T2 fix: Don't render anything if not in Telegram (avoids breaking landing page)
   return null;
 }

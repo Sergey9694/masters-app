@@ -85,10 +85,9 @@ jobs:
             docker-compose pull app
             docker-compose up -d --remove-orphans
 
-            # Ждём БД и запускаем миграции
-            echo "Waiting for database..."
-            sleep 10
-            docker exec masters_app npx prisma migrate deploy
+            # Ждём запуска (миграции выполняются автоматически через startup.js)
+            echo "Waiting for app startup..."
+            sleep 15
 
             # Очистка
             docker image prune -af
