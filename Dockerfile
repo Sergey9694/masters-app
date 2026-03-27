@@ -17,13 +17,12 @@ RUN npm install --os=linux --libc=musl --cpu=x64 sharp
 # 3. Builder
 FROM base AS builder
 WORKDIR /app
+# 👇 libc6-compat и openssl необходимы для npx prisma generate в Alpine
+RUN apk add --no-cache libc6-compat openssl
 COPY --from=deps /app/node_modules ./node_modules
+COPY prisma ./prisma
+RUN npx prisma@7.5.0 generate
 COPY . .
-
-# Применяем переменные окружения для билда (если нужны)
-# ENV NEXT_PUBLIC_... 
-
-RUN npx prisma generate
 
 # 👇 Используем кэш Next.js (.next/cache)
 RUN --mount=type=cache,target=/app/.next/cache \
@@ -56,6 +55,6 @@ USER nextjs
 
 EXPOSE 3000
 ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV HOSTNAME 0.0.0.0
 
 CMD ["node", "startup.js"]
