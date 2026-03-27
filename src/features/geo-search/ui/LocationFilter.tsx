@@ -20,33 +20,78 @@ export function LocationFilter() {
   const hasGeo = searchParams.has("lat") && searchParams.has("lng");
 
   const handleGeoSearch = () => {
+    console.log("[GEO_DEBUG] Запуск стратегии 'Авто-выбор' (Двухэтапный поиск)...");
     setIsLocating(true);
     
     if (!navigator.geolocation) {
-      toast.error("Геолокация не поддерживается вашим браузером");
+      toast.error("Геолокация не поддерживается");
       setIsLocating(false);
       return;
     }
 
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        const current = new URLSearchParams(Array.from(searchParams.entries()));
-        
-        current.set("lat", latitude.toString());
-        current.set("lng", longitude.toString());
-        
-        router.push(`?${current.toString()}`);
-        setIsLocating(false);
-        toast.success("Локация обновлена. Показываем ближайшие заказы!");
-      },
-      (err) => {
-        console.error("Geo error:", err);
-        toast.error("Не удалось определить местоположение. Проверьте настройки доступа.");
-        setIsLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 5000 }
-    );
+    // Вспомогательная функция для попытки получения координат
+    const getPos = (high: boolean, timeout: number): Promise<GeolocationPosition> => {
+      console.log(`[GEO_DEBUG] Попытка: highAccuracy=${high}, timeout=${timeout}ms...`);
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: high,
+          timeout,
+          maximumAge: 60000
+        });
+      });
+    };
+
+    const runSearch = async () => {
+      try {
+        // Шаг 1: Пробуем GPS (точность) - 3 секунды
+        const pos = await getPos(true, 3000);
+        handleSuccess(pos.coords.latitude, pos.coords.longitude);
+      } catch (err: any) {
+        // Шаг 2: Фолбек на Wi-Fi (браузер) - 4 секунды
+        console.warn("[GEO_DEBUG] GPS не ответил. Пробуем Wi-Fi/Браузер...");
+        try {
+          const fastPos = await getPos(false, 4000);
+          handleSuccess(fastPos.coords.latitude, fastPos.coords.longitude);
+        } catch (fastErr: any) {
+          // Шаг 3 (ФИНАЛ): Сетевой поиск по IP (ipapi.co) - 100% надежность
+          console.warn("[GEO_DEBUG] Браузерный поиск заблокирован или не сработал. Фолбек на IP-API...");
+          try {
+            const res = await fetch("https://ipapi.co/json/", { cache: "no-store" });
+            const data = await res.json();
+            if (data.latitude && data.longitude) {
+              console.log("[GEO_DEBUG] УСПЕХ ПО IP:", data.latitude, data.longitude);
+              handleSuccess(data.latitude, data.longitude);
+              toast.info("Местоположение определено по IP-адресу");
+            } else {
+              throw new Error("IP API вернул некорректные данные");
+            }
+          } catch (ipErr: any) {
+            handleError(ipErr);
+          }
+        }
+      }
+    };
+
+    const handleSuccess = (lat: number, lng: number) => {
+      console.log(`[GEO_DEBUG] ПРИМЕНЕНИЕ КООРДИНАТ: ${lat}, ${lng}`);
+      const current = new URLSearchParams(Array.from(searchParams.entries()));
+      current.set("lat", lat.toString());
+      current.set("lng", lng.toString());
+      router.push(`?${current.toString()}`);
+      setIsLocating(false);
+      toast.success("Локация обновлена!");
+    };
+
+    const handleError = (err: any) => {
+      let msg = "Не удалось определить координаты";
+      if (err.code === 1) msg = "Доступ к геопозиции запрещен (проверьте настройки)";
+      
+      console.error(`[GEO_DEBUG] ФАТАЛЬНАЯ ОШИБКА: Code: ${err.code}, Msg: ${err.message}`);
+      toast.error(msg);
+      setIsLocating(false);
+    };
+
+    runSearch();
   };
 
   const clearGeo = () => {

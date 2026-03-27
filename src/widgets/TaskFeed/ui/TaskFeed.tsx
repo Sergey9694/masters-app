@@ -15,7 +15,8 @@ export async function TaskFeed({ categoryId, lat, lng }: TaskFeedProps) {
 
   if (lat && lng) {
     // Включаем гиперлокальный режим (PostGIS ST_DWithin + ST_Distance)
-    tasks = await getTasksNearby(lng, lat, 15000); // Радиус 15км для теста
+    // Радиус 15км для теста (целевой параметр районного мастера)
+    tasks = await getTasksNearby(lng, lat, 15000); 
     // Если есть categoryId, фильтруем на уровне JS (для простоты в этом MR)
     if (categoryId) {
       tasks = tasks.filter(t => t.categoryId === categoryId);
