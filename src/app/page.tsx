@@ -92,16 +92,13 @@ export default function Home() {
 
         {/* Кнопка действия */}
         <motion.div className="w-full space-y-6" variants={STAGGER_ITEM}>
-          <motion.div
-            whileHover={HOVER_GLOW}
-            whileTap={CLICK_SCALE}
-          >
+          <div className="w-full">
             <Button asChild size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 transition-all font-bold">
                <a href={process.env.NEXT_PUBLIC_BOT_NAME ? `https://t.me/${process.env.NEXT_PUBLIC_BOT_NAME}` : "/dashboard"}>
                  Запустить Сервис
                </a>
             </Button>
-          </motion.div>
+          </div>
 
           {process.env.NODE_ENV === "development" && (
             <form action={mockLogin}>
