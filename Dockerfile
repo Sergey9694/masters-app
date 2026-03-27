@@ -40,8 +40,8 @@ ENV NODE_ENV production
 
 # Добавляем необходимые пакеты
 RUN apk add --no-cache openssl libc6-compat curl
-# 👇 Устанавливаем Prisma глобально, чтобы она имела все свои зависимости для миграций
-RUN npm install -g prisma@7.5.0
+# 👇 Устанавливаем Prisma стабильной версии для миграций
+RUN npm install -g prisma@5.10.0
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

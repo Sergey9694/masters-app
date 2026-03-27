@@ -15,9 +15,20 @@ async function main() {
     const PRISMA_CLI = "prisma";
 
     console.log("[STARTUP] Накатываем актуальные миграции...");
+    
+    // Проверка наличия URL базы данных для Prisma
+    if (!process.env.DATABASE_URL) {
+        console.error("[STARTUP] ОШИБКА: DATABASE_URL не задана! Миграции невозможны.");
+    } else {
+        console.log(`[STARTUP] База данных найдена: ${process.env.DATABASE_URL.split('@')[1]}`);
+    }
+
     // В продакшене используем deploy
     try {
-        execSync(`${PRISMA_CLI} migrate deploy`, { stdio: "inherit" });
+        execSync(`${PRISMA_CLI} migrate deploy`, { 
+            stdio: "inherit",
+            env: { ...process.env } // Явный проброс всех переменных
+        });
     } catch (e) {
         console.log("[STARTUP] Ошибка миграций, возможно БД еще не готова или миграций нет.");
     }
