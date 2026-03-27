@@ -2,41 +2,56 @@ import { db } from "@/shared/lib/db";
 import { TaskCard } from "./TaskCard";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
+import { getTasksNearby } from "@/entities/task/api/task-geo";
 
 interface TaskFeedProps {
   categoryId?: string;
+  lat?: number;
+  lng?: number;
 }
 
-export async function TaskFeed({ categoryId }: TaskFeedProps) {
-  const tasks = await db.taskRequest.findMany({
-    where: {
-      status: "OPEN",
-      ...(categoryId ? { categoryId } : {}),
-    },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      budget: true,
-      address: true,
-      createdAt: true,
-      category: {
-        select: {
-          name: true,
+export async function TaskFeed({ categoryId, lat, lng }: TaskFeedProps) {
+  let tasks: any[] = [];
+
+  if (lat && lng) {
+    // Включаем гиперлокальный режим (PostGIS ST_DWithin + ST_Distance)
+    tasks = await getTasksNearby(lng, lat, 15000); // Радиус 15км для теста
+    // Если есть categoryId, фильтруем на уровне JS (для простоты в этом MR)
+    if (categoryId) {
+      tasks = tasks.filter(t => t.categoryId === categoryId);
+    }
+  } else {
+    // Обычный режим (Свежие заказы)
+    tasks = await db.taskRequest.findMany({
+      where: {
+        status: "OPEN",
+        ...(categoryId ? { categoryId } : {}),
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        budget: true,
+        address: true,
+        createdAt: true,
+        category: {
+          select: {
+            name: true,
+          },
+        },
+        customer: {
+          select: {
+            firstName: true,
+            avatar: true,
+          },
         },
       },
-      customer: {
-        select: {
-          firstName: true,
-          avatar: true,
-        },
+      orderBy: {
+        createdAt: "desc",
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 20,
-  });
+      take: 20,
+    });
+  }
 
   if (tasks.length === 0) {
     return (

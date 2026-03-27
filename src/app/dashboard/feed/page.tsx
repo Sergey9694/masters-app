@@ -6,13 +6,18 @@ import { Input } from "@/shared/ui/input";
 import { db } from "@/shared/lib/db";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
+import { LocationFilter } from "@/features/geo-search/ui/LocationFilter";
 
 interface FeedPageProps {
-  searchParams: Promise<{ categoryId?: string }>;
+  searchParams: Promise<{ 
+    categoryId?: string;
+    lat?: string;
+    lng?: string;
+  }>;
 }
 
 export default async function FeedPage({ searchParams }: FeedPageProps) {
-  const { categoryId } = await searchParams;
+  const { categoryId, lat, lng } = await searchParams;
 
   const categories = await db.category.findMany({
     select: { id: true, name: true, icon: true }
@@ -22,9 +27,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
     <StaggerWrap className="container-standard space-y-12">
       {/* Search Header */}
       <StaggerItem className="space-y-6">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 text-center sm:text-left">
           <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Поиск заказов</h1>
-          <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">Найдите работу в вашем районе</p>
+          <p className="text-sm text-slate-400 font-bold uppercase tracking-widest leading-none">Найдите работу в вашем районе</p>
         </div>
 
         <div className="relative group">
@@ -34,6 +39,9 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             className="pl-12 h-14 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-slate-800 rounded-3xl text-base font-medium shadow-xl shadow-black/5"
           />
         </div>
+
+        {/* Hyperlocal Search Button (Geo Search) */}
+        <LocationFilter />
       </StaggerItem>
 
       {/* Categories Filter */}
@@ -58,7 +66,11 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           </div>
         }>
           {/* @ts-ignore - Prisma types may be out of sync in IDE */}
-          <TaskFeed categoryId={categoryId} />
+          <TaskFeed 
+            categoryId={categoryId} 
+            lat={lat ? parseFloat(lat) : undefined} 
+            lng={lng ? parseFloat(lng) : undefined} 
+          />
         </Suspense>
       </StaggerItem>
     </StaggerWrap>

@@ -23,12 +23,18 @@ interface TaskCardProps {
       firstName: string;
       avatar: string | null;
     };
-    images?: string[]; // Added images array
+    images?: string[]; 
+    distance?: number;
   };
 }
 
+const formatDistance = (m: number) => {
+  if (m < 1000) return `${m} м`;
+  return `${(m / 1000).toFixed(1)} км`;
+};
+
 export function TaskCard({ task }: TaskCardProps) {
-  const { title, description, budget, address, createdAt, category, customer, images } = task;
+  const { title, description, budget, address, createdAt, category, customer, images, distance } = task;
 
   return (
     <motion.div
@@ -104,9 +110,16 @@ export function TaskCard({ task }: TaskCardProps) {
                 <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
                   <MapPin className="w-4 h-4" />
                 </div>
-                <span className="text-sm font-bold truncate max-w-[150px]">
-                  {task.address || "Не указан"}
-                </span>
+                <div className="flex flex-col">
+                   <span className="text-sm font-bold truncate max-w-[150px]">
+                     {task.address || "Не указан"}
+                   </span>
+                   {distance !== undefined && (
+                     <span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">
+                        {formatDistance(distance)} от вас
+                     </span>
+                   )}
+                </div>
               </div>
             </div>
 
