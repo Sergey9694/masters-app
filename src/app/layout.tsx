@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Экосистема для поиска мастеров в вашем районе (Академический). Быстро, надежно, рядом.",
 };
 
+import Script from "next/script";
+
 export default function RootLayout({
   children,
 }: {
@@ -25,6 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className="dark">
+      <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       <body className={`${outfit.variable} ${jetbrainsMono.variable} font-sans`}>
         {/*
            GLOBAL APP ROOT:
