@@ -82,8 +82,8 @@ jobs:
             docker network create proxy_network 2>/dev/null || true
 
             # Обновляем образ и перезапускаем
-            docker compose pull app
-            docker compose up -d --remove-orphans
+            docker-compose pull app
+            docker-compose up -d --remove-orphans
 
             # Ждём БД и запускаем миграции
             echo "Waiting for database..."
