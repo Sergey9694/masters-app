@@ -97,9 +97,9 @@ export default function Home() {
             whileTap={CLICK_SCALE}
           >
             <Button asChild size="lg" className="w-full text-lg h-16 rounded-2xl shadow-xl shadow-blue-600/30 bg-blue-600 hover:bg-blue-700 transition-all font-bold">
-               <Link href={process.env.NEXT_PUBLIC_BOT_NAME ? `https://t.me/${process.env.NEXT_PUBLIC_BOT_NAME}` : "/dashboard"}>
+               <a href={process.env.NEXT_PUBLIC_BOT_NAME ? `https://t.me/${process.env.NEXT_PUBLIC_BOT_NAME}` : "/dashboard"}>
                  Запустить Сервис
-               </Link>
+               </a>
             </Button>
           </motion.div>
 
