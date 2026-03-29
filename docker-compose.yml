@@ -28,10 +28,10 @@ services:
     # --- ПРИЛОЖЕНИЕ (Next.js) ---
     app:
         container_name: ${APP_CONTAINER_NAME:-masters_app}
-        image: ${DOCKERHUB_IMAGE:-masters-app}:${APP_VERSION:-latest}
-        build:
-            context: .
-            dockerfile: Dockerfile
+        image: ${DOCKERHUB_IMAGE:-drobilenkos94/masters-app}:${APP_VERSION:-latest}
+        # build:
+        #     context: .
+        #     dockerfile: Dockerfile
         restart: always
         env_file: .env
         environment:
