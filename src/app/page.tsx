@@ -68,7 +68,7 @@ export default function Home() {
           className="text-lg text-slate-600 dark:text-slate-400 mb-10 leading-relaxed max-w-[280px]"
           variants={STAGGER_ITEM}
         >
-          Лучшие специалисты района в 15 минутах от вашей двериИ.
+          Лучшие специалисты района в 15 минутах от вашей двериИТИИИИИИИИИИИИИИИИИИ.
         </motion.p>
 
         {/* Сетка преимуществ */}

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "chcp 65001 >nul && powershell -ExecutionPolicy Bypass -File ./scripts/dev.ps1",
+    "dev": "chcp 65001 && powershell -ExecutionPolicy Bypass -File ./scripts/dev.ps1",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
