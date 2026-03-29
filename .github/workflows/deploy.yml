@@ -82,8 +82,8 @@ jobs:
             docker network create proxy_network 2>/dev/null || true
 
             # Обновляем образ и перезапускаем
-            docker-compose pull app
-            docker-compose up -d --remove-orphans
+            docker compose pull app
+            docker compose up -d --remove-orphans --force-recreate
 
             # Ждём запуска (миграции выполняются автоматически через startup.js)
             echo "Waiting for app startup..."
