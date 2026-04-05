@@ -25,7 +25,7 @@ export async function createOrderAction(data: TaskFormValues) {
   const validated = result.data;
 
   try {
-    const task = await db.taskRequest.create({
+    await db.taskRequest.create({
       data: {
         customerId: user.id,
         categoryId: validated.categoryId,
@@ -37,16 +37,6 @@ export async function createOrderAction(data: TaskFormValues) {
         status: "OPEN",
       },
     });
-
-    // PostGIS geo-point update (if coordinates provided)
-    if (validated.lat && validated.lng) {
-      await db.$executeRawUnsafe(
-        `UPDATE "TaskRequest" SET "taskLocation" = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
-        Number(validated.lng),
-        Number(validated.lat),
-        task.id
-      );
-    }
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/feed");

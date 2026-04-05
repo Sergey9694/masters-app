@@ -12,8 +12,6 @@ export const taskSchema = z.object({
   categoryId: z.string().min(1, { message: "Пожалуйста, выберите категорию" }),
   budget: z.string().optional(),
   address: z.string().min(5, "Адрес слишком короткий"),
-  lat: z.number().optional(),
-  lng: z.number().optional(),
   images: z.array(z.string()).optional(),
 });
 
