@@ -211,10 +211,11 @@ masters-app/
 ## 8. Быстрые команды разработки
 
 ```bash
-npm run dev        # запуск dev-сервера через scripts/dev.ps1 (Windows)
-npm run build      # production сборка (standalone)
-npm run start      # запуск production-билда
-npm run lint       # ESLint
+npm run dev           # локальный dev-сервер (scripts/dev.ps1, Windows)
+npm run dev:tunnel    # dev + cloudflared туннель + авто-обновление TWA URL у DEV-бота
+npm run build         # production сборка (standalone)
+npm run start         # запуск production-билда
+npm run lint          # ESLint
 
 # Docker
 docker compose up -d              # Postgres + PostGIS
@@ -224,7 +225,25 @@ docker compose logs -f app
 npx prisma migrate dev            # применить миграции
 npx prisma studio                 # GUI для БД
 npx prisma db seed                # сид категорий
+
+# Диагностика авторизации (без Telegram-клиента)
+npx tsx scripts/auth-selftest.ts
 ```
+
+### Dev-флоу для тестирования TWA на localhost
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  npm run dev:tunnel                                              │
+│  ├─ стартует bin/cloudflared.exe → HTTPS URL trycloudflare.com   │
+│  ├─ через Bot API (setChatMenuButton) прописывает URL у DEV-бота │
+│  └─ стартует next dev на :3000                                   │
+│                                                                  │
+│  Ты открываешь @RayonMasterDev_Bot → WebApp уже настроен         │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Один раз настроить:** создать DEV-бота у `@BotFather` и положить его токен в `.env.local` (`TELEGRAM_DEV_BOT_TOKEN`). Prod-бот `@RayonMaster_Bot` и его URL `https://local-masters.duckdns.org` при этом не трогаются.
 
 ---
 
