@@ -67,6 +67,7 @@ export async function acceptResponseAction(
       select: {
         id: true,
         taskId: true,
+        masterId: true,
         task: { select: { customerId: true, status: true } },
       },
     });
@@ -80,7 +81,10 @@ export async function acceptResponseAction(
 
     await db.taskRequest.update({
       where: { id: response.taskId },
-      data: { status: "IN_PROGRESS" },
+      data: {
+        status: "IN_PROGRESS",
+        assignedMasterId: response.masterId,
+      },
     });
 
     revalidatePath(`/dashboard/task/${response.taskId}`);
@@ -89,5 +93,66 @@ export async function acceptResponseAction(
   } catch (error) {
     console.error("[acceptResponseAction] error:", error);
     return { error: "Не удалось принять отклик" };
+  }
+}
+
+export async function completeTaskAction(taskId: string): Promise<Result> {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Необходима авторизация" };
+
+  try {
+    const task = await db.taskRequest.findUnique({
+      where: { id: taskId },
+      select: { id: true, customerId: true, status: true },
+    });
+    if (!task) return { error: "Заявка не найдена" };
+    if (task.customerId !== user.id) {
+      return { error: "Вы не являетесь автором заявки" };
+    }
+    if (task.status !== "IN_PROGRESS") {
+      return { error: "Заявка не в работе" };
+    }
+
+    await db.taskRequest.update({
+      where: { id: taskId },
+      data: { status: "COMPLETED" },
+    });
+
+    revalidatePath(`/dashboard/task/${taskId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("[completeTaskAction] error:", error);
+    return { error: "Не удалось завершить заявку" };
+  }
+}
+
+export async function cancelTaskAction(taskId: string): Promise<Result> {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Необходима авторизация" };
+
+  try {
+    const task = await db.taskRequest.findUnique({
+      where: { id: taskId },
+      select: { id: true, customerId: true, status: true },
+    });
+    if (!task) return { error: "Заявка не найдена" };
+    if (task.customerId !== user.id) {
+      return { error: "Вы не являетесь автором заявки" };
+    }
+    if (task.status === "COMPLETED" || task.status === "CANCELED") {
+      return { error: "Заявка уже закрыта" };
+    }
+
+    await db.taskRequest.update({
+      where: { id: taskId },
+      data: { status: "CANCELED" },
+    });
+
+    revalidatePath(`/dashboard/task/${taskId}`);
+    revalidatePath("/dashboard/feed");
+    return { success: true };
+  } catch (error) {
+    console.error("[cancelTaskAction] error:", error);
+    return { error: "Не удалось отменить заявку" };
   }
 }

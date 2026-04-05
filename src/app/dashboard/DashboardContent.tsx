@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { STAGGER_CONTAINER, STAGGER_ITEM, HOVER_GLOW, CLICK_SCALE } from "@/shared/lib/motion";
 import { Card } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
-import { Bell, MapPin, Search, PlusCircle, Hammer } from "lucide-react";
+import { Bell, MapPin, Search, PlusCircle, Hammer, ClipboardList, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
 import { ReactNode } from "react";
@@ -101,13 +101,23 @@ export function DashboardContent({ user, categories }: DashboardPageData) {
                 />
               </Link>
             ) : (
-              <ActionCard
-                title="Мои активные заказы"
-                desc="Отслеживайте статус выполнения и общайтесь с исполнителями"
-                icon={<Bell className="w-6 h-6" />}
-                color="bg-emerald-600"
-              />
+              <Link href="/dashboard/my-responses" className="flex-1">
+                <ActionCard
+                  title="Мои отклики"
+                  desc="Заявки, на которые вы откликнулись — отслеживайте статус"
+                  icon={<MessageSquare className="w-6 h-6" />}
+                  color="bg-emerald-600"
+                />
+              </Link>
             )}
+            <Link href="/dashboard/my-tasks" className="flex-1">
+              <ActionCard
+                title="Мои заявки"
+                desc="Ваши тендеры, статус и отклики мастеров"
+                icon={<ClipboardList className="w-6 h-6" />}
+                color="bg-indigo-600"
+              />
+            </Link>
           </div>
         </div>
       </div>

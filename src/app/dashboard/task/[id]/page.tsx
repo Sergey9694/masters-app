@@ -13,6 +13,8 @@ import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { RespondForm } from "@/features/task-response/ui/RespondForm";
 import { AcceptResponseButton } from "@/features/task-response/ui/AcceptResponseButton";
+import { TaskStatusButtons } from "@/features/task-response/ui/TaskStatusButtons";
+import { ReviewForm } from "@/features/review/ui/ReviewForm";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,6 +30,15 @@ export default async function TaskDetailPage({ params }: PageProps) {
     include: {
       category: { select: { name: true } },
       customer: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+      assignedMaster: {
+        select: {
+          id: true,
+          rating: true,
+          isVerified: true,
+          user: { select: { firstName: true, avatar: true } },
+        },
+      },
+      review: { select: { id: true, rating: true, text: true } },
       responses: {
         orderBy: { createdAt: "desc" },
         include: {
@@ -145,6 +156,78 @@ export default async function TaskDetailPage({ params }: PageProps) {
           </div>
         </Card>
       </StaggerItem>
+
+      {/* Owner controls: complete / cancel */}
+      {isOwner && (task.status === "OPEN" || task.status === "IN_PROGRESS") && (
+        <StaggerItem className="mb-6">
+          <TaskStatusButtons taskId={task.id} status={task.status} />
+        </StaggerItem>
+      )}
+
+      {/* Assigned master card (visible when task is IN_PROGRESS / COMPLETED) */}
+      {task.assignedMaster && (task.status === "IN_PROGRESS" || task.status === "COMPLETED") && (
+        <StaggerItem className="mb-6">
+          <Card className="glass border border-emerald-500/20 p-5 rounded-[24px]">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-3">
+              Исполнитель
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+                {task.assignedMaster.user.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={task.assignedMaster.user.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400">
+                    <UserIcon className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-black text-white leading-none mb-1 flex items-center gap-2">
+                  {task.assignedMaster.user.firstName}
+                  {task.assignedMaster.isVerified && (
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  )}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                  {task.assignedMaster.rating.toFixed(1)}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </StaggerItem>
+      )}
+
+      {/* Review form (owner, COMPLETED, no existing review) */}
+      {isOwner && task.status === "COMPLETED" && !task.review && task.assignedMasterId && (
+        <StaggerItem className="mb-6">
+          <ReviewForm taskId={task.id} />
+        </StaggerItem>
+      )}
+
+      {/* Existing review */}
+      {task.review && (
+        <StaggerItem className="mb-6">
+          <Card className="glass border border-yellow-500/20 p-5 rounded-[24px]">
+            <div className="flex items-center gap-2 mb-2">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Star
+                  key={n}
+                  className={
+                    n <= task.review!.rating
+                      ? "w-4 h-4 fill-yellow-400 text-yellow-400"
+                      : "w-4 h-4 text-slate-700"
+                  }
+                />
+              ))}
+            </div>
+            {task.review.text && (
+              <p className="text-sm text-slate-300 leading-relaxed">{task.review.text}</p>
+            )}
+          </Card>
+        </StaggerItem>
+      )}
 
       {/* Respond Form (master, not owner, OPEN, not already) */}
       {canRespond && (

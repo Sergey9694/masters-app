@@ -38,35 +38,40 @@ model MasterProfile {
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id])
   bio         String?
-  
+
   categories  MasterCategory[]
-  
+
   isVerified  Boolean  @default(false)
   isLocal     Boolean  @default(false)
   rating      Float    @default(5.0)
-  
-  responses   TaskResponse[]
-  reviews     Review[] @relation("MasterReviews")
+
+  responses     TaskResponse[]
+  reviews       Review[] @relation("MasterReviews")
+  assignedTasks TaskRequest[] @relation("AssignedMaster")
 }
 
 model TaskRequest {
   id          String   @id @default(cuid())
   customerId  String
   customer    User     @relation(fields: [customerId], references: [id])
-  
+
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id])
-  
+
+  assignedMasterId String?
+  assignedMaster   MasterProfile? @relation("AssignedMaster", fields: [assignedMasterId], references: [id])
+
   title       String
   description String
   images      String[]
   budget      Float?
   address     String?
   status      TaskStatus @default(OPEN)
-  
+
   taskLocation Unsupported("geometry(Point, 4326)")?
-  
+
   responses   TaskResponse[]
+  review      Review?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -108,6 +113,8 @@ model MasterCategory {
 
 model Review {
   id        String   @id @default(cuid())
+  taskId    String   @unique
+  task      TaskRequest @relation(fields: [taskId], references: [id])
   masterId  String
   master    MasterProfile @relation("MasterReviews", fields: [masterId], references: [id])
   authorId  String
