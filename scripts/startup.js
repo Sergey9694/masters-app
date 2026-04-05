@@ -25,13 +25,17 @@ async function main() {
 
     // В продакшене используем deploy
     try {
-        execSync(`${PRISMA_CLI} migrate deploy`, { 
+        execSync(`${PRISMA_CLI} migrate deploy`, {
             stdio: "inherit",
             env: { ...process.env } // Явный проброс всех переменных
         });
     } catch (e) {
         console.log("[STARTUP] Ошибка миграций, возможно БД еще не готова или миграций нет.");
     }
+
+    // Засеиваем справочники (идемпотентно через upsert)
+    console.log("[STARTUP] Запускаем seed справочников...");
+    runSafe("node prisma/seed.mjs");
 
     // Запускаем сервер Next.js (standalone mode)
     console.log("[STARTUP] Запускаем сервер Next.js...");
