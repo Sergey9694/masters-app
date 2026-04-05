@@ -1,0 +1,258 @@
+# 00. Карта проекта (Project Map)
+
+> Актуализировано: 2026-04-05. Единая точка правды о структуре и ответственности модулей. При рассинхроне с другими docs — этот документ приоритетнее.
+
+---
+
+## 1. Что такое «Мастер Района»
+
+Гиперлокальный маркетплейс бытовых услуг внутри **Telegram Web App (TWA)**. Заказчик создаёт тендер → соседи-мастера в радиусе 10–15 минут пешком получают уведомление и откликаются.
+
+Монетизация: подписка для мастеров + платная верификация + буст в топе.
+
+Текущая фаза: **2.1 (MVP механики заказов)**, готовность ~35-40%.
+
+---
+
+## 2. Фактический стек (по `package.json`)
+
+| Слой | Версия | Заметка |
+| :--- | :--- | :--- |
+| Next.js | **16.1.7** (App Router) | `output: "standalone"` |
+| React | **19.2.3** | — |
+| TypeScript | 5.9.3 | strict |
+| Tailwind CSS | **4** | через `@tailwindcss/postcss` |
+| Prisma | **5.10.0** (не 7!) | `url = env("DATABASE_URL")` работает |
+| Driver | `pg 8.20` | — |
+| PostgreSQL | 16 + PostGIS 3.4 | через Docker |
+| Telegram | `@twa-dev/sdk 8.0.2` | + `@twa-dev/types` |
+| Auth | `jose 6.2` | JWT HS256 |
+| UI | Shadcn + Radix + `@base-ui/react` | — |
+| Motion | `framer-motion 12.38` + `motion` | алиасы |
+| Forms | `react-hook-form` + `@hookform/resolvers` + `zod 4.3` | — |
+| Images | `sharp 0.34` | для будущей оптимизации |
+| Toasts | `sonner 2.0` | — |
+| Прочее | `next-themes`, `vaul`, `date-fns`, `lucide-react`, `class-variance-authority`, `tailwind-merge`, `uuid` | — |
+
+**Важно:** документация `03_Database.md` ссылается на «Prisma 7», но в репозитории стоит **Prisma 5**. Миграция на 7 не произведена.
+
+---
+
+## 3. Структура репозитория
+
+```
+masters-app/
+├── docs/                       ← документация (этот файл — здесь)
+├── prisma/
+│   ├── schema.prisma           ← модели User, MasterProfile, TaskRequest, и т.д.
+│   └── seed.ts                 ← сиды категорий и тестовых юзеров
+├── scripts/
+│   ├── dev.ps1                 ← запуск dev-сервера (Windows)
+│   ├── db-check.ts             ← проверка подключения к БД
+│   ├── resize-image.ts         ← утилита для preview-картинок
+│   └── startup.js              ← init для Docker-контейнера
+├── public/                     ← статика
+├── postgres_data/              ← volume Postgres (в .gitignore должен быть)
+├── docker-compose.yml          ← Postgres + PostGIS + app
+├── Dockerfile                  ← multi-stage сборка Next.js
+├── next.config.ts              ← security headers, standalone output
+├── .env                        ← локальные секреты (DATABASE_URL, JWT_SECRET, TG_TOKEN)
+├── .env.example                ← шаблон
+├── implementation_plan.md      ← изначальный план (исторический)
+└── src/
+    ├── app/                    ← роутинг Next.js (App Router)
+    ├── proxy.ts                ← middleware (Next.js 16 переименовал в proxy)
+    ├── widgets/                ← крупные блоки UI
+    ├── features/               ← пользовательские сценарии
+    ├── entities/               ← бизнес-сущности
+    └── shared/                 ← переиспользуемые примитивы
+```
+
+---
+
+## 4. FSD слои — что где лежит и за что отвечает
+
+### 4.1 `src/app/` — роутинг и композиция
+
+| Файл/папка | Ответственность |
+| :--- | :--- |
+| `layout.tsx` | Корневой layout, шрифты Outfit+Mono, подключение `telegram-web-app.js`, Sonner Toaster |
+| `page.tsx` | **Лендинг** `/` — публичная страница, содержит `<TelegramAuth />` (автологин) и CTA-кнопку в бота |
+| `providers.tsx` | ⚠️ `TWAProvider` + `next-themes` — **нигде не импортирован, мёртвый код** |
+| `template.tsx` | Обёртка для page-transition анимаций |
+| `globals.css` | Tailwind 4 + CSS-переменные темы + `.container-standard` |
+| `favicon.ico` | — |
+| `api/health/route.ts` | `/api/health` → 200 OK для Docker healthcheck |
+| `dashboard/page.tsx` | Главная защищённая страница. Вызывает `getCurrentUser()`, при null → redirect `/` |
+| `dashboard/DashboardContent.tsx` | Client-компонент дашборда, рендерит категории и виджеты |
+| `dashboard/create-task/page.tsx` | Страница формы создания заказа |
+| `dashboard/feed/page.tsx` | Лента задач для мастеров |
+
+### 4.2 `src/widgets/` — крупные блоки интерфейса
+
+| Виджет | Файлы | Что делает |
+| :--- | :--- | :--- |
+| `CategoryGrid` | `ui/CategoryGrid.tsx`, `index.ts` | Сетка категорий услуг на дашборде |
+| `TaskFeed` | `ui/TaskFeed.tsx`, `ui/TaskCard.tsx`, + пустые `api/`, `model/` | Рендер списка задач. **Нет пагинации, skeleton, empty-state.** |
+
+### 4.3 `src/features/` — пользовательские сценарии
+
+| Feature | Файлы | Ответственность | Статус |
+| :--- | :--- | :--- | :--- |
+| `auth` | `ui/TelegramAuth.tsx` (auto-login), `model/actions.ts` (`loginWithTelegram`, `mockLogin`), пустой `api/` | Вход через TWA initData + fallback mock-login для разработки | 🔴 сломана (см. §7) |
+| `task-creation` | `ui/TaskCreateForm.tsx`, `model/task-schema.ts` (Zod), `api/create-task-action.ts` (Server Action), `api/upload-action.ts` (загрузка фото — заглушка) | Создание заказа заказчиком | 🟢 работает |
+| `geo-search` | `ui/LocationFilter.tsx` | Фильтр радиуса поиска для мастеров | 🛠 в процессе |
+
+### 4.4 `src/entities/` — бизнес-сущности
+
+| Entity | Файлы | Ответственность |
+| :--- | :--- | :--- |
+| `user` | `model/` (пустая), `ui/` (пустая) | ⚠️ Слой заведён, но реализации модели/UI нет — всё пока в `shared/lib/get-user.ts` |
+| `task` | `api/task-geo.ts` | Гео-запросы PostGIS (ST_DWithin) для задач |
+
+Отсутствующие entity, которые явно нужны: `category`, `master-profile`, `review`, `task-response`.
+
+### 4.5 `src/shared/` — примитивы
+
+#### `shared/ui/` (15 компонентов Shadcn-style)
+`badge`, `button`, `card`, `drawer`, `form`, `input`, `label`, `motion-toast`, `page-transition`, `select`, `skeleton`, `stagger-item`, `stagger-wrap`, `textarea`.
+
+#### `shared/lib/`
+| Файл | Назначение |
+| :--- | :--- |
+| `auth.ts` | JWT (jose): `encrypt/decrypt`, `createSession`, `getSession`, `logout`, `updateSession`, `validateTelegramWebAppData` (HMAC-SHA256) |
+| `db.ts` | Singleton Prisma Client |
+| `get-user.ts` | DAL: `getCurrentUser()` с `select` только нужных полей |
+| `motion.ts` | Пресеты анимаций: `STAGGER_CONTAINER`, `STAGGER_ITEM`, `BLUR_IN`, `HOVER_GLOW`, `CLICK_SCALE`, `TRANSITIONS` |
+| `cn.ts` | `clsx + tailwind-merge` helper |
+| `storage/file-storage.ts` | Локальное хранение файлов (будущее → S3/MinIO) |
+| `telegram/use-haptics.ts` | Хук Haptic Feedback TWA |
+| `telegram/use-main-button.ts` | Хук tg.MainButton |
+
+#### `shared/types/`
+| Файл | Содержит |
+| :--- | :--- |
+| `auth.ts` | `SessionPayload`, `Role` |
+| `domain.ts` | Доменные типы (TaskStatus, категории) |
+
+#### `shared/api/` — **пустая папка** (зарезервирована под Telegram Bot API, внешние интеграции)
+
+### 4.6 `src/proxy.ts` — middleware Next.js 16
+
+Защита маршрутов. Matcher: `/dashboard/*`, `/admin/*`, `/api/*`. Проверяет `session` cookie, валидирует JWT, продлевает сессию (sliding), при невалидности — чистит cookie и редиректит на `/`.
+
+⚠️ Ссылается на `/api/auth/telegram`, которого не существует.
+
+---
+
+## 5. БД — модели Prisma
+
+Файл: [prisma/schema.prisma](../prisma/schema.prisma)
+
+| Модель | Ключевые поля | Связи |
+| :--- | :--- | :--- |
+| `User` | `id`, `telegramId` (BigInt unique), `phone`, `role` (enum), `firstName`, `lastName`, `avatar`, `location` (PostGIS Point) | 1:1 `MasterProfile`, 1:N `TaskRequest`, 1:N `Review` (автор) |
+| `MasterProfile` | `bio`, `isVerified`, `isLocal`, `rating` | 1:1 `User`, N:M `Category` через `MasterCategory`, 1:N `TaskResponse`, 1:N `Review` |
+| `TaskRequest` | `title`, `description`, `images[]`, `budget`, `address`, `status` (enum: OPEN/IN_PROGRESS/COMPLETED/CANCELED), `taskLocation` (Point) | N:1 `User` (customer), N:1 `Category`, 1:N `TaskResponse` |
+| `TaskResponse` | `price`, `message` | N:1 `TaskRequest`, N:1 `MasterProfile` |
+| `Category` | `name`, `icon` | 1:N `TaskRequest`, N:M `MasterProfile` |
+| `MasterCategory` | composite PK | связка M:N |
+| `Review` | `rating` (Int), `text` | N:1 `MasterProfile`, N:1 `User` (author) |
+
+**Отсутствующие индексы (критично для production):**
+- GIST на `User.location` и `TaskRequest.taskLocation`
+- B-tree на `TaskRequest(status, categoryId, createdAt)`
+- B-tree на `TaskResponse(taskId)`
+
+---
+
+## 6. Авторизация — как работает (сейчас)
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ 1. Юзер открывает TWA в Telegram → загружается /                    │
+│ 2. layout.tsx вставляет <Script src="telegram-web-app.js">          │
+│ 3. page.tsx рендерит <TelegramAuth />                               │
+│ 4. useEffect читает window.Telegram.WebApp.initData                 │
+│ 5. Если initData есть → вызов Server Action loginWithTelegram       │
+│ 6. Server: validateTelegramWebAppData() — HMAC проверка подписи     │
+│ 7. Server: upsert User по telegramId (find → create)                │
+│ 8. Server: createSession → JWT в httpOnly cookie "session"          │
+│ 9. Client: router.push("/dashboard")                                │
+│ 10. proxy.ts проверяет cookie → decrypt → пропускает                │
+│ 11. dashboard/page.tsx: getCurrentUser() → RSC рендер               │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Dev fallback**: на лендинге есть кнопка «Войти как Тестовый Админ» → вызывает `mockLogin` (только в NODE_ENV=development).
+
+Секреты: `JWT_SECRET`, `TELEGRAM_BOT_TOKEN` в `.env`.
+
+---
+
+## 7. Известные текущие проблемы (срочное)
+
+| # | Файл:линия | Проблема | Приоритет |
+| :-: | :--- | :--- | :---: |
+| A1 | `src/features/auth/ui/TelegramAuth.tsx:28` | Нет `router.refresh()` после login → RSC-кэш не инвалидируется → петля редиректов | 🔴 |
+| A2 | `.env` | `JWT_SECRET` — плейсхолдер | 🔴 |
+| A3 | `src/app/providers.tsx` | Мёртвый код, не импортируется | 🟡 |
+| A4 | `src/proxy.ts:16` | Ссылка на несуществующий `/api/auth/telegram` | 🟡 |
+| A5 | `src/features/auth/model/actions.ts` | Нет проверки TTL `auth_date` initData | 🟠 |
+| A6 | `src/shared/lib/auth.ts:25` | `payload as any` — потеря типов | 🟡 |
+| A7 | `prisma/schema.prisma` | Нет GIST-индексов для Point-полей | 🟠 |
+| A8 | `03_Database.md` | Документация говорит Prisma 7, по факту 5.10 | 🟡 |
+| A9 | `src/features/auth/api/`, `src/shared/api/`, `entities/user/model,ui/`, `widgets/TaskFeed/api,model/` | Пустые папки без `index.ts` — FSD-контракт нарушен | 🟡 |
+
+Подробный план фиксов — в [06_Development_Plan.md](06_Development_Plan.md).
+
+---
+
+## 8. Быстрые команды разработки
+
+```bash
+npm run dev        # запуск dev-сервера через scripts/dev.ps1 (Windows)
+npm run build      # production сборка (standalone)
+npm run start      # запуск production-билда
+npm run lint       # ESLint
+
+# Docker
+docker compose up -d              # Postgres + PostGIS
+docker compose logs -f app
+
+# Prisma
+npx prisma migrate dev            # применить миграции
+npx prisma studio                 # GUI для БД
+npx prisma db seed                # сид категорий
+```
+
+---
+
+## 9. Переменные окружения (`.env`)
+
+| Ключ | Назначение | Обязательность |
+| :--- | :--- | :---: |
+| `DATABASE_URL` | Строка подключения Postgres | ✅ |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Для docker-compose | ✅ |
+| `JWT_SECRET` | Подпись сессий. В проде ≥32 байта. | ✅ |
+| `TELEGRAM_BOT_TOKEN` | Для валидации initData | ✅ |
+| `TELEGRAM_BOT_NAME` | Имя бота (server-side) | 🟡 |
+| `NEXT_PUBLIC_BOT_NAME` | Имя бота (client, для ссылок) | 🟡 |
+| `NEXT_PUBLIC_APP_URL` | Публичный URL приложения | 🟡 |
+
+---
+
+## 10. Навигация по документации
+
+1. [01. Введение и концепция](01_Introduction.md)
+2. [02. Архитектура и стек](02_Architecture.md)
+3. [03. База данных и PostGIS](03_Database.md) ⚠️ упоминает Prisma 7, по факту 5
+4. [04. Статус и Roadmap](04_Status_and_Roadmap.md)
+5. [05. Известные ошибки](05_Known_Issues.md)
+6. [06. Аудит и план разработки](06_Development_Plan.md) ← пошаговый roadmap
+7. [Жизненный цикл проекта](Project_Lifecycle.md)
+8. **[00. Карта проекта](00_Project_Map.md)** (этот файл) ← начинать отсюда
+
+---
+
+> При изменении структуры репозитория — обновить §3, §4 этого документа. При изменении схемы БД — §5.
