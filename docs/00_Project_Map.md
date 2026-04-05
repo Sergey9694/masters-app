@@ -1,6 +1,6 @@
 # 00. Карта проекта (Project Map)
 
-> Актуализировано: 2026-04-05. Единая точка правды о структуре и ответственности модулей. При рассинхроне с другими docs — этот документ приоритетнее.
+> Актуализировано: 2026-04-05 (обновление: маркетплейс end-to-end). Единая точка правды о структуре и ответственности модулей. При рассинхроне с другими docs — этот документ приоритетнее.
 
 ---
 
@@ -10,7 +10,7 @@
 
 Монетизация: подписка для мастеров + платная верификация + буст в топе.
 
-Текущая фаза: **2.1 (MVP механики заказов)**, готовность ~35-40%.
+Текущая фаза: **2.2 (MVP маркетплейс)**, готовность ~55%. Цикл «создал заявку → откликнулся → выбрали» работает.
 
 ---
 
@@ -87,6 +87,9 @@ masters-app/
 | `dashboard/DashboardContent.tsx` | Client-компонент дашборда, рендерит категории и виджеты |
 | `dashboard/create-task/page.tsx` | Страница формы создания заказа |
 | `dashboard/feed/page.tsx` | Лента задач для мастеров |
+| `dashboard/become-master/page.tsx` | Регистрация профиля мастера (bio + категории) |
+| `dashboard/task/[id]/page.tsx` | Детальная заявки: отклики, форма отклика, принятие |
+| `api/suggest/address/route.ts` | Серверный прокси к DaData (подсказки адресов) |
 
 ### 4.2 `src/widgets/` — крупные блоки интерфейса
 
@@ -99,9 +102,11 @@ masters-app/
 
 | Feature | Файлы | Ответственность | Статус |
 | :--- | :--- | :--- | :--- |
-| `auth` | `ui/TelegramAuth.tsx` (auto-login), `model/actions.ts` (`loginWithTelegram`, `mockLogin`), пустой `api/` | Вход через TWA initData + fallback mock-login для разработки | 🔴 сломана (см. §7) |
-| `task-creation` | `ui/TaskCreateForm.tsx`, `model/task-schema.ts` (Zod), `api/create-task-action.ts` (Server Action), `api/upload-action.ts` (загрузка фото — заглушка) | Создание заказа заказчиком | 🟢 работает |
-| `geo-search` | `ui/LocationFilter.tsx` | Фильтр радиуса поиска для мастеров | 🛠 в процессе |
+| `auth` | `ui/TelegramAuth.tsx` (auto-login), `model/actions.ts` (`loginWithTelegram`, `mockLogin`), пустой `api/` | Вход через TWA initData + fallback mock-login для разработки | 🟢 работает |
+| `task-creation` | `ui/TaskCreateForm.tsx`, `model/task-schema.ts` (Zod), `api/create-task-action.ts` (Server Action), `api/upload-action.ts` (загрузка фото — заглушка) | Создание заказа заказчиком, подсказки адреса через `/api/suggest/address` | 🟢 работает |
+| `master-registration` | `ui/MasterRegistrationForm.tsx`, `model/schema.ts`, `api/actions.ts` (`createMasterProfileAction`) | Регистрация профиля мастера: bio + выбор категорий, меняет User.role → MASTER | 🟢 работает |
+| `task-response` | `ui/RespondForm.tsx`, `ui/AcceptResponseButton.tsx`, `model/schema.ts`, `api/actions.ts` (`respondToTaskAction`, `acceptResponseAction`) | Отклик мастера на заявку + принятие отклика заказчиком (task → IN_PROGRESS) | 🟢 работает |
+| `geo-search` | `ui/LocationFilter.tsx` | Фильтр радиуса поиска для мастеров | 🛠 отложен (адрес текстовый) |
 
 ### 4.4 `src/entities/` — бизнес-сущности
 
@@ -110,7 +115,7 @@ masters-app/
 | `user` | `model/` (пустая), `ui/` (пустая) | ⚠️ Слой заведён, но реализации модели/UI нет — всё пока в `shared/lib/get-user.ts` |
 | `task` | `api/task-geo.ts` | Гео-запросы PostGIS (ST_DWithin) для задач |
 
-Отсутствующие entity, которые явно нужны: `category`, `master-profile`, `review`, `task-response`.
+Отсутствующие entity, которые явно нужны: `category`, `master-profile` (логика в features/master-registration), `review`. `task-response` логика — в features/task-response.
 
 ### 4.5 `src/shared/` — примитивы
 
@@ -190,19 +195,21 @@ masters-app/
 
 ---
 
-## 7. Известные текущие проблемы (срочное)
+## 7. Известные текущие проблемы
 
-| # | Файл:линия | Проблема | Приоритет |
-| :-: | :--- | :--- | :---: |
-| A1 | `src/features/auth/ui/TelegramAuth.tsx:28` | Нет `router.refresh()` после login → RSC-кэш не инвалидируется → петля редиректов | 🔴 |
-| A2 | `.env` | `JWT_SECRET` — плейсхолдер | 🔴 |
-| A3 | `src/app/providers.tsx` | Мёртвый код, не импортируется | 🟡 |
-| A4 | `src/proxy.ts:16` | Ссылка на несуществующий `/api/auth/telegram` | 🟡 |
-| A5 | `src/features/auth/model/actions.ts` | Нет проверки TTL `auth_date` initData | 🟠 |
-| A6 | `src/shared/lib/auth.ts:25` | `payload as any` — потеря типов | 🟡 |
-| A7 | `prisma/schema.prisma` | Нет GIST-индексов для Point-полей | 🟠 |
-| A8 | `03_Database.md` | Документация говорит Prisma 7, по факту 5.10 | 🟡 |
-| A9 | `src/features/auth/api/`, `src/shared/api/`, `entities/user/model,ui/`, `widgets/TaskFeed/api,model/` | Пустые папки без `index.ts` — FSD-контракт нарушен | 🟡 |
+| # | Файл:линия | Проблема | Приоритет | Статус |
+| :-: | :--- | :--- | :---: | :---: |
+| A1 | `src/features/auth/ui/TelegramAuth.tsx` | `router.refresh()` после login | 🔴 | ✅ исправлено |
+| A2 | `.env` | `JWT_SECRET` — плейсхолдер | 🔴 | ✅ исправлено |
+| A3 | `src/app/providers.tsx` | Мёртвый код | 🟡 | ✅ удалён |
+| A4 | `src/proxy.ts` | Ссылка на `/api/auth/telegram` | 🟡 | ✅ исправлено |
+| A5 | `src/features/auth/model/actions.ts` | TTL `auth_date` initData | 🟠 | ✅ исправлено |
+| A6 | `src/shared/lib/auth.ts` | `payload as any` | 🟡 | ✅ исправлено |
+| A7 | `prisma/schema.prisma` | GIST-индексы для Point-полей | 🟠 | 🛠 отложено (адрес текстовый) |
+| A8 | `03_Database.md` | Prisma 7 vs 5.10 | 🟡 | 📝 в `00_Project_Map` оговорено |
+| A9 | FSD-barrels (`index.ts`) | Контракт слоёв | 🟡 | ⏳ в очереди |
+| A10 | Отсутствие rate-limit на Server Actions | Абьюз `login`, `createOrder`, `upload` | 🟠 | ⏳ в очереди |
+| A11 | CSP-заголовки | XSS → кража cookies | 🟠 | ⏳ в очереди |
 
 Подробный план фиксов — в [06_Development_Plan.md](06_Development_Plan.md).
 
@@ -258,6 +265,7 @@ npx tsx scripts/auth-selftest.ts
 | `TELEGRAM_BOT_NAME` | Имя бота (server-side) | 🟡 |
 | `NEXT_PUBLIC_BOT_NAME` | Имя бота (client, для ссылок) | 🟡 |
 | `NEXT_PUBLIC_APP_URL` | Публичный URL приложения | 🟡 |
+| `DADATA_API_KEY` | Токен DaData для `/api/suggest/address` (server-only) | 🟡 |
 
 ---
 

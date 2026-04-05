@@ -106,18 +106,19 @@ if (result.success) {
 
 ---
 
-### ЭТАП 0 — Hotfix авторизации (1-2 дня) 🔴
+### ЭТАП 0 — Hotfix авторизации ✅ ЗАВЕРШЕНО
 
 **Цель:** разблокировать вход пользователя.
 
-- [ ] **0.1** В `TelegramAuth.tsx` добавить `router.refresh()` перед `router.push("/dashboard")`.
-- [ ] **0.2** Сгенерировать и прописать реальный `JWT_SECRET` (`openssl rand -base64 32`).
-- [ ] **0.3** Добавить проверку `auth_date` TTL (< 24h) в `validateTelegramWebAppData`.
-- [ ] **0.4** Добавить детальное логирование в `loginWithTelegram` (почему именно fail: signature / user / DB).
-- [ ] **0.5** Добавить в `TelegramAuth.tsx` UI-состояние «не в Telegram» — полезная ошибка вместо `return null`.
-- [ ] **0.6** Убрать мёртвый код из `providers.tsx` ИЛИ подключить его в `layout.tsx` вместо ручного `<Script>`.
-- [ ] **0.7** Убрать несуществующий `/api/auth/telegram` из исключений `proxy.ts` (или создать сам роут как запасной канал).
-- [ ] **0.8** Тест-кейс: открыть TWA через `@BotFather` preview-url, проверить цикл login → /dashboard.
+- [x] **0.1** `router.refresh()` перед `router.push("/dashboard")`.
+- [x] **0.2** Реальный `JWT_SECRET` в `.env`.
+- [x] **0.3** Проверка `auth_date` TTL (< 24h) в `validateTelegramWebAppData`.
+- [x] **0.4** Логирование в `loginWithTelegram` с префиксом `[loginWithTelegram]`.
+- [x] **0.6** Удалён мёртвый `providers.tsx`.
+- [x] **0.7** Убран несуществующий `/api/auth/telegram` из `proxy.ts`.
+- [x] **0.8** Протестировано в Telegram Desktop — логин работает.
+- [x] **бонус** `findUnique + create` заменён на атомарный `upsert` (фикс race condition).
+- [x] **бонус** Polling `window.Telegram.WebApp` (до 2с) на случай race c загрузкой скрипта.
 
 ---
 
@@ -136,18 +137,20 @@ if (result.success) {
 
 ---
 
-### ЭТАП 2 — Завершение MVP-механики заказов (1-2 недели) 🟢
+### ЭТАП 2 — Завершение MVP-механики заказов 🟢 В ПРОЦЕССЕ
 
-Документация указывает Фазу 2.1 как текущую.
-
-- [ ] **2.1** **Task Feed (Widget)**: пагинация через cursor-based (RSC + client `loadMore`), skeleton-state, empty-state.
-- [ ] **2.2** **Geo Search (Feature)**: финализировать `ST_DWithin` запрос, default-radius 1500м, конфигурируемый.
-- [ ] **2.3** **Photo Upload** (Фаза 2.2): Server Action `uploadTaskImage` с `sharp` (resize 1920px, WebP quality 85). Временное хранилище `src/shared/lib/storage/local.ts` → абстракция под S3/MinIO.
-- [ ] **2.4** **Task Detail Page**: `/dashboard/task/[id]/page.tsx` с проверкой прав (customer/master).
-- [ ] **2.5** **Task Response Flow**: Feature `features/task-response` — мастер откликается, заказчик видит список откликов.
-- [ ] **2.6** **Entity: Category** — вынести в `src/entities/category/` с моделью и UI-карточкой.
-- [ ] **2.7** **User Profile Edit**: `features/profile-edit` — имя, аватар, телефон.
-- [ ] **2.8** **Location Permission Flow**: запрос геолокации у юзера при первом входе в `/dashboard`, запись в `User.location` через `$queryRaw`.
+- [x] **2.3-lite** **Task Creation**: создание заявки с адресом (DaData через server proxy `/api/suggest/address`, токен скрыт). Фото — заглушка `uploadImagesAction`.
+- [x] **2.4** **Task Detail Page**: `/dashboard/task/[id]/page.tsx` — просмотр заявки, список откликов, проверка прав (owner vs master vs anonymous).
+- [x] **2.5** **Task Response Flow**: `features/task-response` — `respondToTaskAction` (мастер откликается), `acceptResponseAction` (заказчик выбирает → task.status = IN_PROGRESS). Защиты: нельзя отклик на свою, нельзя дважды, только OPEN.
+- [x] **2.9** **Master Registration**: `features/master-registration` — `/dashboard/become-master`, форма bio + категории, `User.role → MASTER` в транзакции.
+- [x] **2.10** **DaData proxy**: `/api/suggest/address` — server-side, авторизованные only, дебаунс+AbortController на клиенте.
+- [ ] **2.1** **Task Feed**: пагинация cursor-based, skeleton-state, empty-state, поиск по title/description.
+- [ ] **2.2** **Geo Search**: отложено до возвращения структурированных адресов (сейчас адрес = текстовое поле).
+- [ ] **2.3** **Photo Upload (настоящий)**: `sharp` (resize 1920px → WebP q85), сохранение в `/app/uploads` (volume), замена заглушки `uploadImagesAction`.
+- [ ] **2.6** **Entity: Category** — вынести в `src/entities/category/`.
+- [ ] **2.7** **User Profile Edit**: `features/profile-edit` — имя, телефон, аватар.
+- [ ] **2.11** **«Мои заявки» / «Мои отклики»**: отдельные страницы под ролью (`/dashboard/my-tasks`, `/dashboard/my-responses`).
+- [ ] **2.12** **Завершение заявки** + отзыв: `completeTaskAction` (IN_PROGRESS → COMPLETED) + форма `Review` по мастеру.
 
 ---
 
