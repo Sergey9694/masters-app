@@ -7,6 +7,7 @@ import { db } from "@/shared/lib/db";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { LocationFilter } from "@/features/geo-search/ui/LocationFilter";
+import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 
 interface FeedPageProps {
   searchParams: Promise<{ 
@@ -25,6 +26,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   return (
     <StaggerWrap className="container-standard space-y-12">
+      <TelegramBackButton />
       {/* Search Header */}
       <StaggerItem className="space-y-6">
         <div className="flex flex-col gap-1 text-center sm:text-left">
