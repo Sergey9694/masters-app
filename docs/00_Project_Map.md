@@ -10,7 +10,7 @@
 
 Монетизация: подписка для мастеров + платная верификация + буст в топе.
 
-Текущая фаза: **2.2 (MVP маркетплейс)**, готовность ~55%. Цикл «создал заявку → откликнулся → выбрали» работает.
+Текущая фаза: **2.3 (MVP полный цикл сделки)**, готовность ~65%. Цикл «создал → откликнулся → выбрали → завершили → оставил отзыв» работает end-to-end.
 
 ---
 
@@ -88,7 +88,9 @@ masters-app/
 | `dashboard/create-task/page.tsx` | Страница формы создания заказа |
 | `dashboard/feed/page.tsx` | Лента задач для мастеров |
 | `dashboard/become-master/page.tsx` | Регистрация профиля мастера (bio + категории) |
-| `dashboard/task/[id]/page.tsx` | Детальная заявки: отклики, форма отклика, принятие |
+| `dashboard/task/[id]/page.tsx` | Детальная заявки: отклики, принятие, завершение, отзыв |
+| `dashboard/my-tasks/page.tsx` | Список своих заявок (для customer) по статусам |
+| `dashboard/my-responses/page.tsx` | Список откликов мастера + отметка «вы выбраны» |
 | `api/suggest/address/route.ts` | Серверный прокси к DaData (подсказки адресов) |
 
 ### 4.2 `src/widgets/` — крупные блоки интерфейса
@@ -105,7 +107,8 @@ masters-app/
 | `auth` | `ui/TelegramAuth.tsx` (auto-login), `model/actions.ts` (`loginWithTelegram`, `mockLogin`), пустой `api/` | Вход через TWA initData + fallback mock-login для разработки | 🟢 работает |
 | `task-creation` | `ui/TaskCreateForm.tsx`, `model/task-schema.ts` (Zod), `api/create-task-action.ts` (Server Action), `api/upload-action.ts` (загрузка фото — заглушка) | Создание заказа заказчиком, подсказки адреса через `/api/suggest/address` | 🟢 работает |
 | `master-registration` | `ui/MasterRegistrationForm.tsx`, `model/schema.ts`, `api/actions.ts` (`createMasterProfileAction`) | Регистрация профиля мастера: bio + выбор категорий, меняет User.role → MASTER | 🟢 работает |
-| `task-response` | `ui/RespondForm.tsx`, `ui/AcceptResponseButton.tsx`, `model/schema.ts`, `api/actions.ts` (`respondToTaskAction`, `acceptResponseAction`) | Отклик мастера на заявку + принятие отклика заказчиком (task → IN_PROGRESS) | 🟢 работает |
+| `task-response` | `ui/RespondForm.tsx`, `ui/AcceptResponseButton.tsx`, `ui/TaskStatusButtons.tsx`, `model/schema.ts`, `api/actions.ts` (`respondToTaskAction`, `acceptResponseAction`, `completeTaskAction`, `cancelTaskAction`) | Отклик мастера + принятие (→ IN_PROGRESS с `assignedMasterId`) + завершение (→ COMPLETED) + отмена | 🟢 работает |
+| `review` | `ui/ReviewForm.tsx`, `model/schema.ts`, `api/actions.ts` (`createReviewAction`) | Отзыв на завершённую сделку (1-5 звёзд + текст), авто-пересчёт рейтинга мастера в транзакции | 🟢 работает |
 | `geo-search` | `ui/LocationFilter.tsx` | Фильтр радиуса поиска для мастеров | 🛠 отложен (адрес текстовый) |
 
 ### 4.4 `src/entities/` — бизнес-сущности
@@ -158,11 +161,11 @@ masters-app/
 | :--- | :--- | :--- |
 | `User` | `id`, `telegramId` (BigInt unique), `phone`, `role` (enum), `firstName`, `lastName`, `avatar`, `location` (PostGIS Point) | 1:1 `MasterProfile`, 1:N `TaskRequest`, 1:N `Review` (автор) |
 | `MasterProfile` | `bio`, `isVerified`, `isLocal`, `rating` | 1:1 `User`, N:M `Category` через `MasterCategory`, 1:N `TaskResponse`, 1:N `Review` |
-| `TaskRequest` | `title`, `description`, `images[]`, `budget`, `address`, `status` (enum: OPEN/IN_PROGRESS/COMPLETED/CANCELED), `taskLocation` (Point) | N:1 `User` (customer), N:1 `Category`, 1:N `TaskResponse` |
+| `TaskRequest` | `title`, `description`, `images[]`, `budget`, `address`, `status` (enum: OPEN/IN_PROGRESS/COMPLETED/CANCELED), `assignedMasterId`, `taskLocation` (Point) | N:1 `User` (customer), N:1 `Category`, N:1 `MasterProfile` (assigned, optional), 1:N `TaskResponse`, 1:1 `Review` |
 | `TaskResponse` | `price`, `message` | N:1 `TaskRequest`, N:1 `MasterProfile` |
 | `Category` | `name`, `icon` | 1:N `TaskRequest`, N:M `MasterProfile` |
 | `MasterCategory` | composite PK | связка M:N |
-| `Review` | `rating` (Int), `text` | N:1 `MasterProfile`, N:1 `User` (author) |
+| `Review` | `taskId` (unique), `rating` (Int), `text` | 1:1 `TaskRequest`, N:1 `MasterProfile`, N:1 `User` (author) |
 
 **Отсутствующие индексы (критично для production):**
 - GIST на `User.location` и `TaskRequest.taskLocation`

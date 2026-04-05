@@ -149,8 +149,8 @@ if (result.success) {
 - [ ] **2.3** **Photo Upload (настоящий)**: `sharp` (resize 1920px → WebP q85), сохранение в `/app/uploads` (volume), замена заглушки `uploadImagesAction`.
 - [ ] **2.6** **Entity: Category** — вынести в `src/entities/category/`.
 - [ ] **2.7** **User Profile Edit**: `features/profile-edit` — имя, телефон, аватар.
-- [ ] **2.11** **«Мои заявки» / «Мои отклики»**: отдельные страницы под ролью (`/dashboard/my-tasks`, `/dashboard/my-responses`).
-- [ ] **2.12** **Завершение заявки** + отзыв: `completeTaskAction` (IN_PROGRESS → COMPLETED) + форма `Review` по мастеру.
+- [x] **2.11** **«Мои заявки» / «Мои отклики»**: `/dashboard/my-tasks`, `/dashboard/my-responses`.
+- [x] **2.12** **Завершение заявки** + отзыв: `completeTaskAction`, `cancelTaskAction`, `createReviewAction` с пересчётом рейтинга мастера. `TaskRequest.assignedMasterId` + `Review.taskId` (unique).
 
 ---
 
