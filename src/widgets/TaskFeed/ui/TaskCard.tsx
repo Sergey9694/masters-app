@@ -1,11 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MapPin, Clock, Banknote, ChevronRight, User } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Clock, Banknote } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Card } from "@/shared/ui/card";
-import { Badge } from "@/shared/ui/badge";
 import { STAGGER_ITEM } from "@/shared/lib/motion";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 
@@ -46,6 +46,7 @@ export function TaskCard({ task }: TaskCardProps) {
       onClick={haptics.selection}
       className="group cursor-pointer"
     >
+      <Link href={`/dashboard/task/${task.id}`} className="block">
       <Card className="p-0 border-none glass overflow-hidden rounded-[32px] hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
         <div className="p-6">
           {/* Header: User & Category */}
@@ -133,6 +134,7 @@ export function TaskCard({ task }: TaskCardProps) {
           </div>
         </div>
       </Card>
+      </Link>
     </motion.div>
   );
 }

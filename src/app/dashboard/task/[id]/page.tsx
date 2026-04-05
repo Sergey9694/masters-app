@@ -1,0 +1,248 @@
+import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeft, Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { ru } from "date-fns/locale";
+
+import { db } from "@/shared/lib/db";
+import { getCurrentUser } from "@/shared/lib/get-user";
+import { Card } from "@/shared/ui/card";
+import { Badge } from "@/shared/ui/badge";
+import { StaggerWrap } from "@/shared/ui/stagger-wrap";
+import { StaggerItem } from "@/shared/ui/stagger-item";
+import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
+import { RespondForm } from "@/features/task-response/ui/RespondForm";
+import { AcceptResponseButton } from "@/features/task-response/ui/AcceptResponseButton";
+
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function TaskDetailPage({ params }: PageProps) {
+  const { id } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect("/");
+
+  const task = await db.taskRequest.findUnique({
+    where: { id },
+    include: {
+      category: { select: { name: true } },
+      customer: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+      responses: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          master: {
+            select: {
+              id: true,
+              rating: true,
+              isVerified: true,
+              user: { select: { firstName: true, lastName: true, avatar: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!task) notFound();
+
+  const isOwner = task.customerId === user.id;
+  const isMaster = Boolean(user.masterProfile);
+  const alreadyResponded =
+    isMaster &&
+    task.responses.some((r) => r.masterId === user.masterProfile!.id);
+  const canRespond = !isOwner && isMaster && task.status === "OPEN" && !alreadyResponded;
+
+  const statusLabel: Record<typeof task.status, string> = {
+    OPEN: "Открыта",
+    IN_PROGRESS: "В работе",
+    COMPLETED: "Завершена",
+    CANCELED: "Отменена",
+  };
+
+  return (
+    <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
+      <TelegramBackButton />
+
+      <StaggerItem className="flex items-center gap-4 mb-8">
+        <Link
+          href="/dashboard/feed"
+          className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-lg font-black tracking-tight">Заявка</h1>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+            {statusLabel[task.status]}
+          </p>
+        </div>
+      </StaggerItem>
+
+      {/* Task Summary */}
+      <StaggerItem>
+        <Card className="glass border-none p-6 rounded-[32px] mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/20 overflow-hidden">
+                {task.customer.avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={task.customer.avatar} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-400 font-bold text-xs">
+                    {task.customer.firstName[0]}
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
+                  {task.customer.firstName}
+                </p>
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+                  {formatDistanceToNow(task.createdAt, { addSuffix: true, locale: ru })}
+                </p>
+              </div>
+            </div>
+            <Badge variant="outline" className="text-[9px] uppercase tracking-wider">
+              {task.category.name}
+            </Badge>
+          </div>
+
+          <h2 className="text-xl font-black text-white leading-tight mb-3">{task.title}</h2>
+          <p className="text-sm text-slate-300 leading-relaxed mb-5">{task.description}</p>
+
+          {task.images.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-5 -mx-1 px-1">
+              {task.images.map((url, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={url}
+                  alt=""
+                  className="h-24 w-24 object-cover rounded-2xl border border-white/10 flex-shrink-0"
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
+            <div className="flex items-center gap-2 text-slate-200">
+              <Banknote className="w-4 h-4 text-emerald-400" />
+              <span className="text-sm font-black">
+                {task.budget ? `${task.budget.toLocaleString()} ₽` : "Договорная"}
+              </span>
+            </div>
+            {task.address && (
+              <div className="flex items-center gap-2 text-slate-400">
+                <MapPin className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-bold">{task.address}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-widest ml-auto">
+              <Clock className="w-3.5 h-3.5" />
+              {task.responses.length} отклик(ов)
+            </div>
+          </div>
+        </Card>
+      </StaggerItem>
+
+      {/* Respond Form (master, not owner, OPEN, not already) */}
+      {canRespond && (
+        <StaggerItem className="mb-6">
+          <RespondForm taskId={task.id} />
+        </StaggerItem>
+      )}
+
+      {alreadyResponded && !isOwner && (
+        <StaggerItem className="mb-6">
+          <div className="glass border border-emerald-500/20 p-4 rounded-[24px] text-center">
+            <p className="text-xs font-black uppercase tracking-widest text-emerald-400">
+              Вы уже откликнулись на эту заявку
+            </p>
+          </div>
+        </StaggerItem>
+      )}
+
+      {!isMaster && !isOwner && task.status === "OPEN" && (
+        <StaggerItem className="mb-6">
+          <Link href="/dashboard/become-master">
+            <div className="glass border border-white/10 p-4 rounded-[24px] text-center hover:bg-white/5 transition-colors">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-300">
+                Чтобы откликнуться — станьте мастером
+              </p>
+            </div>
+          </Link>
+        </StaggerItem>
+      )}
+
+      {/* Responses list (owner sees all, master sees only own) */}
+      {task.responses.length > 0 && (
+        <StaggerItem>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4 px-1">
+            Отклики
+          </h3>
+          <div className="space-y-3">
+            {task.responses
+              .filter((r) => isOwner || r.masterId === user.masterProfile?.id)
+              .map((r) => (
+                <Card key={r.id} className="glass border-none p-5 rounded-[24px]">
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+                        {r.master.user.avatar ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={r.master.user.avatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400">
+                            <UserIcon className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-white leading-none mb-1 flex items-center gap-2">
+                          {r.master.user.firstName}
+                          {r.master.isVerified && (
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          )}
+                        </p>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                          <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                          {r.master.rating.toFixed(1)}
+                        </p>
+                      </div>
+                    </div>
+                    {r.price && (
+                      <div className="text-sm font-black text-emerald-400 whitespace-nowrap">
+                        {r.price.toLocaleString()} ₽
+                      </div>
+                    )}
+                  </div>
+                  {r.message && (
+                    <p className="text-sm text-slate-300 leading-relaxed mb-3">{r.message}</p>
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+                      {formatDistanceToNow(r.createdAt, { addSuffix: true, locale: ru })}
+                    </span>
+                    {isOwner && task.status === "OPEN" && (
+                      <AcceptResponseButton responseId={r.id} />
+                    )}
+                  </div>
+                </Card>
+              ))}
+          </div>
+        </StaggerItem>
+      )}
+
+      {isOwner && task.responses.length === 0 && (
+        <StaggerItem>
+          <div className="glass border border-dashed border-white/10 p-8 rounded-[24px] text-center">
+            <p className="text-sm font-bold text-slate-400">
+              Пока никто не откликнулся. Мастера скоро увидят вашу заявку.
+            </p>
+          </div>
+        </StaggerItem>
+      )}
+    </StaggerWrap>
+  );
+}

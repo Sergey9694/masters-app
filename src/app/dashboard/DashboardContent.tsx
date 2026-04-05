@@ -92,16 +92,18 @@ export function DashboardContent({ user, categories }: DashboardPageData) {
               />
             </Link>
             {!user.masterProfile ? (
-              <ActionCard 
-                title="Стать мастером" 
-                desc="Начните помогать своим соседям и зарабатывать в свободное время" 
-                icon={<Hammer className="w-6 h-6" />}
-                color="bg-emerald-600"
-              />
+              <Link href="/dashboard/become-master" className="flex-1">
+                <ActionCard
+                  title="Стать мастером"
+                  desc="Начните помогать своим соседям и зарабатывать в свободное время"
+                  icon={<Hammer className="w-6 h-6" />}
+                  color="bg-emerald-600"
+                />
+              </Link>
             ) : (
-              <ActionCard 
-                title="Мои активные заказы" 
-                desc="Отслеживайте статус выполнения и общайтесь с исполнителями" 
+              <ActionCard
+                title="Мои активные заказы"
+                desc="Отслеживайте статус выполнения и общайтесь с исполнителями"
                 icon={<Bell className="w-6 h-6" />}
                 color="bg-emerald-600"
               />
