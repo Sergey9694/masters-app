@@ -46,17 +46,40 @@ else {
 Write-Host "--- Starting Database ---" -ForegroundColor Cyan
 docker-compose up -d db
 
-# Wait for 8 seconds to allow Postgres to initialize
-Write-Host "Waiting for database initialization..." -ForegroundColor Yellow
-Start-Sleep -Seconds 8
+# Wait for Postgres to actually accept connections (not just a fixed sleep).
+# Uses pg_isready inside the container — it returns 0 only when the server is ready.
+Write-Host "Waiting for Postgres to accept connections..." -ForegroundColor Yellow
+$dbTimeout = 60
+$dbElapsed = 0
+while ($dbElapsed -lt $dbTimeout) {
+    docker exec masters_db pg_isready -U admin -d masters_db >$null 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host " Postgres is ready!" -ForegroundColor Green
+        break
+    }
+    Write-Host "." -NoNewline
+    Start-Sleep -Seconds 1
+    $dbElapsed += 1
+}
+if ($dbElapsed -ge $dbTimeout) {
+    Write-Host "ERROR: Postgres did not become ready within $dbTimeout seconds." -ForegroundColor Red
+    exit 1
+}
 
 # 3. Prisma Push
 Write-Host "--- Prisma Setup ---" -ForegroundColor Cyan
 npx prisma db push
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: prisma db push failed." -ForegroundColor Red
+    exit 1
+}
 
 # 4. Seed Data
 Write-Host "--- Seeding Data ---" -ForegroundColor Cyan
 npx prisma db seed
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "WARNING: seed failed (continuing to start server)." -ForegroundColor Yellow
+}
 
 # 5. Start Server
 Write-Host "--- Starting Next.js Dev Server ---" -ForegroundColor Cyan

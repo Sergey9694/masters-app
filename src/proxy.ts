@@ -13,13 +13,14 @@ export async function proxy(request: NextRequest) {
   // 2. Если сессии нет
   if (!session) {
     // Если это API запрос — возвращаем JSON ошибку
-    if (request.nextUrl.pathname.startsWith("/api") && request.nextUrl.pathname !== "/api/auth/telegram") {
+    // (аутентификация сейчас идёт через Server Action loginWithTelegram, не через API-route)
+    if (request.nextUrl.pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    
+
     // Публичные страницы (лендинг, логин) пускаем
     if (
-      request.nextUrl.pathname === "/" || 
+      request.nextUrl.pathname === "/" ||
       request.nextUrl.pathname === "/login" ||
       request.nextUrl.pathname.startsWith("/_next") ||
       request.nextUrl.pathname === "/favicon.ico"

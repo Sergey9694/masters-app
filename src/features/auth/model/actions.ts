@@ -14,9 +14,17 @@ export async function loginWithTelegram(initData: string) {
   const validated = loginSchema.safeParse({ initData });
   if (!validated.success) return { error: "Invalid input" };
 
-  // 2. Telegram signature validation
-  if (!validateTelegramWebAppData(initData)) {
-    return { error: "Invalid Telegram signature" };
+  // 2. Telegram signature validation (HMAC + TTL)
+  const check = validateTelegramWebAppData(initData);
+  if (!check.ok) {
+    console.error("[loginWithTelegram] validation failed:", check.reason);
+    const messages: Record<typeof check.reason, string> = {
+      no_token: "Сервер не сконфигурирован (no bot token)",
+      no_hash: "Некорректные данные Telegram",
+      bad_signature: "Неверная подпись Telegram",
+      expired: "Сессия Telegram устарела, перезапустите приложение",
+    };
+    return { error: messages[check.reason] };
   }
 
   // 3. Extract user data (S8: safe JSON parse)
@@ -38,32 +46,31 @@ export async function loginWithTelegram(initData: string) {
   const telegramId = BigInt(tgUser.id as number);
 
   try {
-    // 4. Find or create user (Server-Side Logic)
-    let user = await db.user.findUnique({
+    // 4. Atomic upsert (avoids race condition on first-login concurrency)
+    const firstName = String(tgUser.first_name || "User");
+    const lastName = tgUser.last_name ? String(tgUser.last_name) : null;
+    const avatar = tgUser.photo_url ? String(tgUser.photo_url) : null;
+
+    const user = await db.user.upsert({
       where: { telegramId },
+      update: { firstName, lastName, avatar },
+      create: {
+        telegramId,
+        firstName,
+        lastName,
+        avatar,
+        role: "USER" as const,
+      },
       select: { id: true, role: true },
     });
-
-    if (!user) {
-      user = await db.user.create({
-        data: {
-          telegramId,
-          firstName: String(tgUser.first_name || "User"),
-          lastName: tgUser.last_name ? String(tgUser.last_name) : null,
-          avatar: tgUser.photo_url ? String(tgUser.photo_url) : null,
-          role: "USER" as const,
-        },
-        select: { id: true, role: true },
-      });
-    }
 
     // 5. Create session (httpOnly Cookie)
     await createSession(user.id, user.role);
 
     return { success: true };
   } catch (error) {
-    console.error("Login error:", error);
-    return { error: "Database error during login" };
+    console.error("[loginWithTelegram] DB error:", error);
+    return { error: "Ошибка базы данных при входе" };
   }
 }
 

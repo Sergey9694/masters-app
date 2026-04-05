@@ -19,10 +19,20 @@ function getSecretKey() {
 }
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
+const INIT_DATA_MAX_AGE_SEC = 24 * 60 * 60; // 24h TTL per Telegram guidelines
 
 export async function encrypt(payload: SessionPayload) {
   const key = getSecretKey();
-  return await new SignJWT(payload as any)
+  // Normalize Date → ISO string so JWT payload round-trips cleanly
+  const jwtPayload: Record<string, unknown> = {
+    userId: payload.userId,
+    role: payload.role,
+    expires:
+      payload.expires instanceof Date
+        ? payload.expires.toISOString()
+        : payload.expires,
+  };
+  return await new SignJWT(jwtPayload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("1 day")
@@ -94,13 +104,21 @@ export async function updateSession(request: NextRequest) {
 }
 
 /**
- * Валидация данных из Telegram Web App
+ * Валидация данных из Telegram Web App.
+ * Возвращает конкретную причину отказа для логирования (вместо простого boolean).
  */
-export function validateTelegramWebAppData(initData: string): boolean {
-  if (!process.env.TELEGRAM_BOT_TOKEN) return false;
+export type TelegramValidationResult =
+  | { ok: true }
+  | { ok: false; reason: "no_token" | "no_hash" | "bad_signature" | "expired" };
+
+export function validateTelegramWebAppData(
+  initData: string,
+): TelegramValidationResult {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, reason: "no_token" };
 
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get("hash");
+  if (!hash) return { ok: false, reason: "no_hash" };
   urlParams.delete("hash");
 
   const sortedKeys = Array.from(urlParams.keys()).sort();
@@ -118,5 +136,17 @@ export function validateTelegramWebAppData(initData: string): boolean {
     .update(dataCheckString)
     .digest("hex");
 
-  return hmac === hash;
+  if (hmac !== hash) return { ok: false, reason: "bad_signature" };
+
+  // TTL-check: initData не должна быть старше INIT_DATA_MAX_AGE_SEC
+  const authDateStr = urlParams.get("auth_date");
+  if (authDateStr) {
+    const authDate = Number(authDateStr);
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (!Number.isFinite(authDate) || nowSec - authDate > INIT_DATA_MAX_AGE_SEC) {
+      return { ok: false, reason: "expired" };
+    }
+  }
+
+  return { ok: true };
 }
