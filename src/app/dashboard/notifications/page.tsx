@@ -43,11 +43,16 @@ export default async function NotificationsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/");
 
-  const notifications = await db.notification.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
+  let notifications: Awaited<ReturnType<typeof db.notification.findMany>> = [];
+  try {
+    notifications = await db.notification.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+  } catch {
+    // table may not exist yet
+  }
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

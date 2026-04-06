@@ -2,7 +2,7 @@ import { db } from "@/shared/lib/db";
 import type { NotificationType } from "@prisma/client";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const WEBAPP_URL = process.env.NEXT_PUBLIC_WEBAPP_URL || "";
+const WEBAPP_URL = process.env.NEXT_PUBLIC_APP_URL || "";
 
 interface NotifyParams {
   userId: string;

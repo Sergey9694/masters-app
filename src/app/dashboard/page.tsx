@@ -17,36 +17,34 @@ export default async function DashboardPage() {
   // Load stats in parallel
   const isMaster = !!user.masterProfile;
 
-  const [
-    myTasksCount,
-    openResponsesCount,
-    unreadNotificationsCount,
-    activeTasksCount,
-  ] = await Promise.all([
-    // Customer: total tasks created
-    db.taskRequest.count({ where: { customerId: user.id } }),
-    // Customer: tasks with new responses (OPEN tasks that have at least 1 response)
-    db.taskRequest.count({
-      where: {
-        customerId: user.id,
-        status: "OPEN",
-        responses: { some: {} },
-      },
-    }),
-    // Unread notifications count
-    db.notification.count({
+  let unreadNotificationsCount = 0;
+  try {
+    unreadNotificationsCount = await db.notification.count({
       where: { userId: user.id, read: false },
-    }).catch(() => 0), // table may not exist yet during migration
-    // Master: assigned active tasks
-    isMaster
-      ? db.taskRequest.count({
-          where: {
-            assignedMasterId: user.masterProfile!.id,
-            status: "IN_PROGRESS",
-          },
-        })
-      : 0,
-  ]);
+    });
+  } catch {
+    // table may not exist yet before migration
+  }
+
+  const [myTasksCount, openResponsesCount, activeTasksCount] =
+    await Promise.all([
+      db.taskRequest.count({ where: { customerId: user.id } }),
+      db.taskRequest.count({
+        where: {
+          customerId: user.id,
+          status: "OPEN",
+          responses: { some: {} },
+        },
+      }),
+      isMaster
+        ? db.taskRequest.count({
+            where: {
+              assignedMasterId: user.masterProfile!.id,
+              status: "IN_PROGRESS",
+            },
+          })
+        : 0,
+    ]);
 
   // Master-specific stats
   const masterStats = isMaster
