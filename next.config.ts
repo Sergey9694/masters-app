@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
 
+  experimental: {
+    // Allow large photo uploads from phones (iPhone photos 3-5 MB)
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
+
   // S6: Enterprise Security Headers
   headers: async () => [
     {
