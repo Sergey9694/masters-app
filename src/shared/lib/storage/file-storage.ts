@@ -3,42 +3,39 @@ import { join } from "path";
 import { v4 as uuidv4 } from "uuid";
 import sharp from "sharp";
 
+const MAX_WIDTH = 1920;
+const WEBP_QUALITY = 85;
+
 /**
- * Загрузка и автоматическая конвертация файла в WebP
- * Стандарт 2026: Автоматическая оптимизация "на лету"
+ * Загрузка, resize и конвертация в WebP.
+ * Файлы сохраняются в <cwd>/uploads/ (Docker volume).
+ * Отдаются через /api/uploads/[filename].
  */
 export async function uploadFile(file: File): Promise<string> {
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  // Конвертируем в WebP используя sharp
-  // Это значительно экономит место и ускоряет загрузку в TWA
-  let processedBuffer: Buffer = buffer;
-  let fileName = `${uuidv4()}.webp`;
+  let processedBuffer: Buffer;
+  const fileName = `${uuidv4()}.webp`;
 
   try {
-    const sharpInstance = sharp(buffer);
-    processedBuffer = await sharpInstance
-      .webp({ quality: 80 }) // Сбалансированное качество
+    processedBuffer = await sharp(buffer)
+      .resize({ width: MAX_WIDTH, withoutEnlargement: true })
+      .webp({ quality: WEBP_QUALITY })
       .toBuffer();
   } catch (err) {
-    console.error("Image processing error:", err);
-    // Если это не изображение, sharp может упасть. 
-    throw new Error("Не удалось сконвертировать файл. Убедитесь, что это корректное изображение (JPG, PNG, WebP).");
+    console.error("[uploadFile] sharp error:", err);
+    throw new Error("Не удалось обработать изображение. Убедитесь, что это JPG, PNG или WebP.");
   }
-  
-  // Сохраняем в папку uploads в корне проекта
-  const uploadsDir = join(process.cwd(), "public", "uploads");
-  
+
+  const uploadsDir = join(process.cwd(), "uploads");
+
   try {
     await mkdir(uploadsDir, { recursive: true });
-    const filePath = join(uploadsDir, fileName);
-    await writeFile(filePath, processedBuffer);
-    
-    // Возвращаем публичный путь
-    return `/uploads/${fileName}`;
+    await writeFile(join(uploadsDir, fileName), processedBuffer);
+    return `/api/uploads/${fileName}`;
   } catch (error) {
-    console.error("Storage error:", error);
-    throw new Error("Ошибка при сохранении файла в хранилище. Проверьте права доступа к папке public/uploads");
+    console.error("[uploadFile] write error:", error);
+    throw new Error("Ошибка сохранения файла");
   }
 }

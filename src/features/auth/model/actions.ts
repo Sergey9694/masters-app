@@ -2,6 +2,7 @@
 
 import { db } from "@/shared/lib/db";
 import { createSession, validateTelegramWebAppData } from "@/shared/lib/auth";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -13,6 +14,19 @@ export async function loginWithTelegram(initData: string) {
   // 1. Zod input validation
   const validated = loginSchema.safeParse({ initData });
   if (!validated.success) return { error: "Invalid input" };
+
+  // 1.5 Rate-limit по telegramId из initData (до тяжёлой проверки)
+  const params0 = new URLSearchParams(initData);
+  const userJson0 = params0.get("user");
+  let rlKey = "login:unknown";
+  try {
+    const u = userJson0 ? JSON.parse(userJson0) : {};
+    if (u.id) rlKey = `login:${u.id}`;
+  } catch { /* ignore */ }
+  const rl = checkRateLimit({ key: rlKey, limit: 10, windowSec: 60 });
+  if (!rl.allowed) {
+    return { error: `Слишком много попыток. Подождите ${rl.retryAfterSec} сек.` };
+  }
 
   // 2. Telegram signature validation (HMAC + TTL)
   const check = validateTelegramWebAppData(initData);

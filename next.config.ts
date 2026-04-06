@@ -20,6 +20,18 @@ const nextConfig: NextConfig = {
           key: "Permissions-Policy",
           value: "camera=(), microphone=(), geolocation=(self)",
         },
+        {
+          key: "Content-Security-Policy",
+          value: [
+            "default-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://telegram.org",
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: blob: https://t.me https://*.telegram.org",
+            "font-src 'self'",
+            "connect-src 'self' https://telegram.org https://*.telegram.org",
+            "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org",
+          ].join("; "),
+        },
       ],
     },
   ],

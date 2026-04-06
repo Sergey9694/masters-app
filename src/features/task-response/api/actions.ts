@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { taskResponseSchema, type TaskResponseFormValues } from "../model/schema";
 
 type Result = { success: true } | { error: string };
@@ -13,6 +14,11 @@ export async function respondToTaskAction(
   const user = await getCurrentUser();
   if (!user) return { error: "Необходима авторизация" };
   if (!user.masterProfile) return { error: "Сначала зарегистрируйтесь как мастер" };
+
+  const rl = checkRateLimit({ key: `respond:${user.id}`, limit: 15, windowSec: 60 });
+  if (!rl.allowed) {
+    return { error: `Слишком часто. Подождите ${rl.retryAfterSec} сек.` };
+  }
 
   const parsed = taskResponseSchema.safeParse(data);
   if (!parsed.success) {

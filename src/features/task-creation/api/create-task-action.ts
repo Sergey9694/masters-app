@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { taskSchema, type TaskFormValues } from "../model/task-schema";
 
 /**
@@ -14,6 +15,11 @@ export async function createOrderAction(data: TaskFormValues) {
 
   if (!user) {
     return { error: "Необходима авторизация" };
+  }
+
+  const rl = checkRateLimit({ key: `createOrder:${user.id}`, limit: 5, windowSec: 60 });
+  if (!rl.allowed) {
+    return { error: `Слишком часто. Подождите ${rl.retryAfterSec} сек.` };
   }
 
   const result = taskSchema.safeParse(data);

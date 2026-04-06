@@ -2,6 +2,7 @@
 
 import { uploadFile } from "@/shared/lib/storage/file-storage";
 import { getCurrentUser } from "@/shared/lib/get-user";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = [
@@ -16,6 +17,11 @@ export async function uploadImagesAction(formData: FormData) {
   const user = await getCurrentUser();
   if (!user) {
     throw new Error("Unauthorized");
+  }
+
+  const rl = checkRateLimit({ key: `upload:${user.id}`, limit: 10, windowSec: 60 });
+  if (!rl.allowed) {
+    throw new Error(`Слишком часто. Подождите ${rl.retryAfterSec} сек.`);
   }
 
   const files = formData.getAll("images") as File[];

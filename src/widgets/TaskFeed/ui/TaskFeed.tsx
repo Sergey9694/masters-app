@@ -1,30 +1,27 @@
 import { db } from "@/shared/lib/db";
-import { TaskCard } from "./TaskCard";
-import { StaggerWrap } from "@/shared/ui/stagger-wrap";
-import { StaggerItem } from "@/shared/ui/stagger-item";
-import { getTasksNearby } from "@/entities/task/api/task-geo";
-import type { TaskCardData, NearbyTaskCard } from "@/shared/types/domain";
+import { TaskFeedClient } from "./TaskFeedClient";
+import type { TaskCardData } from "@/shared/types/domain";
+
+const PAGE_SIZE = 10;
 
 interface TaskFeedProps {
   categoryId?: string;
-  lat?: number;
-  lng?: number;
+  search?: string;
 }
 
-export async function TaskFeed({ categoryId, lat, lng }: TaskFeedProps) {
-  let tasks: TaskCardData[] = [];
+export async function TaskFeed({ categoryId, search }: TaskFeedProps) {
+  const where: Record<string, unknown> = { status: "OPEN" as const };
+  if (categoryId) where.categoryId = categoryId;
+  if (search && search.trim().length >= 2) {
+    where.OR = [
+      { title: { contains: search.trim(), mode: "insensitive" } },
+      { description: { contains: search.trim(), mode: "insensitive" } },
+    ];
+  }
 
-  if (lat && lng) {
-    // Hyperlocal mode (PostGIS ST_DWithin + ST_Distance)
-    const nearbyTasks: NearbyTaskCard[] = await getTasksNearby(lng, lat, 15000);
-    tasks = nearbyTasks;
-  } else {
-    // Standard mode (latest open tasks)
-    tasks = await db.taskRequest.findMany({
-      where: {
-        status: "OPEN",
-        ...(categoryId ? { categoryId } : {}),
-      },
+  const [tasks, total] = await Promise.all([
+    db.taskRequest.findMany({
+      where,
       select: {
         id: true,
         title: true,
@@ -32,58 +29,26 @@ export async function TaskFeed({ categoryId, lat, lng }: TaskFeedProps) {
         budget: true,
         address: true,
         createdAt: true,
-        category: {
-          select: {
-            name: true,
-          },
-        },
-        customer: {
-          select: {
-            firstName: true,
-            avatar: true,
-          },
-        },
+        category: { select: { name: true } },
+        customer: { select: { firstName: true, avatar: true } },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 20,
-    });
-  }
+      orderBy: { createdAt: "desc" },
+      take: PAGE_SIZE + 1,
+    }),
+    db.taskRequest.count({ where }),
+  ]);
 
-  if (tasks.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center glass rounded-[40px] border border-dashed border-white/20 px-8">
-        <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400 mb-6">
-          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
-        </div>
-        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Заказов пока нет</h3>
-        <p className="text-sm text-slate-400 font-bold max-w-xs mx-auto leading-normal">
-          В этой категории пока пусто. Будьте первым, кто предложит услуги!
-        </p>
-      </div>
-    );
-  }
- 
+  const hasMore = tasks.length > PAGE_SIZE;
+  const page: TaskCardData[] = hasMore ? tasks.slice(0, PAGE_SIZE) : tasks;
+  const nextCursor = hasMore ? page[page.length - 1].id : null;
+
   return (
-    <StaggerWrap className="space-y-6">
-      <StaggerItem className="flex items-center justify-between px-2 mb-8">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-3">
-          Свежие тендеры
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-        </h2>
-        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider">
-          {tasks.length} активных
-        </span>
-      </StaggerItem>
-
-      <StaggerWrap className="grid grid-cols-1 gap-6 pb-10">
-        {tasks.map((task) => (
-          <TaskCard key={task.id} task={task} />
-        ))}
-      </StaggerWrap>
-    </StaggerWrap>
+    <TaskFeedClient
+      initialTasks={page}
+      initialCursor={nextCursor}
+      categoryId={categoryId}
+      search={search}
+      totalLabel={`${total} активных`}
+    />
   );
 }
