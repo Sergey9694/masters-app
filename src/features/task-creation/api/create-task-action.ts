@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
+import { notifyMastersInCategories } from "@/shared/lib/telegram/bot-notify";
 import { taskSchema, type TaskFormValues } from "../model/task-schema";
 
 /**
@@ -31,7 +32,7 @@ export async function createOrderAction(data: TaskFormValues) {
   const validated = result.data;
 
   try {
-    await db.taskRequest.create({
+    const task = await db.taskRequest.create({
       data: {
         customerId: user.id,
         categoryId: validated.categoryId,
@@ -43,6 +44,14 @@ export async function createOrderAction(data: TaskFormValues) {
         status: "OPEN",
       },
     });
+
+    // Notify masters in this category (fire-and-forget)
+    notifyMastersInCategories(
+      [validated.categoryId],
+      user.id,
+      validated.title,
+      task.id,
+    );
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/feed");

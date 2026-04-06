@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
+import { notify } from "@/shared/lib/telegram/bot-notify";
 import { reviewSchema, type ReviewFormValues } from "../model/schema";
 
 type Result = { success: true } | { error: string };
@@ -24,9 +25,11 @@ export async function createReviewAction(
       where: { id: taskId },
       select: {
         id: true,
+        title: true,
         customerId: true,
         status: true,
         assignedMasterId: true,
+        assignedMaster: { select: { userId: true } },
         review: { select: { id: true } },
       },
     });
@@ -65,6 +68,17 @@ export async function createReviewAction(
         data: { rating: agg._avg.rating ?? 5 },
       });
     });
+
+    // Notify master about new review
+    if (task.assignedMaster) {
+      notify({
+        userId: task.assignedMaster.userId,
+        type: "NEW_REVIEW",
+        title: "Новый отзыв",
+        body: `Вам оставили отзыв (${rating}★) за «${task.title}»`,
+        taskId,
+      });
+    }
 
     revalidatePath(`/dashboard/task/${taskId}`);
     return { success: true };

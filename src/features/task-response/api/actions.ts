@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
+import { notify } from "@/shared/lib/telegram/bot-notify";
 import { taskResponseSchema, type TaskResponseFormValues } from "../model/schema";
 
 type Result = { success: true } | { error: string };
@@ -29,7 +30,7 @@ export async function respondToTaskAction(
   try {
     const task = await db.taskRequest.findUnique({
       where: { id: taskId },
-      select: { id: true, status: true, customerId: true },
+      select: { id: true, title: true, status: true, customerId: true },
     });
     if (!task) return { error: "Заявка не найдена" };
     if (task.status !== "OPEN") return { error: "Заявка уже не принимает отклики" };
@@ -50,6 +51,15 @@ export async function respondToTaskAction(
         price: price ? parseFloat(price) : null,
         message,
       },
+    });
+
+    // Notify task owner about new response
+    notify({
+      userId: task.customerId,
+      type: "NEW_RESPONSE",
+      title: "Новый отклик",
+      body: `Мастер ${user.firstName} откликнулся на «${task.title}»`,
+      taskId,
     });
 
     revalidatePath(`/dashboard/task/${taskId}`);
@@ -74,7 +84,8 @@ export async function acceptResponseAction(
         id: true,
         taskId: true,
         masterId: true,
-        task: { select: { customerId: true, status: true } },
+        master: { select: { userId: true } },
+        task: { select: { title: true, customerId: true, status: true } },
       },
     });
     if (!response) return { error: "Отклик не найден" };
@@ -93,6 +104,15 @@ export async function acceptResponseAction(
       },
     });
 
+    // Notify master that they were chosen
+    notify({
+      userId: response.master.userId,
+      type: "RESPONSE_ACCEPTED",
+      title: "Вас выбрали!",
+      body: `Вы назначены на заявку «${response.task.title}»`,
+      taskId: response.taskId,
+    });
+
     revalidatePath(`/dashboard/task/${response.taskId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
@@ -109,7 +129,14 @@ export async function completeTaskAction(taskId: string): Promise<Result> {
   try {
     const task = await db.taskRequest.findUnique({
       where: { id: taskId },
-      select: { id: true, customerId: true, status: true },
+      select: {
+        id: true,
+        title: true,
+        customerId: true,
+        status: true,
+        assignedMasterId: true,
+        assignedMaster: { select: { userId: true } },
+      },
     });
     if (!task) return { error: "Заявка не найдена" };
     if (task.customerId !== user.id) {
@@ -123,6 +150,17 @@ export async function completeTaskAction(taskId: string): Promise<Result> {
       where: { id: taskId },
       data: { status: "COMPLETED" },
     });
+
+    // Notify assigned master
+    if (task.assignedMaster) {
+      notify({
+        userId: task.assignedMaster.userId,
+        type: "TASK_COMPLETED",
+        title: "Заявка завершена",
+        body: `Заказчик завершил заявку «${task.title}»`,
+        taskId,
+      });
+    }
 
     revalidatePath(`/dashboard/task/${taskId}`);
     return { success: true };
@@ -139,7 +177,14 @@ export async function cancelTaskAction(taskId: string): Promise<Result> {
   try {
     const task = await db.taskRequest.findUnique({
       where: { id: taskId },
-      select: { id: true, customerId: true, status: true },
+      select: {
+        id: true,
+        title: true,
+        customerId: true,
+        status: true,
+        assignedMasterId: true,
+        assignedMaster: { select: { userId: true } },
+      },
     });
     if (!task) return { error: "Заявка не найдена" };
     if (task.customerId !== user.id) {
@@ -153,6 +198,17 @@ export async function cancelTaskAction(taskId: string): Promise<Result> {
       where: { id: taskId },
       data: { status: "CANCELED" },
     });
+
+    // Notify assigned master about cancellation
+    if (task.assignedMaster) {
+      notify({
+        userId: task.assignedMaster.userId,
+        type: "TASK_CANCELED",
+        title: "Заявка отменена",
+        body: `Заказчик отменил заявку «${task.title}»`,
+        taskId,
+      });
+    }
 
     revalidatePath(`/dashboard/task/${taskId}`);
     revalidatePath("/dashboard/feed");

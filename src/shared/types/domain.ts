@@ -7,10 +7,27 @@ export interface CategoryItem {
   icon: string | null;
 }
 
+/** Master-specific dashboard stats */
+export interface MasterStats {
+  responsesCount: number;
+  activeTasksCount: number;
+  rating: number;
+  reviewsCount: number;
+}
+
+/** Dashboard stats */
+export interface DashboardStats {
+  myTasksCount: number;
+  openResponsesCount: number;
+  unreadNotificationsCount: number;
+  masterStats: MasterStats | null;
+}
+
 /** Dashboard page props (typed from RSC data loading) */
 export interface DashboardPageData {
   user: CurrentUser;
   categories: CategoryItem[];
+  stats: DashboardStats;
 }
 
 /** Task card data (for feed display) */

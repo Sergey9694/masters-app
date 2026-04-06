@@ -10,18 +10,73 @@ export default async function DashboardPage() {
     redirect("/");
   }
 
-  // Fetch categories for the widget (RSC data loading)
   const categories = await db.category.findMany({
-    orderBy: { name: 'asc' }
+    orderBy: { name: "asc" },
   });
+
+  // Load stats in parallel
+  const isMaster = !!user.masterProfile;
+
+  const [
+    myTasksCount,
+    openResponsesCount,
+    unreadNotificationsCount,
+    activeTasksCount,
+  ] = await Promise.all([
+    // Customer: total tasks created
+    db.taskRequest.count({ where: { customerId: user.id } }),
+    // Customer: tasks with new responses (OPEN tasks that have at least 1 response)
+    db.taskRequest.count({
+      where: {
+        customerId: user.id,
+        status: "OPEN",
+        responses: { some: {} },
+      },
+    }),
+    // Unread notifications count
+    db.notification.count({
+      where: { userId: user.id, read: false },
+    }).catch(() => 0), // table may not exist yet during migration
+    // Master: assigned active tasks
+    isMaster
+      ? db.taskRequest.count({
+          where: {
+            assignedMasterId: user.masterProfile!.id,
+            status: "IN_PROGRESS",
+          },
+        })
+      : 0,
+  ]);
+
+  // Master-specific stats
+  const masterStats = isMaster
+    ? {
+        responsesCount: await db.taskResponse.count({
+          where: { masterId: user.masterProfile!.id },
+        }),
+        activeTasksCount,
+        rating: user.masterProfile!.rating,
+        reviewsCount: await db.review.count({
+          where: { masterId: user.masterProfile!.id },
+        }),
+      }
+    : null;
 
   return (
     <div className="relative overflow-hidden min-h-screen">
-      {/* Ambient Glows (Apple Style) */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-indigo-600/5 blur-[100px] rounded-full pointer-events-none" />
 
-      <DashboardContent user={user} categories={categories} />
+      <DashboardContent
+        user={user}
+        categories={categories}
+        stats={{
+          myTasksCount,
+          openResponsesCount,
+          unreadNotificationsCount,
+          masterStats,
+        }}
+      />
     </div>
   );
 }
