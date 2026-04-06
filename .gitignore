@@ -20,6 +20,7 @@
 # database & media
 postgres_data/
 /uploads/
+public/uploads/
 *.db
 *.sqlite
 
