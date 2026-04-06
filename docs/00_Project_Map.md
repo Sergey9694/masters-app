@@ -1,6 +1,6 @@
 # 00. Карта проекта (Project Map)
 
-> Актуализировано: 2026-04-05 (обновление: маркетплейс end-to-end). Единая точка правды о структуре и ответственности модулей. При рассинхроне с другими docs — этот документ приоритетнее.
+> Актуализировано: 2026-04-06. Единая точка правды о структуре и ответственности модулей. При рассинхроне с другими docs — этот документ приоритетнее.
 
 ---
 
@@ -10,7 +10,7 @@
 
 Монетизация: подписка для мастеров + платная верификация + буст в топе.
 
-Текущая фаза: **2.3 (MVP полный цикл сделки)**, готовность ~65%. Цикл «создал → откликнулся → выбрали → завершили → оставил отзыв» работает end-to-end.
+Текущая фаза: **2.3 (MVP стабилизация)**, готовность ~75%. Полный цикл сделки + security hardening + пагинация/поиск + загрузка фото.
 
 ---
 
@@ -30,7 +30,7 @@
 | UI | Shadcn + Radix + `@base-ui/react` | — |
 | Motion | `framer-motion 12.38` + `motion` | алиасы |
 | Forms | `react-hook-form` + `@hookform/resolvers` + `zod 4.3` | — |
-| Images | `sharp 0.34` | для будущей оптимизации |
+| Images | `sharp 0.34` | resize + WebP конвертация при загрузке |
 | Toasts | `sonner 2.0` | — |
 | Прочее | `next-themes`, `vaul`, `date-fns`, `lucide-react`, `class-variance-authority`, `tailwind-merge`, `uuid` | — |
 
@@ -78,7 +78,7 @@ masters-app/
 | :--- | :--- |
 | `layout.tsx` | Корневой layout, шрифты Outfit+Mono, подключение `telegram-web-app.js`, Sonner Toaster |
 | `page.tsx` | **Лендинг** `/` — публичная страница, содержит `<TelegramAuth />` (автологин) и CTA-кнопку в бота |
-| `providers.tsx` | ⚠️ `TWAProvider` + `next-themes` — **нигде не импортирован, мёртвый код** |
+| ~~`providers.tsx`~~ | Удалён (был мёртвый код) |
 | `template.tsx` | Обёртка для page-transition анимаций |
 | `globals.css` | Tailwind 4 + CSS-переменные темы + `.container-standard` |
 | `favicon.ico` | — |
@@ -92,20 +92,21 @@ masters-app/
 | `dashboard/my-tasks/page.tsx` | Список своих заявок (для customer) по статусам |
 | `dashboard/my-responses/page.tsx` | Список откликов мастера + отметка «вы выбраны» |
 | `api/suggest/address/route.ts` | Серверный прокси к DaData (подсказки адресов) |
+| `api/uploads/[filename]/route.ts` | Раздача загруженных фото (WebP, Cache-Control immutable) |
 
 ### 4.2 `src/widgets/` — крупные блоки интерфейса
 
 | Виджет | Файлы | Что делает |
 | :--- | :--- | :--- |
 | `CategoryGrid` | `ui/CategoryGrid.tsx`, `index.ts` | Сетка категорий услуг на дашборде |
-| `TaskFeed` | `ui/TaskFeed.tsx`, `ui/TaskCard.tsx`, + пустые `api/`, `model/` | Рендер списка задач. **Нет пагинации, skeleton, empty-state.** |
+| `TaskFeed` | `ui/TaskFeed.tsx` (RSC), `ui/TaskFeedClient.tsx` (клиент), `ui/TaskCard.tsx`, `ui/SearchInput.tsx`, `api/load-tasks.ts`, `index.ts` | Рендер списка задач с cursor-based пагинацией, кнопкой «Показать ещё» и поиском по title/description |
 
 ### 4.3 `src/features/` — пользовательские сценарии
 
 | Feature | Файлы | Ответственность | Статус |
 | :--- | :--- | :--- | :--- |
-| `auth` | `ui/TelegramAuth.tsx` (auto-login), `model/actions.ts` (`loginWithTelegram`, `mockLogin`), пустой `api/` | Вход через TWA initData + fallback mock-login для разработки | 🟢 работает |
-| `task-creation` | `ui/TaskCreateForm.tsx`, `model/task-schema.ts` (Zod), `api/create-task-action.ts` (Server Action), `api/upload-action.ts` (загрузка фото — заглушка) | Создание заказа заказчиком, подсказки адреса через `/api/suggest/address` | 🟢 работает |
+| `auth` | `ui/TelegramAuth.tsx` (auto-login), `model/actions.ts` (`loginWithTelegram` + rate-limit, `mockLogin`), `index.ts` | Вход через TWA initData + fallback mock-login для разработки | 🟢 работает |
+| `task-creation` | `ui/TaskCreateForm.tsx`, `model/task-schema.ts` (Zod), `api/create-task-action.ts` (+ rate-limit), `api/upload-action.ts` (sharp → WebP + rate-limit), `index.ts` | Создание заказа с загрузкой фото, подсказки адреса через `/api/suggest/address` | 🟢 работает |
 | `master-registration` | `ui/MasterRegistrationForm.tsx`, `model/schema.ts`, `api/actions.ts` (`createMasterProfileAction`) | Регистрация профиля мастера: bio + выбор категорий, меняет User.role → MASTER | 🟢 работает |
 | `task-response` | `ui/RespondForm.tsx`, `ui/AcceptResponseButton.tsx`, `ui/TaskStatusButtons.tsx`, `model/schema.ts`, `api/actions.ts` (`respondToTaskAction`, `acceptResponseAction`, `completeTaskAction`, `cancelTaskAction`) | Отклик мастера + принятие (→ IN_PROGRESS с `assignedMasterId`) + завершение (→ COMPLETED) + отмена | 🟢 работает |
 | `review` | `ui/ReviewForm.tsx`, `model/schema.ts`, `api/actions.ts` (`createReviewAction`) | Отзыв на завершённую сделку (1-5 звёзд + текст), авто-пересчёт рейтинга мастера в транзакции | 🟢 работает |
@@ -133,7 +134,8 @@ masters-app/
 | `get-user.ts` | DAL: `getCurrentUser()` с `select` только нужных полей |
 | `motion.ts` | Пресеты анимаций: `STAGGER_CONTAINER`, `STAGGER_ITEM`, `BLUR_IN`, `HOVER_GLOW`, `CLICK_SCALE`, `TRANSITIONS` |
 | `cn.ts` | `clsx + tailwind-merge` helper |
-| `storage/file-storage.ts` | Локальное хранение файлов (будущее → S3/MinIO) |
+| `rate-limit.ts` | In-memory rate-limiter для Server Actions (ключ, лимит, окно) |
+| `storage/file-storage.ts` | Загрузка фото: sharp resize 1920px → WebP q85, сохранение в `<cwd>/uploads/` (Docker volume) |
 | `telegram/use-haptics.ts` | Хук Haptic Feedback TWA |
 | `telegram/use-main-button.ts` | Хук tg.MainButton |
 
@@ -149,7 +151,7 @@ masters-app/
 
 Защита маршрутов. Matcher: `/dashboard/*`, `/admin/*`, `/api/*`. Проверяет `session` cookie, валидирует JWT, продлевает сессию (sliding), при невалидности — чистит cookie и редиректит на `/`.
 
-⚠️ Ссылается на `/api/auth/telegram`, которого не существует.
+Мёртвая ссылка на `/api/auth/telegram` убрана.
 
 ---
 
@@ -210,9 +212,9 @@ masters-app/
 | A6 | `src/shared/lib/auth.ts` | `payload as any` | 🟡 | ✅ исправлено |
 | A7 | `prisma/schema.prisma` | GIST-индексы для Point-полей | 🟠 | 🛠 отложено (адрес текстовый) |
 | A8 | `03_Database.md` | Prisma 7 vs 5.10 | 🟡 | 📝 в `00_Project_Map` оговорено |
-| A9 | FSD-barrels (`index.ts`) | Контракт слоёв | 🟡 | ⏳ в очереди |
-| A10 | Отсутствие rate-limit на Server Actions | Абьюз `login`, `createOrder`, `upload` | 🟠 | ⏳ в очереди |
-| A11 | CSP-заголовки | XSS → кража cookies | 🟠 | ⏳ в очереди |
+| A9 | FSD-barrels (`index.ts`) | Контракт слоёв | 🟡 | ✅ добавлены |
+| A10 | Rate-limit на Server Actions | Абьюз `login`, `createOrder`, `upload` | 🟠 | ✅ in-memory limiter |
+| A11 | CSP-заголовки | XSS → кража cookies | 🟠 | ✅ добавлены в next.config.ts |
 
 Подробный план фиксов — в [06_Development_Plan.md](06_Development_Plan.md).
 

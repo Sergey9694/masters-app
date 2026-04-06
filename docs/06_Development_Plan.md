@@ -122,31 +122,29 @@ if (result.success) {
 
 ---
 
-### ЭТАП 1 — Стабилизация фундамента (3-5 дней) 🟠
+### ЭТАП 1 — Стабилизация фундамента ✅ ОСНОВНОЕ ЗАВЕРШЕНО
 
-- [ ] **1.1** Привести код и документацию к единой версии Prisma (оставаться на 5.10 или мигрировать на 7 с `prisma.config.ts`). **Рекомендация: остаться на Prisma 5 до GA Prisma 7 для PostGIS.**
+- [ ] **1.1** Привести документацию к единой версии Prisma. **Решение: остаёмся на Prisma 5.10 до GA 7.**
 - [ ] **1.2** Добавить `@@index` на `TaskRequest(status, categoryId, createdAt)`, `TaskResponse(taskId)`.
-- [ ] **1.3** Создать SQL-миграцию с `CREATE INDEX ... USING GIST (location)` для `User.location` и `TaskRequest.taskLocation`.
-- [ ] **1.4** Завести `src/features/auth/api/index.ts` как публичное API слоя (`export { loginWithTelegram, mockLogin }`).
-- [ ] **1.5** Добавить `index.ts` барреля во все `features/*`, `widgets/*`, `entities/*`.
-- [ ] **1.6** Добавить CSP header в `next.config.ts` (allow: `telegram.org`, self, inline-скрипты Next).
-- [ ] **1.7** Добавить rate limiting для Server Actions: простой in-memory по IP + Redis в проде.
-- [ ] **1.8** Заменить `payload as any` в `auth.ts` на корректную типизацию jose: `SignJWT({...payload})` с явным cast `expires` → ISO-строка.
-- [ ] **1.9** Добавить `.gitignore` → `*.tsbuildinfo`, удалить закоммиченный файл.
-- [ ] **1.10** Подключить Prettier + `husky` + `lint-staged`.
+- [ ] **1.3** GIST-индексы для Point-полей — отложено (адрес пока текстовый).
+- [x] **1.5** FSD-barrels: `index.ts` во всех `features/*`, `widgets/TaskFeed`, `entities/task`.
+- [x] **1.6** CSP-заголовки в `next.config.ts` (self + telegram.org, frame-ancestors для TWA).
+- [x] **1.7** Rate-limit: in-memory `shared/lib/rate-limit.ts`, подключен к login (10/мин), createOrder (5/мин), respond (15/мин), upload (10/мин).
+- [x] **1.8** `payload as any` исправлен ранее.
+- [ ] **1.10** Prettier + `husky` + `lint-staged` — в очереди.
 
 ---
 
 ### ЭТАП 2 — Завершение MVP-механики заказов 🟢 В ПРОЦЕССЕ
 
-- [x] **2.3-lite** **Task Creation**: создание заявки с адресом (DaData через server proxy `/api/suggest/address`, токен скрыт). Фото — заглушка `uploadImagesAction`.
+- [x] **2.3-lite** **Task Creation**: создание заявки с адресом (DaData через server proxy), загрузка фото (sharp resize 1920px → WebP q85, `<cwd>/uploads/`, API route `/api/uploads/[filename]`).
 - [x] **2.4** **Task Detail Page**: `/dashboard/task/[id]/page.tsx` — просмотр заявки, список откликов, проверка прав (owner vs master vs anonymous).
 - [x] **2.5** **Task Response Flow**: `features/task-response` — `respondToTaskAction` (мастер откликается), `acceptResponseAction` (заказчик выбирает → task.status = IN_PROGRESS). Защиты: нельзя отклик на свою, нельзя дважды, только OPEN.
 - [x] **2.9** **Master Registration**: `features/master-registration` — `/dashboard/become-master`, форма bio + категории, `User.role → MASTER` в транзакции.
 - [x] **2.10** **DaData proxy**: `/api/suggest/address` — server-side, авторизованные only, дебаунс+AbortController на клиенте.
-- [ ] **2.1** **Task Feed**: пагинация cursor-based, skeleton-state, empty-state, поиск по title/description.
+- [x] **2.1** **Task Feed**: cursor-based пагинация (SSR первой страницы + клиентский loadMore), поиск по title/description через Prisma contains insensitive, SearchInput с дебаунсом 350мс.
 - [ ] **2.2** **Geo Search**: отложено до возвращения структурированных адресов (сейчас адрес = текстовое поле).
-- [ ] **2.3** **Photo Upload (настоящий)**: `sharp` (resize 1920px → WebP q85), сохранение в `/app/uploads` (volume), замена заглушки `uploadImagesAction`.
+- [x] **2.3** **Photo Upload**: `sharp` (resize 1920px → WebP q85), `<cwd>/uploads/` (Docker volume), API route `/api/uploads/[filename]` с Cache-Control immutable, валидация filename (regex).
 - [ ] **2.6** **Entity: Category** — вынести в `src/entities/category/`.
 - [ ] **2.7** **User Profile Edit**: `features/profile-edit` — имя, телефон, аватар.
 - [x] **2.11** **«Мои заявки» / «Мои отклики»**: `/dashboard/my-tasks`, `/dashboard/my-responses`.
