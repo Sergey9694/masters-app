@@ -55,7 +55,6 @@ export default async function MyTasksPage() {
           </div>
         </StaggerItem>
       ) : (
-      ) : (
         <div className="space-y-8">
           {[
             { title: "Активные", items: tasks.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS") },

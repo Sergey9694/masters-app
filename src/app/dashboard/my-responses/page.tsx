@@ -80,7 +80,6 @@ export default async function MyResponsesPage() {
           </div>
         </StaggerItem>
       ) : (
-      ) : (
         <div className="space-y-8">
           {[
             { title: "Активные", items: responses.filter(r => r.task.status === "OPEN" || r.task.status === "IN_PROGRESS") },
