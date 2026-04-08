@@ -16,6 +16,7 @@ import { AcceptResponseButton } from "@/features/task-response/ui/AcceptResponse
 import { TaskStatusButtons } from "@/features/task-response/ui/TaskStatusButtons";
 import { ReviewForm } from "@/features/review/ui/ReviewForm";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
+import { TaskImageGallery } from "@/features/task-view/ui/TaskImageGallery";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -120,19 +121,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
           <h2 className="text-xl font-black text-white leading-tight mb-3">{task.title}</h2>
           <p className="text-sm text-slate-300 leading-relaxed mb-5">{task.description}</p>
 
-          {task.images.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-2 mb-5 -mx-1 px-1">
-              {task.images.map((url, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={i}
-                  src={url}
-                  alt=""
-                  className="h-24 w-24 object-cover rounded-2xl border border-white/10 flex-shrink-0"
-                />
-              ))}
-            </div>
-          )}
+          <TaskImageGallery images={task.images} />
 
           <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
             <div className="flex items-center gap-2 text-slate-200">

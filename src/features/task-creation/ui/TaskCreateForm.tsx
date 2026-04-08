@@ -75,8 +75,16 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
           setIsUploading(true);
           const fd = new FormData();
           previewImages.forEach((p) => fd.append("images", p.file));
-          urls = await uploadImagesAction(fd);
+          
+          const uploadRes = await uploadImagesAction(fd);
           setIsUploading(false);
+
+          if (uploadRes.error) {
+            toast.error(uploadRes.error);
+            return;
+          }
+          
+          urls = uploadRes.urls || [];
         }
         
         const res = await createOrderAction({ ...vals, images: urls });

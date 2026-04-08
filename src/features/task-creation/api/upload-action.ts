@@ -24,37 +24,49 @@ const uploadImagesSchema = z.object({
   ).max(5, "Maximum 5 images allowed").optional().default([]),
 });
 
-export async function uploadImagesAction(formData: FormData) {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("Unauthorized");
+export async function uploadImagesAction(formData: FormData): Promise<{ urls?: string[]; error?: string }> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return { error: "Вы должны быть авторизованы" };
+    }
+
+    const rl = checkRateLimit({ key: `upload:${user.id}`, limit: 15, windowSec: 60 });
+    if (!rl.allowed) {
+      return { error: `Слишком часто. Подожтите ${rl.retryAfterSec} сек.` };
+    }
+
+    const rawImages = formData.getAll("images");
+    console.log(`[uploadAction] User ${user.id} uploading ${rawImages.length} files`);
+    
+    const parsed = uploadImagesSchema.safeParse({ images: rawImages });
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues?.[0];
+      return { error: firstIssue?.message || "Ошибка при валидации файлов" };
+    }
+
+    const files = parsed.data.images;
+    if (files.length === 0) {
+      return { urls: [] };
+    }
+
+    const urls: string[] = [];
+    for (const file of files) {
+      if (file.size === 0) continue;
+      console.log(`[uploadAction] Processing ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB, type: ${file.type})`);
+      
+      try {
+        const url = await uploadFile(file);
+        urls.push(url);
+      } catch (uploadError) {
+        console.error(`[uploadAction] Failed to upload ${file.name}:`, uploadError);
+        // Не валим весь процесс, если один файл не загрузился
+      }
+    }
+
+    return { urls };
+  } catch (globalError: unknown) {
+    console.error("[uploadAction] Fatal global error:", globalError);
+    return { error: "Внутренняя ошибка сервера при загрузке" };
   }
-
-  const rl = checkRateLimit({ key: `upload:${user.id}`, limit: 10, windowSec: 60 });
-  if (!rl.allowed) {
-    throw new Error(`Слишком часто. Подождите ${rl.retryAfterSec} сек.`);
-  }
-
-  const rawImages = formData.getAll("images");
-  
-  const parsed = uploadImagesSchema.safeParse({ images: rawImages });
-  if (!parsed.success) {
-    const firstIssue = parsed.error.issues?.[0];
-    throw new Error(firstIssue?.message || "Ошибка при валидации файлов");
-  }
-
-  const files = parsed.data.images;
-
-  if (files.length === 0) {
-    return [];
-  }
-
-  const urls = await Promise.all(
-    files.map(async (file) => {
-      if (file.size === 0) return null;
-      return await uploadFile(file);
-    })
-  );
-
-  return urls.filter((url): url is string => url !== null);
 }
