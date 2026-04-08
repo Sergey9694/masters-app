@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 };
 
 import Script from "next/script";
+import { ProfileSync } from "@/features/auth/ui/ProfileSync";
 
 export default function RootLayout({
   children,
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="ru" className="dark">
       <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       <body className={`${outfit.variable} ${jetbrainsMono.variable} font-sans`}>
+        <ProfileSync />
         {/*
            GLOBAL APP ROOT:
            All layout paddings are moved to .container-standard utility 
