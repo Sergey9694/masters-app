@@ -5,7 +5,7 @@ import { uploadFile } from "@/shared/lib/storage/file-storage";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
   "image/png",
@@ -19,8 +19,8 @@ const uploadImagesSchema = z.object({
   images: z.array(
     z.any()
       .refine((file): file is File => file instanceof File, "Ожидается загрузка файлов")
-      .refine((file) => file.size <= MAX_FILE_SIZE, "Размер файла не должен превышать 5MB")
-      .refine((file) => ALLOWED_MIME_TYPES.includes(file.type), "Недопустимый формат файла")
+      .refine((file) => file.size <= MAX_FILE_SIZE, "Размер файла не должен превышать 25MB")
+      .refine((file) => ALLOWED_MIME_TYPES.includes(file.type) || file.type.startsWith("image/"), "Недопустимый формат файла")
   ).max(5, "Maximum 5 images allowed").optional().default([]),
 });
 
