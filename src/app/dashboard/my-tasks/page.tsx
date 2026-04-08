@@ -92,17 +92,16 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
                 defaultOpen={group.title === "Активные"}
               >
                 {group.items.map((task) => (
-                  <StaggerItem key={task.id}>
-                    <TaskListItem
-                      title={task.title}
-                      category={task.category.name}
-                      status={task.status}
-                      price={task.budget}
-                      responsesCount={task._count.responses}
-                      date={task.createdAt}
-                      href={`/dashboard/task/${task.id}`}
-                    />
-                  </StaggerItem>
+                  <TaskListItem
+                    key={task.id}
+                    title={task.title}
+                    category={task.category.name}
+                    status={task.status}
+                    price={task.budget}
+                    responsesCount={task._count.responses}
+                    date={task.createdAt}
+                    href={`/dashboard/task/${task.id}`}
+                  />
                 ))}
               </StatusAccordion>
             </StaggerItem>

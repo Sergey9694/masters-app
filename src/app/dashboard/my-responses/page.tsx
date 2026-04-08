@@ -135,17 +135,16 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
                 defaultOpen={group.title === "Активные"}
               >
                 {group.items.map((r) => (
-                  <StaggerItem key={r.id}>
-                    <TaskListItem
-                      title={r.task.title}
-                      category={r.task.category.name}
-                      status={r.task.status}
-                      price={r.price}
-                      isChosen={r.task.assignedMasterId === user.masterProfile!.id}
-                      date={r.createdAt}
-                      href={`/dashboard/task/${r.task.id}`}
-                    />
-                  </StaggerItem>
+                  <TaskListItem
+                    key={r.id}
+                    title={r.task.title}
+                    category={r.task.category.name}
+                    status={r.task.status}
+                    price={r.price}
+                    isChosen={r.task.assignedMasterId === user.masterProfile!.id}
+                    date={r.createdAt}
+                    href={`/dashboard/task/${r.task.id}`}
+                  />
                 ))}
               </StatusAccordion>
             </StaggerItem>
