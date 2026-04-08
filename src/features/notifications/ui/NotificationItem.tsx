@@ -81,12 +81,12 @@ export function NotificationItem({ notification: n }: NotificationItemProps) {
           <div className={`p-2 rounded-xl ${config.color} flex-shrink-0 mt-0.5`}>
             {config.icon}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-black text-white leading-tight mb-0.5">
+          <div className="flex-1 min-w-0 py-0.5">
+            <p className="text-base font-black text-white leading-tight mb-1">
               {n.title}
             </p>
-            <p className="text-xs text-slate-400 leading-snug">{n.body}</p>
-            <p className="text-[10px] text-slate-600 mt-1.5">
+            <p className="text-xs font-normal text-slate-400 leading-snug">{n.body}</p>
+            <p className="text-[10px] font-medium text-slate-500 mt-2">
               {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: ru })}
             </p>
           </div>

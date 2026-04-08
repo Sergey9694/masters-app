@@ -7,6 +7,8 @@ import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 
+import { PageHeader } from "@/shared/ui/page-header";
+
 interface FeedPageProps {
   searchParams: Promise<{
     categoryId?: string;
@@ -22,24 +24,22 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   });
 
   return (
-    <StaggerWrap className="container-standard space-y-12">
+    <StaggerWrap className="container-standard space-y-12 pt-6">
       <TelegramBackButton />
 
       {/* Search Header */}
-      <StaggerItem className="space-y-6">
-        <div className="flex flex-col gap-1 text-center sm:text-left">
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
-            Поиск заказов
-          </h1>
-          <p className="text-sm text-slate-400 font-bold uppercase tracking-widest leading-none">
-            Найдите работу в вашем районе
-          </p>
-        </div>
+      <div className="space-y-6">
+        <PageHeader 
+          title="Поиск заказов" 
+          subtitle="Найдите работу в вашем районе" 
+          showBack={false} 
+          className="mb-0"
+        />
 
         <Suspense>
           <SearchInput />
         </Suspense>
-      </StaggerItem>
+      </div>
 
       {/* Categories Filter */}
       <StaggerItem className="space-y-4">

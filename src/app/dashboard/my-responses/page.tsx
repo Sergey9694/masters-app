@@ -10,7 +10,7 @@ import { Card } from "@/shared/ui/card";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
-import { BackButton } from "@/shared/ui/back-button";
+import { PageHeader } from "@/shared/ui/page-header";
 
 const STATUS_LABEL: Record<string, { text: string; color: string }> = {
   OPEN: { text: "Открыта", color: "text-blue-400 bg-blue-500/10" },
@@ -26,10 +26,7 @@ export default async function MyResponsesPage() {
     return (
       <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
         <TelegramBackButton />
-        <StaggerItem className="flex items-center gap-4 mb-8">
-          <BackButton />
-          <h1 className="text-2xl font-black tracking-tight">Мои отклики</h1>
-        </StaggerItem>
+        <PageHeader title="Мои отклики" />
         <StaggerItem>
           <Link href="/dashboard/become-master">
             <Card className="glass border border-emerald-500/20 p-6 rounded-[24px] text-center hover:bg-white/5 transition-colors">
@@ -69,15 +66,10 @@ export default async function MyResponsesPage() {
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       <TelegramBackButton />
 
-      <StaggerItem className="flex items-center gap-4 mb-8">
-        <BackButton />
-        <div>
-          <h1 className="text-2xl font-black tracking-tight">Мои отклики</h1>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-            {responses.length} всего
-          </p>
-        </div>
-      </StaggerItem>
+      <PageHeader 
+        title="Мои отклики" 
+        subtitle={`${responses.length} всего`}
+      />
 
       {responses.length === 0 ? (
         <StaggerItem>

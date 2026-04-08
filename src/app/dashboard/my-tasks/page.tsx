@@ -10,7 +10,7 @@ import { Card } from "@/shared/ui/card";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
-import { BackButton } from "@/shared/ui/back-button";
+import { PageHeader } from "@/shared/ui/page-header";
 
 const STATUS_LABEL: Record<string, { text: string; color: string }> = {
   OPEN: { text: "Открыта", color: "text-blue-400 bg-blue-500/10" },
@@ -41,15 +41,10 @@ export default async function MyTasksPage() {
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       <TelegramBackButton />
 
-      <StaggerItem className="flex items-center gap-4 mb-8">
-        <BackButton />
-        <div>
-          <h1 className="text-2xl font-black tracking-tight">Мои заявки</h1>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-            {tasks.length} всего
-          </p>
-        </div>
-      </StaggerItem>
+      <PageHeader 
+        title="Мои заявки" 
+        subtitle={`${tasks.length} всего`}
+      />
 
       {tasks.length === 0 ? (
         <StaggerItem>
@@ -78,7 +73,7 @@ export default async function MyTasksPage() {
                         <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
                           {task.category.name}
                         </p>
-                        <h3 className="text-base font-black text-white leading-tight truncate">
+                        <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
                           {task.title}
                         </h3>
                       </div>

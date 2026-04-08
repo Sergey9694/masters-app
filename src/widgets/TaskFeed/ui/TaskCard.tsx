@@ -87,11 +87,11 @@ export function TaskCard({ task }: TaskCardProps) {
           )}
 
           {/* Content */}
-          <div className="space-y-3 mb-6">
-            <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight group-hover:text-blue-500 transition-colors">
+          <div className="space-y-2 mb-6">
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight group-hover:text-blue-500 transition-colors">
               {title}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed font-medium">
+            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed font-normal opacity-80">
               {description}
             </p>
           </div>

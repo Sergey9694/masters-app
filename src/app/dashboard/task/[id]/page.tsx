@@ -18,6 +18,7 @@ import { TaskStatusButtons } from "@/features/task-response/ui/TaskStatusButtons
 import { ReviewForm } from "@/features/review/ui/ReviewForm";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { TaskImageGallery } from "@/features/task-view/ui/TaskImageGallery";
+import { PageHeader } from "@/shared/ui/page-header";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -78,15 +79,11 @@ export default async function TaskDetailPage({ params }: PageProps) {
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       <TelegramBackButton />
 
-      <StaggerItem className="flex items-center gap-4 mb-8">
-        <BackButton fallbackUrl="/dashboard/feed" />
-        <div>
-          <h1 className="text-lg font-black tracking-tight">Заявка</h1>
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
-            {statusLabel[task.status]}
-          </p>
-        </div>
-      </StaggerItem>
+      <PageHeader 
+        title="Заявка"
+        subtitle={statusLabel[task.status]}
+        fallbackUrl="/dashboard/feed"
+      />
 
       {/* Task Summary */}
       <StaggerItem>
@@ -113,8 +110,8 @@ export default async function TaskDetailPage({ params }: PageProps) {
             </Badge>
           </div>
 
-          <h2 className="text-xl font-black text-white leading-tight mb-3">{task.title}</h2>
-          <p className="text-sm text-slate-300 leading-relaxed mb-5">{task.description}</p>
+          <h2 className="text-2xl font-black text-white leading-tight mb-3">{task.title}</h2>
+          <p className="text-sm font-normal text-slate-300 leading-relaxed mb-5 opacity-90">{task.description}</p>
 
           <TaskImageGallery images={task.images} />
 

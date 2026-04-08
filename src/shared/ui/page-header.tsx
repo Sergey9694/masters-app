@@ -1,0 +1,48 @@
+"use client";
+
+import { cn } from "@/shared/lib/cn";
+import { BackButton } from "./back-button";
+import { StaggerItem } from "./stagger-item";
+
+interface PageHeaderProps {
+  title: string;
+  subtitle?: string;
+  showBack?: boolean;
+  fallbackUrl?: string;
+  rightAction?: React.ReactNode;
+  className?: string;
+}
+
+/**
+ * Переиспользуемый компонент заголовка страницы.
+ * Обеспечивает единообразный отступ, выравнивание по левому краю и структуру с кнопкой назад.
+ */
+export function PageHeader({
+  title,
+  subtitle,
+  showBack = true,
+  fallbackUrl,
+  rightAction,
+  className,
+}: PageHeaderProps) {
+  return (
+    <StaggerItem className={cn("flex items-center gap-4 mb-8", className)}>
+      {showBack && <BackButton fallbackUrl={fallbackUrl} />}
+      <div className="flex-1 min-w-0">
+        <h1 className="text-2xl font-black tracking-tight text-white truncate">
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mt-1">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {rightAction && (
+        <div className="flex-shrink-0">
+          {rightAction}
+        </div>
+      )}
+    </StaggerItem>
+  );
+}

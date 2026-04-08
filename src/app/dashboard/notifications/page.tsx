@@ -8,6 +8,7 @@ import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { BackButton } from "@/shared/ui/back-button";
 import { MarkAllReadButton } from "./MarkAllReadButton";
 import { NotificationItem } from "@/features/notifications/ui/NotificationItem";
+import { PageHeader } from "@/shared/ui/page-header";
 
 export default async function NotificationsPage() {
   const user = await getCurrentUser();
@@ -30,18 +31,11 @@ export default async function NotificationsPage() {
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       <TelegramBackButton />
 
-      <StaggerItem className="flex items-center gap-4 mb-8">
-        <BackButton />
-        <div className="flex-1">
-          <h1 className="text-2xl font-black tracking-tight">Уведомления</h1>
-          {unreadCount > 0 && (
-            <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mt-1">
-              {unreadCount} непрочитанных
-            </p>
-          )}
-        </div>
-        {unreadCount > 0 && <MarkAllReadButton />}
-      </StaggerItem>
+      <PageHeader 
+        title="Уведомления"
+        subtitle={unreadCount > 0 ? `${unreadCount} непрочитанных` : undefined}
+        rightAction={unreadCount > 0 ? <MarkAllReadButton /> : undefined}
+      />
 
       {notifications.length === 0 ? (
         <StaggerItem>
