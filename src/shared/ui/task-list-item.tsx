@@ -54,7 +54,7 @@ export function TaskListItem({
           </div>
           <div className="flex flex-col items-end gap-2">
             <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
-            <Badge variant="category" className="bg-white/5 whitespace-nowrap">
+            <Badge variant="category" className="whitespace-nowrap">
               {category}
             </Badge>
           </div>

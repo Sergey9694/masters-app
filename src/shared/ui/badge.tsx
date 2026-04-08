@@ -19,7 +19,7 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
-        category: "bg-indigo-500/5 text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.2)] font-black uppercase text-[10px] tracking-[0.15em] px-3 py-1 rounded-full",
+        category: "badge-category-neon text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 shadow-[0_0_12px_rgba(99,102,241,0.2)] font-black uppercase text-[10px] tracking-[0.15em] px-3 py-1 rounded-full",
       },
     },
     defaultVariants: {

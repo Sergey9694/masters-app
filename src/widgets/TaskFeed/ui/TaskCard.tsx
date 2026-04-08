@@ -73,7 +73,7 @@ export function TaskCard({ task }: TaskCardProps) {
               </div>
             </div>
             
-            <Badge variant="category" className="backdrop-blur-md">
+            <Badge variant="category">
               {category.name}
             </Badge>
           </div>
