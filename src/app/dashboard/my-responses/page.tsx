@@ -13,6 +13,7 @@ import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
 import { SectionHeader } from "@/shared/ui/section-header";
+import { Badge } from "@/shared/ui/badge";
 
 import { 
   Pagination, 
@@ -127,9 +128,9 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
                         <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
                           <div className="flex items-start justify-between gap-4 mb-3">
                             <div className="flex-1 min-w-0">
-                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                              <Badge variant="category" className="mb-2">
                                 {r.task.category.name}
-                              </p>
+                              </Badge>
                               <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
                                 {r.task.title}
                               </h3>

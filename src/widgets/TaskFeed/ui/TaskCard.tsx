@@ -9,6 +9,7 @@ import { Card } from "@/shared/ui/card";
 import { STAGGER_ITEM } from "@/shared/lib/motion";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
+import { Badge } from "@/shared/ui/badge";
 
 interface TaskCardProps {
   task: {
@@ -70,9 +71,9 @@ export function TaskCard({ task }: TaskCardProps) {
               </div>
             </div>
             
-            <div className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-md">
-              <p className="text-[9px] font-black uppercase tracking-[0.15em] text-blue-400">{category.name}</p>
-            </div>
+            <Badge variant="category" className="backdrop-blur-md">
+              {category.name}
+            </Badge>
           </div>
 
           {/* Optional Image Preview (New Feature) */}

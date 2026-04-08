@@ -13,6 +13,7 @@ import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
 import { SectionHeader } from "@/shared/ui/section-header";
+import { Badge } from "@/shared/ui/badge";
 
 import { 
   Pagination, 
@@ -100,9 +101,9 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
                       <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
                         <div className="flex items-start justify-between gap-4 mb-3">
                           <div className="flex-1 min-w-0">
-                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                            <Badge variant="category" className="mb-2">
                               {task.category.name}
-                            </p>
+                            </Badge>
                             <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
                               {task.title}
                             </h3>
@@ -117,7 +118,8 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
                               {task.budget.toLocaleString()} ₽
                             </span>
                           )}
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded-md bg-indigo-500/5 text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider flex items-center gap-1.5">
+                            <div className="w-1 h-1 rounded-full bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,0.5)]" />
                             {task._count.responses} откликов
                           </span>
                           <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-500">
