@@ -54,7 +54,7 @@ export async function respondToTaskAction(
     });
 
     // Notify task owner about new response
-    notify({
+    await notify({
       userId: task.customerId,
       type: "NEW_RESPONSE",
       title: "Новый отклик",
@@ -105,7 +105,7 @@ export async function acceptResponseAction(
     });
 
     // Notify master that they were chosen
-    notify({
+    await notify({
       userId: response.master.userId,
       type: "RESPONSE_ACCEPTED",
       title: "Вас выбрали!",
@@ -179,7 +179,7 @@ export async function completeTaskAction(taskId: string): Promise<Result> {
 
     // Notify assigned master
     if (task.assignedMaster) {
-      notify({
+      await notify({
         userId: task.assignedMaster.userId,
         type: "TASK_COMPLETED",
         title: "Заявка завершена",
@@ -227,7 +227,7 @@ export async function cancelTaskAction(taskId: string): Promise<Result> {
 
     // Notify assigned master about cancellation
     if (task.assignedMaster) {
-      notify({
+      await notify({
         userId: task.assignedMaster.userId,
         type: "TASK_CANCELED",
         title: "Заявка отменена",
@@ -287,7 +287,7 @@ export async function refuseTaskAction(taskId: string): Promise<Result> {
     ]);
 
     // Notify customer that master refused
-    notify({
+    await notify({
       userId: task.customerId,
       type: "TASK_CANCELED",
       title: "Мастер отказался",
@@ -297,7 +297,7 @@ export async function refuseTaskAction(taskId: string): Promise<Result> {
 
     // Notify other masters in category that job is available again
     const { notifyMastersInCategories } = await import("@/shared/lib/telegram/bot-notify");
-    notifyMastersInCategories(
+    await notifyMastersInCategories(
       [task.categoryId],
       user.id, // Exclude the one who just refused
       `[СНОВА ОТКРЫТА] ${task.title}`,

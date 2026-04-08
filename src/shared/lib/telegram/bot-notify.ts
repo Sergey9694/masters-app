@@ -45,21 +45,34 @@ export async function notify(params: NotifyParams) {
 
     const text = `<b>${escapeHtml(params.title)}</b>\n${escapeHtml(params.body)}`;
 
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const isHttps = WEBAPP_URL.startsWith("https://");
+    const reply_markup = {
+      inline_keyboard: [
+        [
+          isHttps
+            ? { text: "Открыть", web_app: { url: taskUrl } }
+            : { text: "Открыть", url: taskUrl.startsWith("http") ? taskUrl : `${WEBAPP_URL}${taskUrl}` },
+        ],
+      ],
+    };
+
+    const telegramRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: user.telegramId.toString(),
         text,
         parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "Открыть", web_app: { url: taskUrl } }],
-          ],
-        },
+        reply_markup,
       }),
     });
-  } catch {
+
+    if (!telegramRes.ok) {
+      const errorText = await telegramRes.text();
+      console.error(`[notify] Telegram API error: ${telegramRes.status} ${errorText}`);
+    }
+  } catch (error) {
+    console.error("[notify] Error sending notification:", error);
     // Notification failure should never break the main flow
   }
 }
@@ -111,28 +124,40 @@ export async function notifyMastersInCategories(
       select: { telegramId: true },
     });
 
+    const isHttps = WEBAPP_URL.startsWith("https://");
     const taskUrl = `${WEBAPP_URL}/dashboard/task/${taskId}`;
 
     await Promise.allSettled(
-      users.map((u) =>
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      users.map(async (u) => {
+        const reply_markup = {
+          inline_keyboard: [
+            [
+              isHttps
+                ? { text: "Откликнуться", web_app: { url: taskUrl } }
+                : { text: "Откликнуться", url: taskUrl },
+            ],
+          ],
+        };
+
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chat_id: u.telegramId!.toString(),
             text: `<b>Новая заявка в вашей категории</b>\n${escapeHtml(taskTitle)}`,
             parse_mode: "HTML",
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: "Откликнуться", web_app: { url: taskUrl } }],
-              ],
-            },
+            reply_markup,
           }),
-        }),
-      ),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error(`[notifyMastersInCategories] Telegram error for ${u.telegramId}: ${res.status} ${errorText}`);
+        }
+      }),
     );
-  } catch {
-    // silent
+  } catch (error) {
+    console.error("[notifyMastersInCategories] Error:", error);
   }
 }
 
