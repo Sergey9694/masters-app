@@ -52,6 +52,12 @@ export default async function DashboardPage() {
         responsesCount: await db.taskResponse.count({
           where: { masterId: user.masterProfile!.id },
         }),
+        pendingResponsesCount: await db.taskResponse.count({
+          where: { 
+            masterId: user.masterProfile!.id,
+            task: { status: "OPEN" }
+          },
+        }),
         activeTasksCount,
         rating: user.masterProfile!.rating,
         reviewsCount: await db.review.count({

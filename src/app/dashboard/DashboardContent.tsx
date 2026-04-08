@@ -122,7 +122,11 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                     desc="Отслеживайте статус ваших откликов"
                     icon={<MessageSquare className="w-6 h-6" />}
                     color="bg-blue-600"
-                    badge={stats.masterStats.responsesCount > 0 ? String(stats.masterStats.responsesCount) : null}
+                    badge={
+                      stats.masterStats.pendingResponsesCount > 0 
+                        ? `${stats.masterStats.pendingResponsesCount} активных` 
+                        : null
+                    }
                   />
                 </Link>
               </div>
@@ -157,10 +161,8 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                 color="bg-indigo-600"
                 badge={
                   stats.openResponsesCount > 0
-                    ? `${stats.openResponsesCount} новых`
-                    : stats.myTasksCount > 0
-                      ? String(stats.myTasksCount)
-                      : null
+                    ? `${stats.openResponsesCount} новых откликов`
+                    : null
                 }
               />
             </Link>
@@ -268,7 +270,7 @@ function ActionCard({
         >
           {icon}
           {badge && (
-            <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-500 rounded-full text-[10px] font-black text-white flex items-center justify-center border-2 border-[#14171f]">
+            <span className="absolute -top-2 -right-2 px-2 h-5 rounded-full bg-blue-600 text-[10px] font-black text-white flex items-center justify-center border-2 border-[#14171f] shadow-[0_0_10px_rgba(37,99,235,0.5)] whitespace-nowrap animate-in fade-in zoom-in duration-300">
               {badge}
             </span>
           )}

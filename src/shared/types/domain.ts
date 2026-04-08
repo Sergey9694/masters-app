@@ -10,6 +10,7 @@ export interface CategoryItem {
 /** Master-specific dashboard stats */
 export interface MasterStats {
   responsesCount: number;
+  pendingResponsesCount: number;
   activeTasksCount: number;
   rating: number;
   reviewsCount: number;
