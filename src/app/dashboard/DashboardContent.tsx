@@ -75,6 +75,12 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
       </motion.header>
 
       <div className="space-y-10 pb-32">
+        {/* ── Categories ── */}
+        <motion.div variants={STAGGER_ITEM}>
+          <SectionHeader title="Категории услуг" accentColor="indigo" className="mb-5" />
+          <CategoryGrid initialCategories={categories} />
+        </motion.div>
+
         {/* ── Master Section ── */}
         {isMaster && stats.masterStats && (
           <>
@@ -213,11 +219,6 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
           </div>
         )}
 
-        {/* ── Categories ── */}
-        <motion.div variants={STAGGER_ITEM}>
-          <SectionHeader title="Категории услуг" accentColor="indigo" className="mb-5" />
-          <CategoryGrid initialCategories={categories} />
-        </motion.div>
       </div>
     </motion.div>
   );
