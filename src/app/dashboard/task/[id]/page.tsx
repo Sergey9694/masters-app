@@ -12,6 +12,7 @@ import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { RespondForm } from "@/features/task-response/ui/RespondForm";
+import { BackButton } from "@/shared/ui/back-button";
 import { AcceptResponseButton } from "@/features/task-response/ui/AcceptResponseButton";
 import { TaskStatusButtons } from "@/features/task-response/ui/TaskStatusButtons";
 import { ReviewForm } from "@/features/review/ui/ReviewForm";
@@ -78,13 +79,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
       <TelegramBackButton />
 
       <StaggerItem className="flex items-center gap-4 mb-8">
-        <Link
-          href="/dashboard/feed"
-          replace
-          className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </Link>
+        <BackButton fallbackUrl="/dashboard/feed" />
         <div>
           <h1 className="text-lg font-black tracking-tight">Заявка</h1>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">

@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/shared/lib/get-user";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
+import { BackButton } from "@/shared/ui/back-button";
 import { MasterRegistrationForm } from "@/features/master-registration/ui/MasterRegistrationForm";
 
 export const metadata: Metadata = {
@@ -29,13 +30,7 @@ export default async function BecomeMasterPage() {
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       <TelegramBackButton />
       <StaggerItem className="flex items-center gap-4 mb-10">
-        <Link
-          href="/dashboard"
-          replace
-          className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </Link>
+        <BackButton />
         <div>
           <h1 className="text-2xl font-black tracking-tight">Стать мастером</h1>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
