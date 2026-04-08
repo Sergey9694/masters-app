@@ -9,6 +9,7 @@ import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 export default async function ReviewsPage() {
   const user = await getCurrentUser();
@@ -55,54 +56,49 @@ export default async function ReviewsPage() {
           </div>
         </StaggerItem>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {reviews.map((review) => (
             <StaggerItem key={review.id}>
-              <Card className="glass border-none p-5 rounded-[24px]">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                      {review.author.avatar ? (
-                        <img 
-                          src={review.author.avatar} 
-                          alt={review.author.firstName} 
-                          className="w-full h-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-sm font-black text-indigo-400 uppercase">
-                          {review.author.firstName[0]}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black text-white leading-tight">
-                        {review.author.firstName} {review.author.lastName}
+              <Card className="glass border-none p-4 rounded-[28px] hover:bg-white/[0.03] transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar size="default" className="border border-white/10">
+                      <AvatarImage 
+                        src={review.author.avatar || ""} 
+                        alt={review.author.firstName}
+                      />
+                      <AvatarFallback className="bg-indigo-500/10 text-indigo-400 font-bold uppercase text-[10px]">
+                        {review.author.firstName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <h4 className="text-[13px] font-black text-white leading-tight">
+                        {review.author.firstName} {review.author.lastName?.substring(0, 1)}.
                       </h4>
-                      <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex items-center gap-0.5">
                         {[...Array(5)].map((_, i) => (
                           <Star 
                             key={i} 
-                            className={`w-3 h-3 ${i < review.rating ? "text-amber-400 fill-amber-400" : "text-slate-700"}`} 
+                            className={`w-2.5 h-2.5 ${i < review.rating ? "text-amber-400 fill-amber-400" : "text-slate-700"}`} 
                           />
                         ))}
                       </div>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
+                  <div className="text-[10px] font-bold text-slate-500/60 uppercase tracking-tighter flex items-center gap-1 bg-white/5 px-2 py-1 rounded-full">
+                    <Calendar className="w-2.5 h-2.5" />
                     {formatSmartDate(review.createdAt)}
-                  </span>
+                  </div>
                 </div>
 
-                <div className="bg-white/5 rounded-2xl p-4 mb-3 border border-white/5">
-                  <p className="text-[13px] text-slate-300 leading-relaxed font-medium">
-                    «{review.text || "Без комментария"}»
-                  </p>
-                </div>
+                <p className="text-[13px] text-slate-300 leading-snug font-medium mb-3 italic px-1">
+                  «{review.text || "Без комментария"}»
+                </p>
 
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 bg-slate-900/40 px-3 py-2 rounded-xl w-fit">
-                  <Briefcase className="w-3 h-3 text-emerald-500" />
-                  <span>Заказ: {review.task.title}</span>
+                <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest border-t border-white/5 pt-3">
+                  <Briefcase className="w-3 h-3 text-indigo-500/50" />
+                  <span className="opacity-60">Заказ:</span>
+                  <span className="text-slate-400 truncate max-w-[150px]">{review.task.title}</span>
                 </div>
               </Card>
             </StaggerItem>
