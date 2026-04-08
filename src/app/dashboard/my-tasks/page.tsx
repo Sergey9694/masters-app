@@ -14,6 +14,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
 import { SectionHeader } from "@/shared/ui/section-header";
 import { Badge } from "@/shared/ui/badge";
+import { StatusAccordion } from "@/shared/ui/status-accordion";
 
 import { 
   Pagination, 
@@ -83,18 +84,19 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
           </div>
         </StaggerItem>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {[
-            { title: "Активные", items: tasks.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS") },
-            { title: "Завершенные", items: tasks.filter(t => t.status === "COMPLETED") },
-            { title: "Отмененные", items: tasks.filter(t => t.status === "CANCELED") }
-          ].filter(group => group.items.length > 0).map((group, groupIdx) => (
-            <div key={group.title} className="space-y-4">
-              <StaggerItem>
-                <SectionHeader title={group.title} count={group.items.length} />
-              </StaggerItem>
-              
-              <div className="space-y-3">
+            { title: "Активные", color: "orange" as const, items: tasks.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS") },
+            { title: "Завершенные", color: "green" as const, items: tasks.filter(t => t.status === "COMPLETED") },
+            { title: "Отмененные", color: "red" as const, items: tasks.filter(t => t.status === "CANCELED") }
+          ].filter(group => group.items.length > 0).map((group) => (
+            <StaggerItem key={group.title}>
+              <StatusAccordion 
+                title={group.title} 
+                count={group.items.length} 
+                color={group.color}
+                defaultOpen={group.title === "Активные"}
+              >
                 {group.items.map((task) => (
                   <StaggerItem key={task.id}>
                     <Link href={`/dashboard/task/${task.id}`}>
@@ -131,8 +133,8 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
                     </Link>
                   </StaggerItem>
                 ))}
-              </div>
-            </div>
+              </StatusAccordion>
+            </StaggerItem>
           ))}
         </div>
       )}

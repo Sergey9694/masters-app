@@ -14,6 +14,7 @@ import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
 import { SectionHeader } from "@/shared/ui/section-header";
 import { Badge } from "@/shared/ui/badge";
+import { StatusAccordion } from "@/shared/ui/status-accordion";
 
 import { 
   Pagination, 
@@ -108,18 +109,19 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
           </div>
         </StaggerItem>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {[
-            { title: "Активные", items: responses.filter(r => r.task.status === "OPEN" || r.task.status === "IN_PROGRESS") },
-            { title: "Завершенные", items: responses.filter(r => r.task.status === "COMPLETED") },
-            { title: "Отмененные", items: responses.filter(r => r.task.status === "CANCELED") }
+            { title: "Активные", color: "orange" as const, items: responses.filter(r => r.task.status === "OPEN" || r.task.status === "IN_PROGRESS") },
+            { title: "Завершенные", color: "green" as const, items: responses.filter(r => r.task.status === "COMPLETED") },
+            { title: "Отмененные", color: "red" as const, items: responses.filter(r => r.task.status === "CANCELED") }
           ].filter(group => group.items.length > 0).map((group) => (
-            <div key={group.title} className="space-y-4">
-              <StaggerItem>
-                <SectionHeader title={group.title} count={group.items.length} />
-              </StaggerItem>
-
-              <div className="space-y-3">
+            <StaggerItem key={group.title}>
+              <StatusAccordion 
+                title={group.title} 
+                count={group.items.length} 
+                color={group.color}
+                defaultOpen={group.title === "Активные"}
+              >
                 {group.items.map((r) => {
                   const isChosen = r.task.assignedMasterId === user.masterProfile!.id;
                   return (
@@ -160,8 +162,8 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
                     </StaggerItem>
                   );
                 })}
-              </div>
-            </div>
+              </StatusAccordion>
+            </StaggerItem>
           ))}
         </div>
       )}
