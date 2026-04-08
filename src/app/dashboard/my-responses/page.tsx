@@ -111,9 +111,27 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
       ) : (
         <div className="space-y-6">
           {[
-            { title: "Активные", color: "orange" as const, items: responses.filter(r => r.task.status === "OPEN" || r.task.status === "IN_PROGRESS") },
-            { title: "Завершенные", color: "green" as const, items: responses.filter(r => r.task.status === "COMPLETED") },
-            { title: "Отмененные", color: "red" as const, items: responses.filter(r => r.task.status === "CANCELED") }
+            {
+              title: "Активные",
+              color: "orange" as const,
+              items: responses.filter(r => 
+                r.task.status === "OPEN" || 
+                (r.task.status === "IN_PROGRESS" && r.task.assignedMasterId === user.masterProfile!.id)
+              )
+            },
+            {
+              title: "Завершенные",
+              color: "green" as const,
+              items: responses.filter(r => r.task.status === "COMPLETED")
+            },
+            {
+              title: "Отмененные",
+              color: "red" as const,
+              items: responses.filter(r => 
+                r.task.status === "CANCELED" || 
+                (r.task.status === "IN_PROGRESS" && r.task.assignedMasterId !== user.masterProfile!.id)
+              )
+            }
           ].filter(group => group.items.length > 0).map((group) => (
             <StaggerItem key={group.title}>
               <StatusAccordion 
