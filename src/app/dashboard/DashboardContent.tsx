@@ -99,12 +99,14 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                   value={String(stats.masterStats.reviewsCount)}
                   icon={<MessageSquare className="w-4 h-4" />}
                   color="text-blue-400"
+                  href="/dashboard/reviews"
                 />
                 <StatCard
                   label="В работе"
                   value={String(stats.masterStats.activeTasksCount)}
                   icon={<Briefcase className="w-4 h-4" />}
                   color="text-emerald-400"
+                  href="/dashboard/my-responses"
                 />
               </div>
             </motion.div>
@@ -231,11 +233,13 @@ function StatCard({
   value,
   icon,
   color,
+  href,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
   color: string;
+  href?: string;
 }) {
   const colorMap: Record<string, string> = {
     "text-amber-400": "from-amber-400/20 to-transparent",
@@ -243,28 +247,39 @@ function StatCard({
     "text-emerald-400": "from-emerald-400/20 to-transparent",
   };
 
+  const Content = (
+    <Card className={cn(
+      "relative overflow-hidden p-4 rounded-[24px] glass border-none flex flex-col items-start gap-1 h-full min-h-[90px] group transition-all",
+      href && "cursor-pointer hover:bg-white/10 active:scale-[0.98]"
+    )}>
+      {/* Background Accent */}
+      <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl ${colorMap[color] || "from-blue-400/10 to-transparent"} opacity-50 blur-xl`} />
+      
+      <div className="flex items-start justify-between w-full">
+        <p className={cn("text-2xl font-black leading-none tracking-tight text-white group-hover:scale-105 transition-transform origin-left")}>
+          {value}
+        </p>
+        <div className={`${color} opacity-40 group-hover:opacity-100 transition-opacity`}>
+          {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-3.5 h-3.5" }) : icon}
+        </div>
+      </div>
+
+      <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-500 mt-1">
+        {label}
+      </p>
+
+      {/* Decorative Indicator */}
+      <div className={cn("absolute bottom-3 right-3 w-1 h-1 rounded-full", color.replace("text-", "bg-"), "opacity-30")} />
+    </Card>
+  );
+
   return (
     <motion.div variants={STAGGER_ITEM} whileHover={{ y: -2 }} className="flex-1">
-      <Card className="relative overflow-hidden p-4 rounded-[24px] glass border-none flex flex-col items-start gap-1 h-full min-h-[90px] group transition-all">
-        {/* Background Accent */}
-        <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl ${colorMap[color] || "from-blue-400/10 to-transparent"} opacity-50 blur-xl`} />
-        
-        <div className="flex items-start justify-between w-full">
-          <p className={cn("text-2xl font-black leading-none tracking-tight text-white group-hover:scale-105 transition-transform origin-left")}>
-            {value}
-          </p>
-          <div className={`${color} opacity-40 group-hover:opacity-100 transition-opacity`}>
-            {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-3.5 h-3.5" }) : icon}
-          </div>
-        </div>
-
-        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-500 mt-1">
-          {label}
-        </p>
-
-        {/* Decorative Indicator */}
-        <div className={cn("absolute bottom-3 right-3 w-1 h-1 rounded-full", color.replace("text-", "bg-"), "opacity-30")} />
-      </Card>
+      {href ? (
+        <Link href={href} className="block h-full">
+          {Content}
+        </Link>
+      ) : Content}
     </motion.div>
   );
 }
