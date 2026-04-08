@@ -100,7 +100,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 </p>
               </div>
             </div>
-            <Badge variant="outline" className="text-[9px] uppercase tracking-wider">
+            <Badge variant="category">
               {task.category.name}
             </Badge>
           </div>

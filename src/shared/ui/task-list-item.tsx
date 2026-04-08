@@ -36,15 +36,15 @@ export function TaskListItem({
     <Link href={href} className={cn("block group", className)}>
       <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all">
         <div className="flex items-start justify-between gap-4 mb-3">
-          <div className="flex-1 min-w-0">
-            <Badge variant="category" className="mb-2">
+          <h3 className="text-lg font-black text-white leading-tight truncate flex-1">
+            {title}
+          </h3>
+          <div className="flex flex-col items-end gap-2">
+            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+            <Badge variant="category" className="bg-white/5 whitespace-nowrap">
               {category}
             </Badge>
-            <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
-              {title}
-            </h3>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
