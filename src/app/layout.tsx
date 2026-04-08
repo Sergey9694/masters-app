@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono } from "next/font/google";
+import { Roboto_Condensed, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
+const robotoCondensed = Roboto_Condensed({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-roboto-condensed",
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -31,7 +31,7 @@ export default function RootLayout({
       <head>
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </head>
-      <body className={`${outfit.variable} ${jetbrainsMono.variable} font-sans`}>
+      <body className={`${robotoCondensed.variable} ${jetbrainsMono.variable} font-sans`}>
         <ProfileSync />
         {/*
            GLOBAL APP ROOT:
@@ -48,7 +48,7 @@ export default function RootLayout({
           position="bottom-right" 
           toastOptions={{
             duration: 4000,
-            className: "glass-premium !border-white/10 !rounded-[20px] !p-5 !font-outfit",
+            className: "glass-premium !border-white/10 !rounded-[20px] !p-5 !font-sans",
             style: {
                background: 'linear-gradient(135deg, rgba(8,145,178,0.9), rgba(79,70,229,0.9))',
                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',

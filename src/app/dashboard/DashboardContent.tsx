@@ -245,10 +245,10 @@ function StatCard({
 }) {
   return (
     <motion.div variants={STAGGER_ITEM}>
-      <Card className="p-4 rounded-[20px] glass border-none text-center">
-        <div className={`${color} flex justify-center mb-2`}>{icon}</div>
-        <p className="text-2xl font-black text-white leading-none mb-1">{value}</p>
-        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500">{label}</p>
+      <Card className="p-4 rounded-[20px] glass border-none text-left flex flex-col items-start">
+        <div className={`${color} mb-3`}>{icon}</div>
+        <p className="text-2xl font-black text-white leading-none mb-1.5">{value}</p>
+        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">{label}</p>
       </Card>
     </motion.div>
   );
@@ -275,22 +275,22 @@ function ActionCard({
 
   return (
     <motion.div variants={STAGGER_ITEM} whileHover={HOVER_GLOW} whileTap={CLICK_SCALE}>
-      <Card className="p-5 border-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-none glass flex items-center gap-5 hover:bg-white/10 dark:hover:bg-slate-800 transition-all duration-500 cursor-pointer group active:scale-[0.97] rounded-[28px] border border-white/10 dark:border-white/20 select-none apple-card">
+      <Card className="p-6 border-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-none glass flex flex-col items-start gap-5 hover:bg-white/10 dark:hover:bg-slate-800 transition-all duration-500 cursor-pointer group active:scale-[0.97] rounded-[32px] border border-white/10 dark:border-white/20 select-none">
         <div
           className={`${colorMap[color] || color} p-4 rounded-[20px] text-white shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 relative`}
         >
           {icon}
           {badge && (
-            <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-500 rounded-full text-[10px] font-black text-white flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-500 rounded-full text-[10px] font-black text-white flex items-center justify-center border-2 border-[#14171f]">
               {badge}
             </span>
           )}
         </div>
-        <div className="flex-1">
-          <h3 className="font-black text-slate-900 dark:text-cyan-400 uppercase text-[10px] tracking-[0.25em] mb-1 leading-none">
+        <div className="text-left">
+          <h3 className="font-black text-slate-900 dark:text-cyan-400 uppercase text-[12px] tracking-[0.2em] mb-2 leading-tight">
             {title}
           </h3>
-          <p className="text-[12px] text-slate-600 dark:text-slate-300 font-bold leading-[1.4] opacity-90">
+          <p className="text-[13px] text-slate-600 dark:text-slate-300 font-bold leading-[1.5] opacity-80">
             {desc}
           </p>
         </div>
