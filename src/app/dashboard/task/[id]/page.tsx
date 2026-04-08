@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck, Mail, Calendar } from "lucide-react";
 import { formatSmartDate, formatRelativeTime } from "@/shared/lib/date";
+import { getMapUrl } from "@/shared/lib/maps";
 
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
@@ -116,12 +117,21 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 {task.budget ? `${task.budget.toLocaleString()} ₽` : "Договорная"}
               </span>
             </div>
+            
             {task.address && (
-              <div className="flex items-center gap-2 text-slate-400">
-                <MapPin className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-bold">{task.address}</span>
-              </div>
+              <a 
+                href={getMapUrl(task.address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group/map"
+              >
+                <MapPin className="w-4 h-4 text-blue-400 group-hover/map:animate-bounce" />
+                <span className="text-sm font-bold group-hover/map:underline decoration-blue-500/30 underline-offset-4">
+                  {task.address}
+                </span>
+              </a>
             )}
+
             <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-widest ml-auto">
               <Clock className="w-3.5 h-3.5" />
               {task.responses.length} отклик(ов)

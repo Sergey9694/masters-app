@@ -9,6 +9,8 @@ import { STAGGER_ITEM } from "@/shared/lib/motion";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
+import { cn } from "@/shared/lib/cn";
+import { getMapUrl } from "@/shared/lib/maps";
 
 interface TaskCardProps {
   task: {
@@ -41,6 +43,13 @@ export function TaskCard({ task }: TaskCardProps) {
 
   const truncatedTitle = title.length > 30 ? title.substring(0, 27) + "..." : title;
   const truncatedDesc = description.length > 30 ? description.substring(0, 27) + "..." : description;
+
+  const handleAddressClick = (e: React.MouseEvent) => {
+    if (!address) return;
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(getMapUrl(address), "_blank", "noopener,noreferrer");
+  };
 
   return (
     <motion.div
@@ -85,6 +94,7 @@ export function TaskCard({ task }: TaskCardProps) {
                 src={images[0]} 
                 alt={title} 
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                loading="lazy"
               />
             </div>
           )}
@@ -111,12 +121,18 @@ export function TaskCard({ task }: TaskCardProps) {
                 </span>
               </div>
               
-              <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+              <div 
+                className={cn(
+                  "flex items-center gap-2 text-slate-500 dark:text-slate-400 group/address transition-colors",
+                  address && "hover:text-blue-500 cursor-pointer"
+                )}
+                onClick={handleAddressClick}
+              >
+                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/address:bg-blue-500/20 transition-colors">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div className="flex flex-col">
-                   <span className="text-sm font-bold truncate max-w-[150px]">
+                   <span className="text-sm font-bold truncate max-w-[150px] group-hover/address:underline decoration-blue-500/30 underline-offset-4">
                      {task.address || "Не указан"}
                    </span>
                    {distance !== undefined && (
