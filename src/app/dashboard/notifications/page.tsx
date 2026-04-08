@@ -38,7 +38,10 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
     const [notifs, count] = await Promise.all([
       db.notification.findMany({
         where: { userId: user.id },
-        orderBy: { createdAt: "desc" },
+        orderBy: [
+          { read: "asc" },
+          { createdAt: "desc" }
+        ],
         skip: (page - 1) * DEFAULT_PAGE_SIZE,
         take: DEFAULT_PAGE_SIZE,
       }),
