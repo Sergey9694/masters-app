@@ -1,6 +1,8 @@
 "use client";
 
+import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { cn } from "@/shared/lib/cn";
 import { STAGGER_CONTAINER, STAGGER_ITEM, HOVER_GLOW, CLICK_SCALE } from "@/shared/lib/motion";
 import { Card } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
@@ -251,7 +253,7 @@ function StatCard({
             {value}
           </p>
           <div className={`${color} opacity-40 group-hover:opacity-100 transition-opacity`}>
-            {React.cloneElement(icon as React.ReactElement, { className: "w-3.5 h-3.5" })}
+            {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: "w-3.5 h-3.5" }) : icon}
           </div>
         </div>
 

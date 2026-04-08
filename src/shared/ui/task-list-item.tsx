@@ -7,7 +7,7 @@ import { ru } from "date-fns/locale";
 import { Card } from "./card";
 import { Badge } from "./badge";
 import { StatusBadge } from "./status-badge";
-import { cn } from "@/shared/lib/utils";
+import { cn } from "@/shared/lib/cn";
 
 interface TaskListItemProps {
   title: string;
