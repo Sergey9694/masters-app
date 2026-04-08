@@ -1,9 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, Banknote, Clock, ChevronRight } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
-
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { Card } from "@/shared/ui/card";
@@ -11,10 +7,8 @@ import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
-import { StatusBadge } from "@/shared/ui/status-badge";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { Badge } from "@/shared/ui/badge";
 import { StatusAccordion } from "@/shared/ui/status-accordion";
+import { TaskListItem } from "@/shared/ui/task-list-item";
 
 import { 
   Pagination, 
@@ -99,38 +93,15 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
               >
                 {group.items.map((task) => (
                   <StaggerItem key={task.id}>
-                    <Link href={`/dashboard/task/${task.id}`}>
-                      <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
-                        <div className="flex items-start justify-between gap-4 mb-3">
-                          <div className="flex-1 min-w-0">
-                            <Badge variant="category" className="mb-2">
-                              {task.category.name}
-                            </Badge>
-                            <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
-                              {task.title}
-                            </h3>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <StatusBadge status={task.status} />
-                          {task.budget && (
-                            <span className="flex items-center gap-1 text-[11px] font-bold text-slate-300">
-                              <Banknote className="w-3 h-3 text-emerald-400" />
-                              {task.budget.toLocaleString()} ₽
-                            </span>
-                          )}
-                          <span className="px-2 py-0.5 rounded-md bg-indigo-500/5 text-[10px] font-bold text-indigo-400/80 uppercase tracking-wider flex items-center gap-1.5">
-                            <div className="w-1 h-1 rounded-full bg-indigo-500 shadow-[0_0_5px_rgba(99,102,241,0.5)]" />
-                            {task._count.responses} откликов
-                          </span>
-                          <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-500">
-                            <Clock className="w-3 h-3" />
-                            {formatDistanceToNow(task.createdAt, { addSuffix: true, locale: ru })}
-                          </span>
-                        </div>
-                      </Card>
-                    </Link>
+                    <TaskListItem
+                      title={task.title}
+                      category={task.category.name}
+                      status={task.status}
+                      price={task.budget}
+                      responsesCount={task._count.responses}
+                      date={task.createdAt}
+                      href={`/dashboard/task/${task.id}`}
+                    />
                   </StaggerItem>
                 ))}
               </StatusAccordion>

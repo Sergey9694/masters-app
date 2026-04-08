@@ -1,9 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronLeft, Banknote, ChevronRight, CheckCircle2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
-
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { Card } from "@/shared/ui/card";
@@ -11,10 +7,8 @@ import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
-import { StatusBadge } from "@/shared/ui/status-badge";
-import { SectionHeader } from "@/shared/ui/section-header";
-import { Badge } from "@/shared/ui/badge";
 import { StatusAccordion } from "@/shared/ui/status-accordion";
+import { TaskListItem } from "@/shared/ui/task-list-item";
 
 import { 
   Pagination, 
@@ -140,46 +134,19 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
                 color={group.color}
                 defaultOpen={group.title === "Активные"}
               >
-                {group.items.map((r) => {
-                  const isChosen = r.task.assignedMasterId === user.masterProfile!.id;
-                  return (
-                    <StaggerItem key={r.id}>
-                      <Link href={`/dashboard/task/${r.task.id}`}>
-                        <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
-                          <div className="flex items-start justify-between gap-4 mb-3">
-                            <div className="flex-1 min-w-0">
-                              <Badge variant="category" className="mb-2">
-                                {r.task.category.name}
-                              </Badge>
-                              <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
-                                {r.task.title}
-                              </h3>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
-                          </div>
-                          <div className="flex flex-wrap items-center gap-3">
-                            <StatusBadge status={r.task.status} />
-                            {isChosen && (
-                              <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 flex items-center gap-1 border border-emerald-500/20">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Вы выбраны
-                              </span>
-                            )}
-                            {r.price && (
-                              <span className="flex items-center gap-1 text-[11px] font-bold text-slate-300">
-                                <Banknote className="w-3 h-3 text-emerald-400" />
-                                {r.price.toLocaleString()} ₽
-                              </span>
-                            )}
-                            <span className="ml-auto text-[10px] text-slate-500">
-                              {formatDistanceToNow(r.createdAt, { addSuffix: true, locale: ru })}
-                            </span>
-                          </div>
-                        </Card>
-                      </Link>
-                    </StaggerItem>
-                  );
-                })}
+                {group.items.map((r) => (
+                  <StaggerItem key={r.id}>
+                    <TaskListItem
+                      title={r.task.title}
+                      category={r.task.category.name}
+                      status={r.task.status}
+                      price={r.price}
+                      isChosen={r.task.assignedMasterId === user.masterProfile!.id}
+                      date={r.createdAt}
+                      href={`/dashboard/task/${r.task.id}`}
+                    />
+                  </StaggerItem>
+                ))}
               </StatusAccordion>
             </StaggerItem>
           ))}
