@@ -82,6 +82,7 @@ enum TaskStatus {
   IN_PROGRESS
   COMPLETED
   CANCELED
+  EXPIRED
 }
 
 model TaskResponse {

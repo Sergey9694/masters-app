@@ -83,7 +83,7 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
           {[
             { title: "Активные", color: "orange" as const, items: tasks.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS") },
             { title: "Завершенные", color: "green" as const, items: tasks.filter(t => t.status === "COMPLETED") },
-            { title: "Отмененные", color: "red" as const, items: tasks.filter(t => t.status === "CANCELED") }
+            { title: "Архив", color: "red" as const, items: tasks.filter(t => (t.status as any) === "CANCELED" || (t.status as any) === "EXPIRED") }
           ].filter(group => group.items.length > 0).map((group) => (
             <StaggerItem key={group.title}>
               <StatusAccordion 

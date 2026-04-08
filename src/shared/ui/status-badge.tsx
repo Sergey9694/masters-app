@@ -1,6 +1,6 @@
 import { cn } from "@/shared/lib/cn";
 
-export type TaskStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELED";
+export type TaskStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" | "EXPIRED";
 
 interface StatusBadgeProps {
   status: TaskStatus | string;
@@ -23,6 +23,10 @@ const STATUS_CONFIG: Record<string, { text: string; color: string }> = {
   CANCELED: { 
     text: "Отменена", 
     color: "text-red-400 bg-red-500/10 border-red-500/20" 
+  },
+  EXPIRED: { 
+    text: "Истекла", 
+    color: "text-slate-400 bg-slate-500/10 border-slate-500/20" 
   },
 };
 

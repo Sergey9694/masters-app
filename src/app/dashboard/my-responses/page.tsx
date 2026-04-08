@@ -120,10 +120,11 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
               items: responses.filter(r => r.task.status === "COMPLETED")
             },
             {
-              title: "Отмененные",
+              title: "Архив",
               color: "red" as const,
               items: responses.filter(r => 
-                r.task.status === "CANCELED" || 
+                (r.task.status as any) === "CANCELED" || 
+                (r.task.status as any) === "EXPIRED" ||
                 (r.task.status === "IN_PROGRESS" && r.task.assignedMasterId !== user.masterProfile!.id)
               )
             }
