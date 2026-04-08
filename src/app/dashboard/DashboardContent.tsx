@@ -20,6 +20,7 @@ import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
 import type { DashboardPageData } from "@/shared/types/domain";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 export function DashboardContent({ user, categories, stats }: DashboardPageData) {
   const isMaster = !!user.masterProfile;
@@ -77,10 +78,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
           <>
             {/* Master Stats */}
             <motion.div variants={STAGGER_ITEM}>
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1 flex items-center gap-3 mb-5">
-                Панель мастера
-                <span className="w-1 h-1 rounded-full bg-emerald-500" />
-              </h2>
+              <SectionHeader title="Панель мастера" accentColor="emerald" className="mb-5" />
               <div className="grid grid-cols-3 gap-3">
                 <StatCard
                   label="Рейтинг"
@@ -105,13 +103,9 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
 
             {/* Master Actions */}
             <div className="space-y-5">
-              <motion.h2
-                className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1 flex items-center gap-3"
-                variants={STAGGER_ITEM}
-              >
-                Заказы
-                <span className="w-1 h-1 rounded-full bg-emerald-500" />
-              </motion.h2>
+              <motion.div variants={STAGGER_ITEM}>
+                <SectionHeader title="Заказы" accentColor="emerald" className="mb-5" />
+              </motion.div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/dashboard/feed">
                   <ActionCard
@@ -138,13 +132,13 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
 
         {/* ── Customer Section ── */}
         <div className="space-y-5">
-          <motion.h2
-            className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1 flex items-center gap-3"
-            variants={STAGGER_ITEM}
-          >
-            {isMaster ? "Как заказчик" : "Мои задачи"}
-            <span className="w-1 h-1 rounded-full bg-indigo-600" />
-          </motion.h2>
+          <motion.div variants={STAGGER_ITEM}>
+            <SectionHeader 
+              title={isMaster ? "Как заказчик" : "Мои задачи"} 
+              accentColor="indigo" 
+              className="mb-5" 
+            />
+          </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link href="/dashboard/create-task">
               <ActionCard
@@ -198,13 +192,9 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         {/* ── Browse Feed ── */}
         {!isMaster && (
           <div className="space-y-5">
-            <motion.h2
-              className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1 flex items-center gap-3"
-              variants={STAGGER_ITEM}
-            >
-              Лента заказов
-              <span className="w-1 h-1 rounded-full bg-indigo-600" />
-            </motion.h2>
+            <motion.div variants={STAGGER_ITEM}>
+              <SectionHeader title="Лента заказов" accentColor="indigo" className="mb-5" />
+            </motion.div>
             <Link href="/dashboard/feed">
               <ActionCard
                 title="Все заявки"
@@ -219,10 +209,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
 
         {/* ── Categories ── */}
         <motion.div variants={STAGGER_ITEM}>
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 px-1 flex items-center gap-3 mb-5">
-            Категории услуг
-            <span className="w-1 h-1 rounded-full bg-indigo-600" />
-          </h2>
+          <SectionHeader title="Категории услуг" accentColor="indigo" className="mb-5" />
           <CategoryGrid initialCategories={categories} />
         </motion.div>
       </div>

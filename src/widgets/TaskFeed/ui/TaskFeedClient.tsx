@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
+import { SectionHeader } from "@/shared/ui/section-header";
 import { TaskCard } from "./TaskCard";
 import { loadTasksAction } from "../api/load-tasks";
 import type { TaskCardData } from "@/shared/types/domain";
@@ -65,14 +66,8 @@ export function TaskFeedClient({
 
   return (
     <StaggerWrap className="space-y-6">
-      <StaggerItem className="flex items-center justify-between px-2 mb-8">
-        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 flex items-center gap-3">
-          Свежие тендеры
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-        </h2>
-        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full uppercase tracking-wider">
-          {totalLabel}
-        </span>
+      <StaggerItem className="mb-8">
+        <SectionHeader title="Свежие тендеры" countLabel={totalLabel} accentColor="blue" />
       </StaggerItem>
 
       <StaggerWrap className="grid grid-cols-1 gap-6 pb-4">

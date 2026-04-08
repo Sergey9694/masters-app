@@ -12,6 +12,7 @@ import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 import { 
   Pagination, 
@@ -114,15 +115,7 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
           ].filter(group => group.items.length > 0).map((group) => (
             <div key={group.title} className="space-y-4">
               <StaggerItem>
-                <div className="flex items-center gap-3 px-1">
-                  <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
-                    {group.title}
-                  </h2>
-                  <div className="h-px flex-1 bg-white/5" />
-                  <span className="text-[10px] font-black text-slate-600">
-                    {group.items.length}
-                  </span>
-                </div>
+                <SectionHeader title={group.title} count={group.items.length} />
               </StaggerItem>
 
               <div className="space-y-3">

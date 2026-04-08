@@ -20,6 +20,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { TaskImageGallery } from "@/features/task-view/ui/TaskImageGallery";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
+import { SectionHeader } from "@/shared/ui/section-header";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -146,10 +147,8 @@ export default async function TaskDetailPage({ params }: PageProps) {
       {/* Assigned master card (visible when task is IN_PROGRESS / COMPLETED) */}
       {task.assignedMaster && (task.status === "IN_PROGRESS" || task.status === "COMPLETED") && (
         <StaggerItem className="mb-6">
+          <SectionHeader title="Исполнитель" accentColor="emerald" className="mb-4" />
           <Card className="glass border border-emerald-500/20 p-5 rounded-[24px]">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-3">
-              Исполнитель
-            </p>
             <div className="flex items-center gap-3">
               <Avatar className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
                 <AvatarImage src={task.assignedMaster.user.avatar || ""} alt="" className="object-cover" />
@@ -234,15 +233,21 @@ export default async function TaskDetailPage({ params }: PageProps) {
       )}
 
       {/* Responses list (owner sees all, master sees only own) */}
-      {task.responses.length > 0 && (
-        <StaggerItem>
-          <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-4 px-1">
-            Отклики
-          </h3>
-          <div className="space-y-3">
-            {task.responses
-              .filter((r) => isOwner || r.masterId === user.masterProfile?.id)
-              .map((r) => (
+      {(() => {
+        const filteredResponses = task.responses.filter(
+          (r) => isOwner || r.masterId === user.masterProfile?.id
+        );
+        if (filteredResponses.length === 0) return null;
+
+        return (
+          <StaggerItem className="mb-6">
+            <SectionHeader 
+              title="Отклики" 
+              count={filteredResponses.length} 
+              className="mb-4" 
+            />
+            <div className="space-y-3">
+              {filteredResponses.map((r) => (
                 <Card key={r.id} className="glass border-none p-5 rounded-[24px]">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex items-center gap-3">
@@ -284,9 +289,10 @@ export default async function TaskDetailPage({ params }: PageProps) {
                   </div>
                 </Card>
               ))}
-          </div>
-        </StaggerItem>
-      )}
+            </div>
+          </StaggerItem>
+        );
+      })()}
 
       {isOwner && task.responses.length === 0 && (
         <StaggerItem>

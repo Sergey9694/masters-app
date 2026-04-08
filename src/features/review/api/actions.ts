@@ -71,7 +71,7 @@ export async function createReviewAction(
 
     // Notify master about new review
     if (task.assignedMaster) {
-      notify({
+      await notify({
         userId: task.assignedMaster.userId,
         type: "NEW_REVIEW",
         title: "Новый отзыв",
