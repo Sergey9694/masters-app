@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Star, MessageSquare, Briefcase, Calendar } from "lucide-react";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { formatSmartDate } from "@/shared/lib/date";
 
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
@@ -91,7 +90,7 @@ export default async function ReviewsPage() {
                   </div>
                   <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    {format(review.createdAt, "d MMMM yyyy", { locale: ru })}
+                    {formatSmartDate(review.createdAt)}
                   </span>
                 </div>
 

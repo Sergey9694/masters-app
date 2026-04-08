@@ -4,8 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { markReadAction } from "../api/actions";
 import { Card } from "@/shared/ui/card";
-import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { formatSmartDate } from "@/shared/lib/date";
 import { MessageSquare, CheckCheck, Briefcase, XCircle, Star, PlusCircle } from "lucide-react";
 
 interface NotificationItemProps {
@@ -87,7 +86,7 @@ export function NotificationItem({ notification: n }: NotificationItemProps) {
             </p>
             <p className="text-xs font-normal text-slate-400 leading-snug">{n.body}</p>
             <p className="text-[10px] font-medium text-slate-500 mt-2">
-              {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: ru })}
+              {formatSmartDate(n.createdAt)}
             </p>
           </div>
           {!n.read && (

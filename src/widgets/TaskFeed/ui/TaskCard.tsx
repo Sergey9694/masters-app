@@ -3,8 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { MapPin, Clock, Banknote } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { formatSmartDate } from "@/shared/lib/date";
 import { Card } from "@/shared/ui/card";
 import { STAGGER_ITEM } from "@/shared/lib/motion";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
@@ -39,6 +38,9 @@ const formatDistance = (m: number) => {
 export function TaskCard({ task }: TaskCardProps) {
   const { title, description, budget, address, createdAt, category, customer, images, distance } = task;
   const haptics = useHaptics();
+
+  const truncatedTitle = title.length > 30 ? title.substring(0, 27) + "..." : title;
+  const truncatedDesc = description.length > 30 ? description.substring(0, 27) + "..." : description;
 
   return (
     <motion.div
@@ -88,17 +90,17 @@ export function TaskCard({ task }: TaskCardProps) {
           )}
 
           {/* Content */}
-          <div className="space-y-2 mb-6">
+          <div className="space-y-2 mb-6 text-left">
             <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight group-hover:text-blue-500 transition-colors">
-              {title}
+              {truncatedTitle}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 leading-relaxed font-normal opacity-80">
-              {description}
+            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal opacity-80">
+              {truncatedDesc}
             </p>
           </div>
 
           {/* Meta Info: Budget & Address */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10 dark:border-slate-800">
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10 dark:border-slate-800 text-left">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
@@ -128,7 +130,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
             <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-widest opacity-60">
               <Clock className="w-3.5 h-3.5" />
-              {formatDistanceToNow(createdAt, { addSuffix: true, locale: ru })}
+              {formatSmartDate(createdAt)}
             </div>
           </div>
         </div>

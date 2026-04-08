@@ -1,8 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ru } from "date-fns/locale";
+import { ChevronLeft, Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck, Mail, Calendar } from "lucide-react";
+import { formatSmartDate, formatRelativeTime } from "@/shared/lib/date";
 
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
@@ -96,7 +95,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                   {task.customer.firstName}
                 </p>
                 <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-                  {formatDistanceToNow(task.createdAt, { addSuffix: true, locale: ru })}
+                  {formatSmartDate(task.createdAt)}
                 </p>
               </div>
             </div>
@@ -281,7 +280,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                   )}
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
-                      {formatDistanceToNow(r.createdAt, { addSuffix: true, locale: ru })}
+                      {formatSmartDate(r.createdAt)}
                     </span>
                     {isOwner && task.status === "OPEN" && (
                       <AcceptResponseButton responseId={r.id} />

@@ -43,6 +43,7 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
         status: true,
         budget: true,
         createdAt: true,
+        description: true,
         category: { select: { name: true } },
         _count: { select: { responses: true } },
       },
@@ -95,6 +96,7 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
                   <TaskListItem
                     key={task.id}
                     title={task.title}
+                    description={task.description}
                     category={task.category.name}
                     status={task.status}
                     price={task.budget}

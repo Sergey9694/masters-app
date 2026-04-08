@@ -67,6 +67,7 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
             title: true,
             status: true,
             assignedMasterId: true,
+            description: true,
             category: { select: { name: true } },
           },
         },
@@ -138,6 +139,7 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
                   <TaskListItem
                     key={r.id}
                     title={r.task.title}
+                    description={r.task.description}
                     category={r.task.category.name}
                     status={r.task.status}
                     price={r.price}
