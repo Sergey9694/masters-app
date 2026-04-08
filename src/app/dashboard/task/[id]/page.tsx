@@ -144,12 +144,18 @@ export default async function TaskDetailPage({ params }: PageProps) {
         </Card>
       </StaggerItem>
 
-      {/* Owner controls: complete / cancel */}
-      {isOwner && (task.status === "OPEN" || task.status === "IN_PROGRESS") && (
-        <StaggerItem className="mb-6">
-          <TaskStatusButtons taskId={task.id} status={task.status} />
-        </StaggerItem>
-      )}
+      {/* Controls: owner (complete/cancel) or assigned master (refuse) */}
+      {(isOwner || task.assignedMasterId === user.masterProfile?.id) &&
+        (task.status === "OPEN" || task.status === "IN_PROGRESS") && (
+          <StaggerItem className="mb-6">
+            <TaskStatusButtons
+              taskId={task.id}
+              status={task.status}
+              isOwner={isOwner}
+              isAssignedMaster={task.assignedMasterId === user.masterProfile?.id}
+            />
+          </StaggerItem>
+        )}
 
       {/* Assigned master card (visible when task is IN_PROGRESS / COMPLETED) */}
       {task.assignedMaster && (task.status === "IN_PROGRESS" || task.status === "COMPLETED") && (

@@ -113,6 +113,32 @@ export async function acceptResponseAction(
       taskId: response.taskId,
     });
 
+    // Notify other masters who were NOT chosen
+    const otherResponses = await db.taskResponse.findMany({
+      where: {
+        taskId: response.taskId,
+        id: { not: responseId },
+      },
+      select: {
+        master: { select: { userId: true } },
+      },
+    });
+
+    if (otherResponses.length > 0) {
+      const otherUserIds = otherResponses.map((r) => r.master.userId);
+      await Promise.allSettled(
+        otherUserIds.map((uid) =>
+          notify({
+            userId: uid,
+            type: "TASK_CANCELED", // Or create a new type if needed, but TASK_CANCELED/CLOSED is close
+            title: "Заявка закрыта",
+            body: `Заказчик выбрал другого исполнителя для «${response.task.title}»`,
+            taskId: response.taskId,
+          }),
+        ),
+      );
+    }
+
     revalidatePath(`/dashboard/task/${response.taskId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
@@ -216,5 +242,54 @@ export async function cancelTaskAction(taskId: string): Promise<Result> {
   } catch (error) {
     console.error("[cancelTaskAction] error:", error);
     return { error: "Не удалось отменить заявку" };
+  }
+}
+
+export async function refuseTaskAction(taskId: string): Promise<Result> {
+  const user = await getCurrentUser();
+  if (!user || !user.masterProfile) return { error: "Необходима авторизация мастера" };
+
+  try {
+    const task = await db.taskRequest.findUnique({
+      where: { id: taskId },
+      select: {
+        id: true,
+        title: true,
+        customerId: true,
+        status: true,
+        assignedMasterId: true,
+      },
+    });
+
+    if (!task) return { error: "Заявка не найдена" };
+    if (task.assignedMasterId !== user.masterProfile.id) {
+      return { error: "Вы не назначены на эту заявку" };
+    }
+    if (task.status !== "IN_PROGRESS") {
+      return { error: "Заявка не в работе" };
+    }
+
+    await db.taskRequest.update({
+      where: { id: taskId },
+      data: {
+        status: "OPEN",
+        assignedMasterId: null,
+      },
+    });
+
+    // Notify customer that master refused
+    notify({
+      userId: task.customerId,
+      type: "TASK_CANCELED",
+      title: "Мастер отказался",
+      body: `Мастер ${user.firstName} отказался от выполнения «${task.title}». Заявка снова открыта.`,
+      taskId,
+    });
+
+    revalidatePath(`/dashboard/task/${taskId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("[refuseTaskAction] error:", error);
+    return { error: "Не удалось отказаться от заявки" };
   }
 }
