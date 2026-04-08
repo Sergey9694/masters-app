@@ -1,6 +1,6 @@
 # 00. Карта проекта (Project Map)
 
-> Актуализировано: 2026-04-06. Единая точка правды о структуре и ответственности модулей. При рассинхроне с другими docs — этот документ приоритетнее.
+> Актуализировано: 2026-04-08. Единая точка правды о структуре и ответственности модулей. При рассинхроне с другими docs — этот документ приоритетнее.
 
 ---
 
@@ -10,7 +10,7 @@
 
 Монетизация: подписка для мастеров + платная верификация + буст в топе.
 
-Текущая фаза: **2.3 (MVP стабилизация)**, готовность ~75%. Полный цикл сделки + security hardening + пагинация/поиск + загрузка фото.
+Текущая фаза: **2.3 (MVP стабилизация)**, готовность ~85%. Полный цикл сделки + Yandex Maps + Tailwind 4 Build Fix + Photo Upload (beta).
 
 ---
 
@@ -138,6 +138,7 @@ masters-app/
 | `storage/file-storage.ts` | Загрузка фото: sharp resize 1920px → WebP q85, сохранение в `<cwd>/uploads/` (Docker volume) |
 | `telegram/use-haptics.ts` | Хук Haptic Feedback TWA |
 | `telegram/use-main-button.ts` | Хук tg.MainButton |
+| `maps.ts` | Утилита генерации ссылок для Яндекс Карт |
 
 #### `shared/types/`
 | Файл | Содержит |
@@ -215,6 +216,9 @@ masters-app/
 | A9 | FSD-barrels (`index.ts`) | Контракт слоёв | 🟡 | ✅ добавлены |
 | A10 | Rate-limit на Server Actions | Абьюз `login`, `createOrder`, `upload` | 🟠 | ✅ in-memory limiter |
 | A11 | CSP-заголовки | XSS → кража cookies | 🟠 | ✅ добавлены в next.config.ts |
+| A12 | Tailwind 4 Build Error | Nested `@utility` | 🔴 | ✅ исправлено (08.04) |
+| A13 | Broken TG Avatars | No-referrer policy | 🔴 | ✅ исправлено (08.04) |
+| A14 | Maps Integration | Yandex Maps clickable links | 🟡 | ✅ реализовано (08.04) |
 
 Подробный план фиксов — в [06_Development_Plan.md](06_Development_Plan.md).
 

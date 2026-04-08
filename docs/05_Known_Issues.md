@@ -36,3 +36,10 @@
     - A5: Добавлена проверка TTL `auth_date` (24ч) в `validateTelegramWebAppData`.
     - A6: Функция `validateTelegramWebAppData` теперь возвращает типизированный результат с причиной отказа (`no_token | no_hash | bad_signature | expired`) — убран `any`-cast в `encrypt()`.
     - Бонус: `loginWithTelegram` — заменена пара `findUnique + create` на атомарный `upsert` (устраняет race condition из Known Issue #4). Ошибки теперь логируются с префиксом `[loginWithTelegram]`.
+
+- [x] **08.04.2026 — UI/UX & Build Stability**:
+    - **Infrastructure**: Исправлена критическая ошибка билда Tailwind CSS v4, связанная с вложенными `@utility`. Все кастомные утилиты перенесены на верхний уровень `globals.css`.
+    - **Aesthetics**: Реализована полная синхронизация неоновых градиентов (бордер + текст) для бейджей категорий. Сетка `CategoryGrid` сделана более компактной.
+    - **UX / Maps**: Внедрена интеграция с Яндекс Картами через `shared/lib/maps.ts`. Адреса в ленте и на детальной странице стали кликабельными (активными ссылками).
+    - **Fix**: Решена проблема «пропадающих» аватарок Telegram на страницах отзывов и в ленте через глобальную настройку `referrerPolicy="no-referrer"` в компоненте `Avatar`.
+    - **Refinement**: Страница отзывов переработана для более высокой плотности информации (компактные карточки).

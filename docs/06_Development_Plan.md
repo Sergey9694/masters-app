@@ -154,10 +154,10 @@ if (result.success) {
 
 ### ЭТАП 3 — Telegram UX & Real-time (1-2 недели) 🚀
 
-- [ ] **3.1** Подключить `tg.themeParams` → CSS-переменные Tailwind (динамическая темизация под клиент Telegram).
-- [ ] **3.2** Интегрировать `tg.MainButton` в формы создания задачи и отклика (замена sticky-bottom кнопкам).
-- [ ] **3.3** Интегрировать `tg.BackButton` для навигации на `Task Detail`.
-- [ ] **3.4** Haptic Feedback на ключевые действия (submit, success, error) — через `useHaptics` хук.
+- [ ] **3.1** Подключить `tg.themeParams` → CSS-переменные Tailwind. 🛠
+- [ ] **3.2** Интегрировать `tg.MainButton` в формы создания задачи и отклика. 🛠
+- [x] **3.3** Интегрировать `tg.BackButton` для навигации (синхронно с TWA). ✅ (08.04)
+- [x] **3.4** Haptic Feedback (submit, success, selection) через `useHaptics`. ✅ (08.04)
 - [ ] **3.5** **Telegram Bot (notifications)**: подпроект `src/shared/api/tg-bot/` — `sendNotification(telegramId, text)` + webhook-роут `POST /api/tg/webhook`.
 - [ ] **3.6** Рассылка новых задач мастерам в радиусе (очередь через `BullMQ` или `pg-boss`).
 - [ ] **3.7** Очередь уведомлений: при новой задаче — PostGIS-запрос «мастера в радиусе» → пакетная отправка.
