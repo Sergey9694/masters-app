@@ -55,44 +55,65 @@ export default async function MyTasksPage() {
           </div>
         </StaggerItem>
       ) : (
-        <div className="space-y-3">
-          {tasks.map((task) => {
-            return (
-              <StaggerItem key={task.id}>
-                <Link href={`/dashboard/task/${task.id}`}>
-                  <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-                          {task.category.name}
-                        </p>
-                        <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
-                          {task.title}
-                        </h3>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <StatusBadge status={task.status} />
-                      {task.budget && (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-slate-300">
-                          <Banknote className="w-3 h-3 text-emerald-400" />
-                          {task.budget.toLocaleString()} ₽
-                        </span>
-                      )}
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                        {task._count.responses} откликов
-                      </span>
-                      <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-500">
-                        <Clock className="w-3 h-3" />
-                        {formatDistanceToNow(task.createdAt, { addSuffix: true, locale: ru })}
-                      </span>
-                    </div>
-                  </Card>
-                </Link>
+      ) : (
+        <div className="space-y-8">
+          {[
+            { title: "Активные", items: tasks.filter(t => t.status === "OPEN" || t.status === "IN_PROGRESS") },
+            { title: "Завершенные", items: tasks.filter(t => t.status === "COMPLETED") },
+            { title: "Отмененные", items: tasks.filter(t => t.status === "CANCELED") }
+          ].filter(group => group.items.length > 0).map((group, groupIdx) => (
+            <div key={group.title} className="space-y-4">
+              <StaggerItem>
+                <div className="flex items-center gap-3 px-1">
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
+                    {group.title}
+                  </h2>
+                  <div className="h-px flex-1 bg-white/5" />
+                  <span className="text-[10px] font-black text-slate-600">
+                    {group.items.length}
+                  </span>
+                </div>
               </StaggerItem>
-            );
-          })}
+              
+              <div className="space-y-3">
+                {group.items.map((task) => (
+                  <StaggerItem key={task.id}>
+                    <Link href={`/dashboard/task/${task.id}`}>
+                      <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                              {task.category.name}
+                            </p>
+                            <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
+                              {task.title}
+                            </h3>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <StatusBadge status={task.status} />
+                          {task.budget && (
+                            <span className="flex items-center gap-1 text-[11px] font-bold text-slate-300">
+                              <Banknote className="w-3 h-3 text-emerald-400" />
+                              {task.budget.toLocaleString()} ₽
+                            </span>
+                          )}
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            {task._count.responses} откликов
+                          </span>
+                          <span className="ml-auto flex items-center gap-1 text-[10px] text-slate-500">
+                            <Clock className="w-3 h-3" />
+                            {formatDistanceToNow(task.createdAt, { addSuffix: true, locale: ru })}
+                          </span>
+                        </div>
+                      </Card>
+                    </Link>
+                  </StaggerItem>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </StaggerWrap>

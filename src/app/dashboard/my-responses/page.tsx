@@ -80,47 +80,70 @@ export default async function MyResponsesPage() {
           </div>
         </StaggerItem>
       ) : (
-        <div className="space-y-3">
-          {responses.map((r) => {
-            const isChosen = r.task.assignedMasterId === user.masterProfile!.id;
-            return (
-              <StaggerItem key={r.id}>
-                <Link href={`/dashboard/task/${r.task.id}`}>
-                  <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
-                    <div className="flex items-start justify-between gap-4 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
-                          {r.task.category.name}
-                        </p>
-                        <h3 className="text-base font-black text-white leading-tight truncate">
-                          {r.task.title}
-                        </h3>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <StatusBadge status={r.task.status} />
-                      {isChosen && (
-                        <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Вы выбраны
-                        </span>
-                      )}
-                      {r.price && (
-                        <span className="flex items-center gap-1 text-[11px] font-bold text-slate-300">
-                          <Banknote className="w-3 h-3 text-emerald-400" />
-                          {r.price.toLocaleString()} ₽
-                        </span>
-                      )}
-                      <span className="ml-auto text-[10px] text-slate-500">
-                        {formatDistanceToNow(r.createdAt, { addSuffix: true, locale: ru })}
-                      </span>
-                    </div>
-                  </Card>
-                </Link>
+      ) : (
+        <div className="space-y-8">
+          {[
+            { title: "Активные", items: responses.filter(r => r.task.status === "OPEN" || r.task.status === "IN_PROGRESS") },
+            { title: "Завершенные", items: responses.filter(r => r.task.status === "COMPLETED") },
+            { title: "Отмененные", items: responses.filter(r => r.task.status === "CANCELED") }
+          ].filter(group => group.items.length > 0).map((group) => (
+            <div key={group.title} className="space-y-4">
+              <StaggerItem>
+                <div className="flex items-center gap-3 px-1">
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">
+                    {group.title}
+                  </h2>
+                  <div className="h-px flex-1 bg-white/5" />
+                  <span className="text-[10px] font-black text-slate-600">
+                    {group.items.length}
+                  </span>
+                </div>
               </StaggerItem>
-            );
-          })}
+
+              <div className="space-y-3">
+                {group.items.map((r) => {
+                  const isChosen = r.task.assignedMasterId === user.masterProfile!.id;
+                  return (
+                    <StaggerItem key={r.id}>
+                      <Link href={`/dashboard/task/${r.task.id}`}>
+                        <Card className="glass border-none p-5 rounded-[24px] hover:bg-white/5 transition-all group">
+                          <div className="flex items-start justify-between gap-4 mb-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">
+                                {r.task.category.name}
+                              </p>
+                              <h3 className="text-lg font-black text-white leading-tight truncate mb-1">
+                                {r.task.title}
+                              </h3>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
+                          </div>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <StatusBadge status={r.task.status} />
+                            {isChosen && (
+                              <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 flex items-center gap-1 border border-emerald-500/20">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Вы выбраны
+                              </span>
+                            )}
+                            {r.price && (
+                              <span className="flex items-center gap-1 text-[11px] font-bold text-slate-300">
+                                <Banknote className="w-3 h-3 text-emerald-400" />
+                                {r.price.toLocaleString()} ₽
+                              </span>
+                            )}
+                            <span className="ml-auto text-[10px] text-slate-500">
+                              {formatDistanceToNow(r.createdAt, { addSuffix: true, locale: ru })}
+                            </span>
+                          </div>
+                        </Card>
+                      </Link>
+                    </StaggerItem>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </StaggerWrap>
