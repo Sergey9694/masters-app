@@ -234,12 +234,33 @@ function StatCard({
   icon: React.ReactNode;
   color: string;
 }) {
+  const colorMap: Record<string, string> = {
+    "text-amber-400": "from-amber-400/20 to-transparent",
+    "text-blue-400": "from-blue-400/20 to-transparent",
+    "text-emerald-400": "from-emerald-400/20 to-transparent",
+  };
+
   return (
-    <motion.div variants={STAGGER_ITEM}>
-      <Card className="p-4 rounded-[20px] glass border-none text-left flex flex-col items-start">
-        <div className={`${color} mb-3`}>{icon}</div>
-        <p className="text-2xl font-black text-white leading-none mb-1.5">{value}</p>
-        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 whitespace-nowrap">{label}</p>
+    <motion.div variants={STAGGER_ITEM} whileHover={{ y: -2 }} className="flex-1">
+      <Card className="relative overflow-hidden p-4 rounded-[24px] glass border-none flex flex-col items-start gap-1 h-full min-h-[90px] group transition-all">
+        {/* Background Accent */}
+        <div className={`absolute top-0 right-0 w-12 h-12 bg-gradient-to-bl ${colorMap[color] || "from-blue-400/10 to-transparent"} opacity-50 blur-xl`} />
+        
+        <div className="flex items-start justify-between w-full">
+          <p className={cn("text-2xl font-black leading-none tracking-tight text-white group-hover:scale-105 transition-transform origin-left")}>
+            {value}
+          </p>
+          <div className={`${color} opacity-40 group-hover:opacity-100 transition-opacity`}>
+            {React.cloneElement(icon as React.ReactElement, { className: "w-3.5 h-3.5" })}
+          </div>
+        </div>
+
+        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-500 mt-1">
+          {label}
+        </p>
+
+        {/* Decorative Indicator */}
+        <div className={cn("absolute bottom-3 right-3 w-1 h-1 rounded-full", color.replace("text-", "bg-"), "opacity-30")} />
       </Card>
     </motion.div>
   );
