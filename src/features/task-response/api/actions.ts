@@ -127,8 +127,8 @@ export async function acceptResponseAction(
     if (otherResponses.length > 0) {
       const otherUserIds = otherResponses.map((r) => r.master.userId);
       await Promise.allSettled(
-        otherUserIds.map((uid) =>
-          notify({
+        otherUserIds.map(async (uid) =>
+          await notify({
             userId: uid,
             type: "TASK_CANCELED", // Or create a new type if needed, but TASK_CANCELED/CLOSED is close
             title: "Заявка закрыта",
