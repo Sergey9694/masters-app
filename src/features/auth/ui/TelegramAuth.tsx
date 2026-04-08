@@ -51,7 +51,9 @@ export function TelegramAuth() {
         ));
         // CRITICAL: refresh RSC cache so /dashboard sees the new session cookie
         router.refresh();
-        router.push("/dashboard");
+        // Используем replace вместо push, чтобы корень (/) не оставался в истории переходов
+        // Это предотвращает петлю: /dashboard -> Назад -> / -> Авто-логин -> /dashboard
+        router.replace("/dashboard");
         return;
       }
 

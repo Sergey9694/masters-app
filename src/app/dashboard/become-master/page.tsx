@@ -31,6 +31,7 @@ export default async function BecomeMasterPage() {
       <StaggerItem className="flex items-center gap-4 mb-10">
         <Link
           href="/dashboard"
+          replace
           className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />

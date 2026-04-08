@@ -20,7 +20,11 @@ type TWA = {
  *   useBackButton();                              // router.back()
  *   useBackButton(() => router.push("/dashboard")); // custom handler
  */
-export function useBackButton(onBack?: () => void) {
+// Глобальный счетчик для отслеживания количества активных компонентов TelegramBackButton
+// Это предотвращает скрытие кнопки при переходе между страницами, которые обе используют кнопку
+let activeButtonsCount = 0;
+
+export function useBackButton(fallbackPath: string = "/dashboard") {
   const router = useRouter();
 
   useEffect(() => {
@@ -30,16 +34,29 @@ export function useBackButton(onBack?: () => void) {
     if (!tg) return;
 
     const handler = () => {
-      if (onBack) onBack();
-      else router.back();
+      // Использование replace предотвращает раздувание истории
+      router.replace(fallbackPath);
     };
 
+    activeButtonsCount++;
     tg.BackButton.onClick(handler);
-    tg.BackButton.show();
+    
+    // Показываем кнопку, если это первый активный компонент
+    if (activeButtonsCount > 0) {
+      tg.BackButton.show();
+    }
 
     return () => {
+      activeButtonsCount--;
       tg.BackButton.offClick(handler);
-      tg.BackButton.hide();
+      
+      // Скрываем кнопку только если больше нет активных компонентов TelegramBackButton на экране
+      // Делаем это с небольшой задержкой, чтобы переход между страницами был плавным и кнопка не "прыгала"
+      setTimeout(() => {
+        if (activeButtonsCount <= 0) {
+          tg.BackButton.hide();
+        }
+      }, 10);
     };
-  }, [onBack, router]);
+  }, [fallbackPath, router]);
 }

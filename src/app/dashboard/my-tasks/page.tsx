@@ -43,6 +43,7 @@ export default async function MyTasksPage() {
       <StaggerItem className="flex items-center gap-4 mb-8">
         <Link
           href="/dashboard"
+          replace
           className="w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
