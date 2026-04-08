@@ -111,27 +111,27 @@
     box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
   }
 
-  /* Premium Neon Gradient Border Utility */
-  .neon-border-gradient {
+  /* Premium Neon Gradient Border Utility - Defined as @utility for Tailwind v4 compatibility */
+  @utility neon-border-gradient {
     position: relative;
     background: rgba(255, 255, 255, 0.03) !important;
     border: none !important;
     z-index: 1;
-  }
 
-  .neon-border-gradient::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(to right, #818cf8, #22d3ee, #34d399);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
-    opacity: 0.8;
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(to right, #818cf8, #22d3ee, #34d399);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0.8;
+    }
   }
 
   .badge-category-neon {
