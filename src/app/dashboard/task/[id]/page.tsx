@@ -19,6 +19,7 @@ import { ReviewForm } from "@/features/review/ui/ReviewForm";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { TaskImageGallery } from "@/features/task-view/ui/TaskImageGallery";
 import { PageHeader } from "@/shared/ui/page-header";
+import { StatusBadge } from "@/shared/ui/status-badge";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -68,20 +69,13 @@ export default async function TaskDetailPage({ params }: PageProps) {
     task.responses.some((r) => r.masterId === user.masterProfile!.id);
   const canRespond = !isOwner && isMaster && task.status === "OPEN" && !alreadyResponded;
 
-  const statusLabel: Record<typeof task.status, string> = {
-    OPEN: "Открыта",
-    IN_PROGRESS: "В работе",
-    COMPLETED: "Завершена",
-    CANCELED: "Отменена",
-  };
-
   return (
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       <TelegramBackButton />
 
       <PageHeader 
         title="Заявка"
-        subtitle={statusLabel[task.status]}
+        subtitle={<StatusBadge status={task.status} />}
         fallbackUrl="/dashboard/feed"
       />
 

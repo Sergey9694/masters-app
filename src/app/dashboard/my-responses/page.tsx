@@ -11,13 +11,7 @@ import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
-
-const STATUS_LABEL: Record<string, { text: string; color: string }> = {
-  OPEN: { text: "Открыта", color: "text-blue-400 bg-blue-500/10" },
-  IN_PROGRESS: { text: "В работе", color: "text-amber-400 bg-amber-500/10" },
-  COMPLETED: { text: "Завершена", color: "text-emerald-400 bg-emerald-500/10" },
-  CANCELED: { text: "Отменена", color: "text-slate-400 bg-slate-500/10" },
-};
+import { StatusBadge } from "@/shared/ui/status-badge";
 
 export default async function MyResponsesPage() {
   const user = await getCurrentUser();
@@ -88,7 +82,6 @@ export default async function MyResponsesPage() {
       ) : (
         <div className="space-y-3">
           {responses.map((r) => {
-            const status = STATUS_LABEL[r.task.status];
             const isChosen = r.task.assignedMasterId === user.masterProfile!.id;
             return (
               <StaggerItem key={r.id}>
@@ -106,9 +99,7 @@ export default async function MyResponsesPage() {
                       <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${status.color}`}>
-                        {status.text}
-                      </span>
+                      <StatusBadge status={r.task.status} />
                       {isChosen && (
                         <span className="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3" />

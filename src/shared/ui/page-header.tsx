@@ -6,7 +6,7 @@ import { StaggerItem } from "./stagger-item";
 
 interface PageHeaderProps {
   title: string;
-  subtitle?: string;
+  subtitle?: string | React.ReactNode;
   showBack?: boolean;
   fallbackUrl?: string;
   rightAction?: React.ReactNode;
@@ -33,9 +33,15 @@ export function PageHeader({
           {title}
         </h1>
         {subtitle && (
-          <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mt-1">
-            {subtitle}
-          </p>
+          <div className="mt-1">
+            {typeof subtitle === "string" ? (
+              <p className="text-xs font-bold text-blue-400 uppercase tracking-widest leading-none">
+                {subtitle}
+              </p>
+            ) : (
+              subtitle
+            )}
+          </div>
         )}
       </div>
       {rightAction && (
