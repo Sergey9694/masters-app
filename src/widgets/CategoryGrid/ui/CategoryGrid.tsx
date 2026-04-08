@@ -30,7 +30,7 @@ export function CategoryGrid({ initialCategories, className }: { initialCategori
                className="flex flex-col items-center gap-2 group relative cursor-pointer"
              >
                 {/* Icon Container with Neon Gradient Border */}
-                <div className="w-16 h-16 rounded-[24px] neon-border-gradient flex items-center justify-center text-slate-800 dark:text-white transition-all duration-300 shadow-xl shadow-black/20 group-hover:shadow-cyan-500/20 group-hover:bg-white/5">
+                <div className="w-16 h-16 rounded-[24px] neon-border-gradient flex items-center justify-center text-slate-800 dark:text-white transition-all duration-300 shadow-xl shadow-black/20 group-hover:shadow-cyan-500/40 bg-white/[0.03] group-hover:bg-white/[0.08]">
                   <Icon className="w-7 h-7 stroke-[1.8] group-hover:text-cyan-400 transition-colors" />
                 </div>
 

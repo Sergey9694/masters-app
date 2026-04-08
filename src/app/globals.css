@@ -89,7 +89,6 @@
 /* Base Neon Utility - Must be at top level for Tailwind v4 */
 @utility neon-border-gradient {
   position: relative;
-  background: rgba(255, 255, 255, 0.03) !important;
   border: none !important;
   z-index: 1;
 
@@ -111,6 +110,8 @@
 
 @utility badge-category-neon {
   @apply neon-border-gradient;
+  /* Specific override for badges to allow bg-clip-text gradient to work on the main element */
+  background-color: transparent !important;
 }
 
 @layer utilities {
