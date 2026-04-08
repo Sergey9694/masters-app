@@ -39,7 +39,8 @@ export async function uploadImagesAction(formData: FormData) {
   
   const parsed = uploadImagesSchema.safeParse({ images: rawImages });
   if (!parsed.success) {
-    throw new Error(parsed.error.errors[0]?.message || "Ошибка при валидации файлов");
+    const firstIssue = parsed.error.issues?.[0];
+    throw new Error(firstIssue?.message || "Ошибка при валидации файлов");
   }
 
   const files = parsed.data.images;
