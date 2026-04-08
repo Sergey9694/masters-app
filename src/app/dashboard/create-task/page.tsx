@@ -22,7 +22,7 @@ export default async function CreateTaskPage() {
   });
 
   return (
-    <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
+    <StaggerWrap className="min-h-screen pb-20 pt-6 max-w-2xl mx-auto container-standard overflow-x-hidden">
       <TelegramBackButton />
       
       <PageHeader 

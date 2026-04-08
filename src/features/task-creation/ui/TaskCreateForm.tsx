@@ -112,138 +112,136 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
   };
 
   return (
-    <div className="container-standard">
-      <Form {...form}>
-        <motion.form
-          initial="initial"
-          animate="animate"
-          variants={SLIDE_UP}
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 sm:space-y-12"
-        >
-          <Card className="glass-premium border-none p-6 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative overflow-visible group/card">
-            {/* Ambient Multi-Accent Glows */}
-            <div className="absolute top-0 right-0 w-32 sm:w-48 h-32 sm:h-48 bg-cyan-500/10 blur-[60px] sm:blur-[100px] -mr-12 sm:-mr-24 -mt-12 sm:-mt-24 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-32 sm:w-48 h-32 sm:h-48 bg-indigo-500/10 blur-[60px] sm:blur-[100px] -ml-12 sm:-ml-24 -mb-12 sm:-mb-24 pointer-events-none" />
+    <Form {...form}>
+      <motion.form
+        initial="initial"
+        animate="animate"
+        variants={SLIDE_UP}
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-8 sm:space-y-12"
+      >
+        <Card className="glass-premium border-none p-6 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative overflow-visible group/card">
+          {/* Ambient Multi-Accent Glows */}
+          <div className="absolute top-0 right-0 w-32 sm:w-48 h-32 sm:h-48 bg-cyan-500/10 blur-[60px] sm:blur-[100px] -mr-12 sm:-mr-24 -mt-12 sm:-mt-24 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-32 sm:w-48 h-32 sm:h-48 bg-indigo-500/10 blur-[60px] sm:blur-[100px] -ml-12 sm:-ml-24 -mb-12 sm:-mb-24 pointer-events-none" />
 
-            <header className="space-y-1 relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                <div className="h-1.5 w-8 rounded-full bg-indigo-500/30" />
-                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                Создать тендер
-                <ShieldCheck className="w-5 h-5 text-indigo-400" />
-              </h1>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">District Master • Precision Flow</p>
-            </header>
+          <header className="space-y-1 relative z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <div className="h-1.5 w-8 rounded-full bg-indigo-500/30" />
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+              Создать тендер
+              <ShieldCheck className="w-5 h-5 text-indigo-400" />
+            </h1>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">District Master • Precision Flow</p>
+          </header>
 
-            <div className="space-y-6 relative z-10">
+          <div className="space-y-6 relative z-10">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Что нужно сделать?</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Например: Сборка мебели ИКЕА" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Photos Dropzone Extracted */}
+            <PhotoUploadField previewImages={previewImages} setPreviewImages={setPreviewImages} />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="title"
+                name="categoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Что нужно сделать?</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Например: Сборка мебели ИКЕА" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Photos Dropzone Extracted */}
-              <PhotoUploadField previewImages={previewImages} setPreviewImages={setPreviewImages} />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Категория</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Выберите тип" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="budget"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Готовы оплатить (₽)</FormLabel>
+                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Категория</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <Input type="number" placeholder="Бюджет" {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите тип" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
-                name="description"
+                name="budget"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Подробнее</FormLabel>
+                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Готовы оплатить (₽)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Опишите масштаб работы..." className="min-h-[140px]" {...field} />
+                      <Input type="number" placeholder="Бюджет" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {/* Address Field Extracted */}
-              <AddressField form={form} />
             </div>
 
-            <Button
-              type="submit"
-              variant="premium"
-              size="xl"
-              asChild
-              disabled={isPending || isUploading}
-              className="w-full relative group rounded-[var(--ui-radius-premium)] mt-6"
-            >
-              <motion.button whileHover={HOVER_GLOW} whileTap={CLICK_SCALE}>
-                {isPending || isUploading ? (
-                  <Loader2 className="w-7 h-7 animate-spin" />
-                ) : (
-                  <div className="flex items-center gap-4">
-                    <span>Опубликовать тендер</span>
-                    <SendHorizontal className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
-              </motion.button>
-            </Button>
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Подробнее</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Опишите масштаб работы..." className="min-h-[140px]" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <footer className="pt-3 flex justify-center opacity-30 relative z-10">
-              <div className="flex items-center gap-6">
-                <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-cyan-500/50" />
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <div className="h-0.5 w-12 bg-gradient-to-l from-transparent to-indigo-500/50" />
-              </div>
-            </footer>
-          </Card>
-        </motion.form>
-      </Form>
-    </div>
+            {/* Address Field Extracted */}
+            <AddressField form={form} />
+          </div>
+
+          <Button
+            type="submit"
+            variant="premium"
+            size="xl"
+            asChild
+            disabled={isPending || isUploading}
+            className="w-full relative group rounded-[var(--ui-radius-premium)] mt-6"
+          >
+            <motion.button whileHover={HOVER_GLOW} whileTap={CLICK_SCALE}>
+              {isPending || isUploading ? (
+                <Loader2 className="w-7 h-7 animate-spin" />
+              ) : (
+                <div className="flex items-center gap-4">
+                  <span>Опубликовать тендер</span>
+                  <SendHorizontal className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
+            </motion.button>
+          </Button>
+
+          <footer className="pt-3 flex justify-center opacity-30 relative z-10">
+            <div className="flex items-center gap-6">
+              <div className="h-0.5 w-12 bg-gradient-to-r from-transparent to-cyan-500/50" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <div className="h-0.5 w-12 bg-gradient-to-l from-transparent to-indigo-500/50" />
+            </div>
+          </footer>
+        </Card>
+      </motion.form>
+    </Form>
   );
 }
