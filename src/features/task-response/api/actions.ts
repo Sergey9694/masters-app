@@ -258,6 +258,7 @@ export async function refuseTaskAction(taskId: string): Promise<Result> {
         customerId: true,
         status: true,
         assignedMasterId: true,
+        categoryId: true,
       },
     });
 
@@ -269,13 +270,21 @@ export async function refuseTaskAction(taskId: string): Promise<Result> {
       return { error: "Заявка не в работе" };
     }
 
-    await db.taskRequest.update({
-      where: { id: taskId },
-      data: {
-        status: "OPEN",
-        assignedMasterId: null,
-      },
-    });
+    // Use transaction to ensure data integrity
+    await db.$transaction([
+      db.taskRequest.update({
+        where: { id: taskId },
+        data: {
+          status: "OPEN",
+          assignedMasterId: null,
+        },
+      }),
+      // Remove this master's response so someone else can be chosen 
+      // and this master doesn't distract the owner
+      db.taskResponse.deleteMany({
+        where: { taskId, masterId: user.masterProfile.id }
+      })
+    ]);
 
     // Notify customer that master refused
     notify({
@@ -286,7 +295,17 @@ export async function refuseTaskAction(taskId: string): Promise<Result> {
       taskId,
     });
 
+    // Notify other masters in category that job is available again
+    const { notifyMastersInCategories } = await import("@/shared/lib/telegram/bot-notify");
+    notifyMastersInCategories(
+      [task.categoryId],
+      user.id, // Exclude the one who just refused
+      `[СНОВА ОТКРЫТА] ${task.title}`,
+      taskId,
+    );
+
     revalidatePath(`/dashboard/task/${taskId}`);
+    revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
     console.error("[refuseTaskAction] error:", error);
