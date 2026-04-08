@@ -26,9 +26,16 @@ export default async function DashboardPage() {
     // table may not exist yet before migration
   }
 
-  const [myTasksCount, openResponsesCount, activeTasksCount] =
+  const [myTasksCount, openTasksCount, customerActiveTasksCount, openResponsesCount] =
     await Promise.all([
       db.taskRequest.count({ where: { customerId: user.id } }),
+      db.taskRequest.count({ where: { customerId: user.id, status: "OPEN" } }),
+      db.taskRequest.count({
+        where: {
+          customerId: user.id,
+          status: { in: ["OPEN", "IN_PROGRESS"] },
+        },
+      }),
       db.taskRequest.count({
         where: {
           customerId: user.id,
@@ -36,14 +43,6 @@ export default async function DashboardPage() {
           responses: { some: {} },
         },
       }),
-      isMaster
-        ? db.taskRequest.count({
-            where: {
-              assignedMasterId: user.masterProfile!.id,
-              status: "IN_PROGRESS",
-            },
-          })
-        : 0,
     ]);
 
   // Master-specific stats
@@ -58,7 +57,12 @@ export default async function DashboardPage() {
             task: { status: "OPEN" }
           },
         }),
-        activeTasksCount,
+        activeTasksCount: await db.taskRequest.count({
+          where: {
+            assignedMasterId: user.masterProfile!.id,
+            status: "IN_PROGRESS",
+          },
+        }),
         rating: user.masterProfile!.rating,
         reviewsCount: await db.review.count({
           where: { masterId: user.masterProfile!.id },
@@ -76,6 +80,8 @@ export default async function DashboardPage() {
         categories={categories}
         stats={{
           myTasksCount,
+          openTasksCount,
+          activeTasksCount: customerActiveTasksCount,
           openResponsesCount,
           unreadNotificationsCount,
           masterStats,

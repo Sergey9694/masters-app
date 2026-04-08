@@ -19,6 +19,8 @@ export interface MasterStats {
 /** Dashboard stats */
 export interface DashboardStats {
   myTasksCount: number;
+  openTasksCount: number;
+  activeTasksCount: number;
   openResponsesCount: number;
   unreadNotificationsCount: number;
   masterStats: MasterStats | null;

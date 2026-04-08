@@ -162,7 +162,9 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                 badge={
                   stats.openResponsesCount > 0
                     ? `${stats.openResponsesCount} новых откликов`
-                    : null
+                    : stats.activeTasksCount > 0
+                      ? `${stats.activeTasksCount} активных`
+                      : null
                 }
               />
             </Link>
@@ -264,16 +266,16 @@ function ActionCard({
 
   return (
     <motion.div variants={STAGGER_ITEM} whileHover={HOVER_GLOW} whileTap={CLICK_SCALE}>
-      <Card className="p-6 border-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-none glass flex flex-col items-start gap-5 hover:bg-white/10 dark:hover:bg-slate-800 transition-all duration-500 cursor-pointer group active:scale-[0.97] rounded-[32px] border border-white/10 dark:border-white/20 select-none">
+      <Card className="p-6 border-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-none glass flex flex-col items-start gap-5 hover:bg-white/10 dark:hover:bg-slate-800 transition-all duration-500 cursor-pointer group active:scale-[0.97] rounded-[32px] border border-white/10 dark:border-white/20 select-none relative overflow-visible">
+        {badge && (
+          <span className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-blue-600 text-[10px] font-black text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap animate-in fade-in zoom-in duration-300 z-20 border border-white/10">
+            {badge}
+          </span>
+        )}
         <div
-          className={`${colorMap[color] || color} p-4 rounded-[20px] text-white shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 relative`}
+          className={`${colorMap[color] || color} p-4 rounded-[20px] text-white shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500`}
         >
           {icon}
-          {badge && (
-            <span className="absolute -top-2 -right-2 px-2 h-5 rounded-full bg-blue-600 text-[10px] font-black text-white flex items-center justify-center border-2 border-[#14171f] shadow-[0_0_10px_rgba(37,99,235,0.5)] whitespace-nowrap animate-in fade-in zoom-in duration-300">
-              {badge}
-            </span>
-          )}
         </div>
         <div className="text-left">
           <h3 className="font-black text-slate-900 dark:text-cyan-400 uppercase text-[12px] tracking-[0.2em] mb-2 leading-tight">
