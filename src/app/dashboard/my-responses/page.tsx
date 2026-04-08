@@ -13,7 +13,24 @@ import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
 
-export default async function MyResponsesPage() {
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/shared/ui/pagination";
+
+import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
+
+interface MyResponsesPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function MyResponsesPage({ searchParams }: MyResponsesPageProps) {
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
   const user = await getCurrentUser();
   if (!user) redirect("/");
   if (!user.masterProfile) {
@@ -37,24 +54,33 @@ export default async function MyResponsesPage() {
     );
   }
 
-  const responses = await db.taskResponse.findMany({
-    where: { masterId: user.masterProfile.id },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      price: true,
-      createdAt: true,
-      task: {
-        select: {
-          id: true,
-          title: true,
-          status: true,
-          assignedMasterId: true,
-          category: { select: { name: true } },
+  const [responses, totalCount] = await Promise.all([
+    db.taskResponse.findMany({
+      where: { masterId: user.masterProfile.id },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * DEFAULT_PAGE_SIZE,
+      take: DEFAULT_PAGE_SIZE,
+      select: {
+        id: true,
+        price: true,
+        createdAt: true,
+        task: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            assignedMasterId: true,
+            category: { select: { name: true } },
+          },
         },
       },
-    },
-  });
+    }),
+    db.taskResponse.count({
+      where: { masterId: user.masterProfile.id },
+    })
+  ]);
+
+  const totalPages = Math.ceil(totalCount / DEFAULT_PAGE_SIZE);
 
   return (
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
@@ -144,6 +170,39 @@ export default async function MyResponsesPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <StaggerItem className="mt-10">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href={`/dashboard/my-responses?page=${Math.max(1, page - 1)}`} 
+                  disabled={page <= 1}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink 
+                    href={`/dashboard/my-responses?page=${i + 1}`}
+                    isActive={page === i + 1}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext 
+                  href={`/dashboard/my-responses?page=${Math.min(totalPages, page + 1)}`}
+                  disabled={page >= totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </StaggerItem>
       )}
     </StaggerWrap>
   );

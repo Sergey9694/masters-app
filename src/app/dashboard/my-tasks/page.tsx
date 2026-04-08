@@ -13,23 +13,49 @@ import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
 
-export default async function MyTasksPage() {
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/shared/ui/pagination";
+
+import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
+
+interface MyTasksPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
   const user = await getCurrentUser();
   if (!user) redirect("/");
 
-  const tasks = await db.taskRequest.findMany({
-    where: { customerId: user.id },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      status: true,
-      budget: true,
-      createdAt: true,
-      category: { select: { name: true } },
-      _count: { select: { responses: true } },
-    },
-  });
+  const [tasks, totalCount] = await Promise.all([
+    db.taskRequest.findMany({
+      where: { customerId: user.id },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * DEFAULT_PAGE_SIZE,
+      take: DEFAULT_PAGE_SIZE,
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        budget: true,
+        createdAt: true,
+        category: { select: { name: true } },
+        _count: { select: { responses: true } },
+      },
+    }),
+    db.taskRequest.count({
+      where: { customerId: user.id },
+    })
+  ]);
+
+  const totalPages = Math.ceil(totalCount / DEFAULT_PAGE_SIZE);
 
   return (
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
@@ -114,6 +140,39 @@ export default async function MyTasksPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {totalPages > 1 && (
+        <StaggerItem className="mt-10">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  href={`/dashboard/my-tasks?page=${Math.max(1, page - 1)}`} 
+                  disabled={page <= 1}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink 
+                    href={`/dashboard/my-tasks?page=${i + 1}`}
+                    isActive={page === i + 1}
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext 
+                  href={`/dashboard/my-tasks?page=${Math.min(totalPages, page + 1)}`}
+                  disabled={page >= totalPages}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </StaggerItem>
       )}
     </StaggerWrap>
   );
