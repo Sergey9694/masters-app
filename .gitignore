@@ -57,3 +57,6 @@ next-env.d.ts
 
 # docker
 .docker
+
+# claude code settings (contains API keys)
+.claude/settings.json

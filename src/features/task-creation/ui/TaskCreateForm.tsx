@@ -3,14 +3,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { useState, useTransition, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
-  X,
   Loader2,
-  PlusCircle,
   SendHorizontal,
   ShieldCheck,
   CheckCircle2,
@@ -45,6 +42,8 @@ import { Card } from "@/shared/ui/card";
 import { taskSchema, type TaskFormValues } from "../model/task-schema";
 import { createOrderAction } from "../api/create-task-action";
 import { uploadImagesAction } from "../api/upload-action";
+import { PhotoUploadField } from "./PhotoUploadField";
+import { AddressField } from "./AddressField";
 
 interface TaskCreateFormProps {
   categories: { id: string; name: string }[];
@@ -55,48 +54,6 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState<{ file: File; url: string }[]>([]);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [inputRect, setInputRect] = useState<DOMRect | null>(null);
-  const addressInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const suggestAbortRef = useRef<AbortController | null>(null);
-  const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (showSuggestions && addressInputRef.current) {
-      setInputRect(addressInputRef.current.getBoundingClientRect());
-    }
-  }, [showSuggestions]);
-
-  const fetchAddressSuggest = (query: string) => {
-    if (suggestDebounceRef.current) clearTimeout(suggestDebounceRef.current);
-    if (query.trim().length < 3) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    suggestDebounceRef.current = setTimeout(async () => {
-      suggestAbortRef.current?.abort();
-      const ac = new AbortController();
-      suggestAbortRef.current = ac;
-      try {
-        const resp = await fetch(
-          `/api/suggest/address?q=${encodeURIComponent(query)}`,
-          { signal: ac.signal },
-        );
-        if (!resp.ok) return;
-        const data = (await resp.json()) as { suggestions?: string[] };
-        const list = data.suggestions ?? [];
-        setSuggestions(list);
-        setShowSuggestions(list.length > 0);
-      } catch (e) {
-        if ((e as Error).name !== "AbortError") {
-          console.warn("[suggest] fetch error", e);
-        }
-      }
-    }, 250);
-  };
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskSchema),
@@ -110,19 +67,6 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
     },
   });
 
-  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length + previewImages.length > 5) {
-      toast.error("Можно загрузить не больше 5 фото");
-      return;
-    }
-    setPreviewImages((prev) => [
-      ...prev,
-      ...files.map((f) => ({ file: f, url: URL.createObjectURL(f) })),
-    ]);
-    toast.success(`Добавлено фото: ${files.length}`);
-  };
-
   const onSubmit = async (vals: TaskFormValues) => {
     startTransition(async () => {
       try {
@@ -134,14 +78,16 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
           urls = await uploadImagesAction(fd);
           setIsUploading(false);
         }
+        
         const res = await createOrderAction({ ...vals, images: urls });
 
-        if (res.success) {
+        // Since it's createSafeAction, the result is ActionState:
+        if (res.data?.redirect) {
           toast.custom(() => (
             <MotionToast type="success">Тендер успешно опубликован!</MotionToast>
           ));
           setTimeout(() => {
-            router.push(res.redirect);
+            router.push(res.data!.redirect);
           }, 1000);
           return;
         }
@@ -200,42 +146,8 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                 )}
               />
 
-              {/* Photos Dropzone */}
-              <div className="space-y-2">
-                <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Визуализация</FormLabel>
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="min-h-[120px] sm:min-h-[140px] rounded-[var(--ui-radius-premium)] border-2 border-dashed border-white/5 bg-white/[0.02] flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-cyan-500/40 hover:bg-cyan-500/[0.05] transition-all group active:scale-[0.98]"
-                >
-                  {previewImages.length === 0 ? (
-                    <>
-                      <div className="p-2 sm:p-3 rounded-full bg-indigo-500/10 text-indigo-400 group-hover:bg-cyan-500 group-hover:text-white transition-all scale-90 sm:scale-100">
-                        <PlusCircle className="w-6 h-6 sm:w-7 sm:h-7" />
-                      </div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 group-hover:text-cyan-200">Прикрепить фото</p>
-                    </>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 p-3 justify-center">
-                      {previewImages.map((img, i) => (
-                        <div key={img.url} className="relative w-16 h-16 rounded-[var(--ui-radius-premium)] overflow-hidden border border-white/10 group-hover:border-white/20">
-                          <img src={img.url} className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPreviewImages((p) => p.filter((_, idx) => idx !== i));
-                            }}
-                            className="absolute top-1 right-1 bg-red-500/80 backdrop-blur-md text-white rounded-full p-0.5 hover:scale-110 transition-transform"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={onFile} />
-              </div>
+              {/* Photos Dropzone Extracted */}
+              <PhotoUploadField previewImages={previewImages} setPreviewImages={setPreviewImages} />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
@@ -289,68 +201,8 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem className="relative z-20">
-                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Где находится объект?</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        ref={(node) => {
-                          addressInputRef.current = node;
-                          field.ref(node);
-                        }}
-                        autoComplete="off"
-                        placeholder="Город, улица, дом"
-                        onChange={(e) => {
-                          field.onChange(e);
-                          fetchAddressSuggest(e.target.value);
-                        }}
-                        onBlur={() => {
-                          field.onBlur();
-                          setTimeout(() => setShowSuggestions(false), 200);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-
-                    {typeof document !== "undefined" &&
-                      showSuggestions &&
-                      suggestions.length > 0 &&
-                      inputRect &&
-                      createPortal(
-                        <div
-                          style={{
-                            position: "fixed",
-                            top: inputRect.bottom + 8,
-                            left: inputRect.left,
-                            width: inputRect.width,
-                          }}
-                          className="bg-[#0d0f16]/95 backdrop-blur-3xl border border-white/10 rounded-[var(--ui-radius-premium)] overflow-hidden shadow-2xl z-[9999] font-sans"
-                        >
-                          {suggestions.map((s, i) => (
-                            <button
-                              key={`${s}-${i}`}
-                              type="button"
-                              className="w-full px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-300 hover:bg-indigo-600/40 hover:text-white transition-all border-b border-white/5 last:border-none"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                form.setValue("address", s, { shouldValidate: true });
-                                setSuggestions([]);
-                                setShowSuggestions(false);
-                              }}
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </div>,
-                        document.body,
-                      )}
-                  </FormItem>
-                )}
-              />
+              {/* Address Field Extracted */}
+              <AddressField form={form} />
             </div>
 
             <Button

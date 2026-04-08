@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { uploadFile } from "@/shared/lib/storage/file-storage";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
@@ -10,10 +11,20 @@ const ALLOWED_MIME_TYPES = [
   "image/png",
   "image/webp",
   "image/gif",
+  "image/heic",
+  "image/heif",
 ];
 
+const uploadImagesSchema = z.object({
+  images: z.array(
+    z.any()
+      .refine((file): file is File => file instanceof File, "Ожидается загрузка файлов")
+      .refine((file) => file.size <= MAX_FILE_SIZE, "Размер файла не должен превышать 5MB")
+      .refine((file) => ALLOWED_MIME_TYPES.includes(file.type), "Недопустимый формат файла")
+  ).max(5, "Maximum 5 images allowed").optional().default([]),
+});
+
 export async function uploadImagesAction(formData: FormData) {
-  // S3: Auth check
   const user = await getCurrentUser();
   if (!user) {
     throw new Error("Unauthorized");
@@ -24,31 +35,22 @@ export async function uploadImagesAction(formData: FormData) {
     throw new Error(`Слишком часто. Подождите ${rl.retryAfterSec} сек.`);
   }
 
-  const files = formData.getAll("images") as File[];
-
-  if (!files || files.length === 0) {
-    return [];
+  const rawImages = formData.getAll("images");
+  
+  const parsed = uploadImagesSchema.safeParse({ images: rawImages });
+  if (!parsed.success) {
+    throw new Error(parsed.error.errors[0]?.message || "Ошибка при валидации файлов");
   }
 
-  // S4: Max 5 images per request
-  if (files.length > 5) {
-    throw new Error("Maximum 5 images allowed");
+  const files = parsed.data.images;
+
+  if (files.length === 0) {
+    return [];
   }
 
   const urls = await Promise.all(
     files.map(async (file) => {
       if (file.size === 0) return null;
-
-      // S4: Size limit
-      if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`File "${file.name}" exceeds 5MB limit`);
-      }
-
-      // S4: MIME type check
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        throw new Error(`File "${file.name}" has unsupported format. Use JPG, PNG, WebP or GIF`);
-      }
-
       return await uploadFile(file);
     })
   );

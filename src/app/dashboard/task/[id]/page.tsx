@@ -15,6 +15,7 @@ import { RespondForm } from "@/features/task-response/ui/RespondForm";
 import { AcceptResponseButton } from "@/features/task-response/ui/AcceptResponseButton";
 import { TaskStatusButtons } from "@/features/task-response/ui/TaskStatusButtons";
 import { ReviewForm } from "@/features/review/ui/ReviewForm";
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -95,16 +96,12 @@ export default async function TaskDetailPage({ params }: PageProps) {
         <Card className="glass border-none p-6 rounded-[32px] mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/20 overflow-hidden">
-                {task.customer.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={task.customer.avatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-400 font-bold text-xs">
-                    {task.customer.firstName[0]}
-                  </div>
-                )}
-              </div>
+              <Avatar className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/20 overflow-hidden">
+                <AvatarImage src={task.customer.avatar || ""} alt={task.customer.firstName} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-400 font-bold text-xs uppercase bg-transparent">
+                  {task.customer.firstName[0]}
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
                   {task.customer.firstName}
@@ -172,16 +169,12 @@ export default async function TaskDetailPage({ params }: PageProps) {
               Исполнитель
             </p>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
-                {task.assignedMaster.user.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={task.assignedMaster.user.avatar} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    <UserIcon className="w-4 h-4" />
-                  </div>
-                )}
-              </div>
+              <Avatar className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+                <AvatarImage src={task.assignedMaster.user.avatar || ""} alt="" className="object-cover" />
+                <AvatarFallback className="flex items-center justify-center text-slate-400 bg-transparent">
+                  <UserIcon className="w-4 h-4" />
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1">
                 <p className="text-sm font-black text-white leading-none mb-1 flex items-center gap-2">
                   {task.assignedMaster.user.firstName}
@@ -271,16 +264,12 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 <Card key={r.id} className="glass border-none p-5 rounded-[24px]">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
-                        {r.master.user.avatar ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={r.master.user.avatar} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-400">
-                            <UserIcon className="w-4 h-4" />
-                          </div>
-                        )}
-                      </div>
+                      <Avatar className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+                        <AvatarImage src={r.master.user.avatar || ""} alt="" className="object-cover" />
+                        <AvatarFallback className="flex items-center justify-center text-slate-400 bg-transparent">
+                          <UserIcon className="w-4 h-4" />
+                        </AvatarFallback>
+                      </Avatar>
                       <div>
                         <p className="text-sm font-black text-white leading-none mb-1 flex items-center gap-2">
                           {r.master.user.firstName}

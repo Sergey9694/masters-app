@@ -8,6 +8,7 @@ import { ru } from "date-fns/locale";
 import { Card } from "@/shared/ui/card";
 import { STAGGER_ITEM } from "@/shared/lib/motion";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 interface TaskCardProps {
   task: {
@@ -52,15 +53,12 @@ export function TaskCard({ task }: TaskCardProps) {
           {/* Header: User & Category */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-white/20 overflow-hidden">
-                 {customer.avatar ? (
-                   <img src={customer.avatar} alt={customer.firstName} className="w-full h-full object-cover" />
-                 ) : (
-                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-500 font-bold text-xs">
-                     {customer.firstName[0]}
-                   </div>
-                 )}
-              </div>
+              <Avatar className="w-10 h-10 rounded-full border-2 border-white/20 overflow-hidden bg-slate-200 dark:bg-slate-800">
+                <AvatarImage src={customer.avatar || ""} alt={customer.firstName} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-500 font-bold text-xs uppercase">
+                  {customer.firstName[0]}
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
                   {customer.firstName}
@@ -129,7 +127,7 @@ export function TaskCard({ task }: TaskCardProps) {
 
             <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-widest opacity-60">
               <Clock className="w-3.5 h-3.5" />
-              {formatDistanceToNow(task.createdAt, { addSuffix: true, locale: ru })}
+              {formatDistanceToNow(createdAt, { addSuffix: true, locale: ru })}
             </div>
           </div>
         </div>

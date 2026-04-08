@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
 import type { DashboardPageData } from "@/shared/types/domain";
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 export function DashboardContent({ user, categories, stats }: DashboardPageData) {
   const isMaster = !!user.masterProfile;
@@ -34,13 +35,12 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
       <motion.header className="flex items-center justify-between mb-8" variants={STAGGER_ITEM}>
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20">
-            <div className="w-full h-full rounded-full border-2 border-white/20 dark:border-slate-800 overflow-hidden bg-slate-200 dark:bg-slate-900 flex items-center justify-center text-lg font-black text-slate-500">
-              {user.avatar ? (
-                <img src={user.avatar} alt={user.firstName} className="w-full h-full object-cover" />
-              ) : (
-                user.firstName[0]
-              )}
-            </div>
+            <Avatar className="w-full h-full rounded-full border-2 border-white/20 dark:border-slate-800 overflow-hidden bg-slate-200 dark:bg-slate-900">
+              <AvatarImage src={user.avatar || ""} alt={user.firstName} className="object-cover" />
+              <AvatarFallback className="flex items-center justify-center text-lg font-black text-slate-500 uppercase bg-transparent">
+                {user.firstName[0]}
+              </AvatarFallback>
+            </Avatar>
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">

@@ -3,7 +3,7 @@ FROM node:20-alpine AS base
 
 # 2. Dependencies
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat libheif-dev
 WORKDIR /app
 COPY package.json package-lock.json* ./
 

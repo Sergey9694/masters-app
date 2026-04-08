@@ -14,6 +14,20 @@ async function main() {
 
     const PRISMA_CLI = "prisma";
 
+    // Фикс прав на uploads (EACCES fix для Docker bind mount)
+    const fs = require("fs");
+    const path = require("path");
+    const uploadsDir = path.join(__dirname, "..", "uploads");
+    try {
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        fs.chmodSync(uploadsDir, 0o777);
+        console.log("[STARTUP] ✓ uploads/ directory permissions fixed (777)");
+    } catch (e) {
+        console.log(`[STARTUP] Warning: could not fix uploads/ permissions: ${e.message}`);
+    }
+
     console.log("[STARTUP] Накатываем актуальные миграции...");
     
     // Проверка наличия URL базы данных для Prisma
