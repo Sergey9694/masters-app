@@ -119,7 +119,7 @@ export function TaskImageGallery({ images }: TaskImageGalleryProps) {
             {/* Viewport for dragging and swiping */}
             <motion.div 
                className="w-full h-full flex items-center justify-center"
-               drag={isZoomed ? "xy" : "y"}
+               drag={isZoomed ? true : "y"}
                dragConstraints={isZoomed ? false : { top: 0, bottom: 0 }}
                dragElastic={isZoomed ? 0.1 : 0.6}
                onDragEnd={(_, info) => {
