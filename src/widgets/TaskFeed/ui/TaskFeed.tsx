@@ -54,6 +54,7 @@ export async function TaskFeed({ categoryId, search }: TaskFeedProps) {
         category: { select: { name: true } },
         customer: { select: { firstName: true, avatar: true } },
         status: true,
+        _count: { select: { responses: true } },
       },
       orderBy: { createdAt: "desc" },
       take: PAGE_SIZE + 1,

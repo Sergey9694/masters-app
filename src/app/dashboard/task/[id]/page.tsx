@@ -20,6 +20,7 @@ import { TaskImageGallery } from "@/features/task-view/ui/TaskImageGallery";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusBadge } from "@/shared/ui/status-badge";
 import { SectionHeader } from "@/shared/ui/section-header";
+import { TaskCardBase } from "@/entities/task/ui/TaskCardBase";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -73,44 +74,39 @@ export default async function TaskDetailPage({ params }: PageProps) {
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
       <TelegramBackButton />
 
-      <PageHeader 
+      <PageHeader
         title="Заявка"
-        subtitle={<StatusBadge status={task.status} />}
         fallbackUrl="/dashboard/feed"
       />
 
       {/* Task Summary */}
-      <StaggerItem>
-        <Card className="glass border-none p-6 rounded-[32px] mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/20 overflow-hidden">
+      <StaggerItem className="mb-6">
+        <TaskCardBase
+          isClickable={false}
+          category={<Badge variant="category">{task.category.name}</Badge>}
+          user={
+            <div className="flex items-center gap-2.5">
+              <Avatar className="w-9 h-9 rounded-full border border-white/10 overflow-hidden bg-slate-800">
                 <AvatarImage src={task.customer.avatar || ""} alt={task.customer.firstName} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-400 font-bold text-xs uppercase bg-transparent">
+                <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-400 font-bold text-[10px] uppercase">
                   {task.customer.firstName?.[0] ?? "?"}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
+              <div className="flex flex-col items-start">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white leading-none mb-1">
                   {task.customer.firstName}
                 </p>
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {formatSmartDate(task.createdAt)}
-                </p>
+                <div className="flex items-center gap-1.5 opacity-60">
+                   <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                   <p className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">Заказчик</p>
+                </div>
               </div>
             </div>
-            <Badge variant="category">
-              {task.category.name}
-            </Badge>
-          </div>
-
-          <h2 className="text-2xl font-black text-white leading-tight mb-3">{task.title}</h2>
-          <p className="text-sm font-normal text-slate-300 leading-relaxed mb-5 opacity-90">{task.description}</p>
-
-          <TaskImageGallery images={task.images} />
-
-          <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
+          }
+          title={<h2 className="text-2xl font-black text-white leading-tight">{task.title}</h2>}
+          description={task.description}
+          image={task.images.length > 0 ? <TaskImageGallery images={task.images} /> : undefined}
+          budget={
             <div className="flex items-center gap-2 text-slate-200">
               <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                 <Banknote className="w-4 h-4" />
@@ -119,29 +115,35 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 {task.budget ? `${task.budget.toLocaleString()} ₽` : "Договорная"}
               </span>
             </div>
-            
-            {task.address && (
-              <a 
-                href={getMapUrl(task.address)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group/map"
-              >
-                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/map:bg-blue-500/20 transition-colors">
-                  <MapPin className="w-4 h-4 group-hover/map:animate-bounce" />
-                </div>
-                <span className="text-sm font-bold group-hover/map:underline decoration-blue-500/30 underline-offset-4">
-                  {task.address}
-                </span>
-              </a>
-            )}
-
-            <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-widest ml-auto">
+          }
+          address={task.address ? (
+            <a 
+              href={getMapUrl(task.address)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group/address"
+            >
+              <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/address:bg-blue-500/20 transition-colors">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold underline decoration-blue-500/30 underline-offset-4">
+                {task.address}
+              </span>
+            </a>
+          ) : undefined}
+          responsesCount={
+            <div className="flex items-center gap-1.5 text-indigo-400 text-[10px] font-black uppercase tracking-widest">
               <MessageSquare className="w-3.5 h-3.5" />
-              {task.responses.length} отклик(ов)
+              {task.responses.length} отклика
             </div>
-          </div>
-        </Card>
+          }
+          date={
+            <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-black uppercase tracking-widest opacity-60">
+              <Clock className="w-3.5 h-3.5" />
+              {formatSmartDate(task.createdAt)}
+            </div>
+          }
+        />
       </StaggerItem>
 
       {/* Controls: owner (complete/cancel) or assigned master (refuse) */}
@@ -256,10 +258,10 @@ export default async function TaskDetailPage({ params }: PageProps) {
 
         return (
           <StaggerItem className="mb-6">
-            <SectionHeader 
-              title="Отклики" 
-              count={filteredResponses.length} 
-              className="mb-4" 
+            <SectionHeader
+              title="Отклики"
+              count={filteredResponses.length}
+              className="mb-4"
             />
             <div className="space-y-3">
               {filteredResponses.map((r) => (

@@ -69,20 +69,26 @@ export function TaskFeedClient({
 
   return (
     <StaggerWrap className="space-y-6">
-      <StaggerItem className="mb-2">
-        <div className="flex flex-col gap-3">
-          <SectionHeader title="Свежие тендеры" countLabel={totalLabel} accentColor="blue" />
+      <StaggerItem className="mb-4">
+        <div className="flex flex-col gap-4">
+          <SectionHeader 
+             title={search ? `Поиск: ${search}` : "Свежие тендеры"} 
+             countLabel={totalLabel} 
+             accentColor="blue" 
+          />
           
           {isDefaultFilter && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl w-fit"
-            >
-              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 leading-none">
-                ✨ По вашим специальностям
-              </p>
-            </motion.div>
+            <div className="flex justify-center py-2">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="px-6 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full"
+              >
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 leading-none">
+                  ✨ По вашим специальностям
+                </p>
+              </motion.div>
+            </div>
           )}
         </div>
       </StaggerItem>
