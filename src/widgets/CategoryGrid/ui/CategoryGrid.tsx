@@ -52,7 +52,7 @@ export function CategoryGrid({
           "gap-x-4 transition-all duration-500",
           variant === 'grid' 
             ? "grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-6" 
-            : "flex overflow-x-auto no-scrollbar py-2 px-1"
+            : "flex overflow-x-auto no-scrollbar py-3 px-4 -mx-4 scroll-smooth"
         )}
       >
         {categoriesToRender.map((cat) => {
@@ -73,16 +73,16 @@ export function CategoryGrid({
              >
                 {/* Icon Container with Neon Gradient Border */}
                 <div className={cn(
-                  "rounded-[22px] flex items-center justify-center transition-all duration-500 shadow-xl relative",
+                  "rounded-[22px] flex items-center justify-center transition-all duration-500 shadow-md relative",
                   variant === 'grid' ? "w-16 h-16" : "w-14 h-14",
                   isActive 
-                    ? "bg-gradient-to-tr from-cyan-600 to-indigo-600 text-white shadow-cyan-500/40 scale-110" 
+                    ? "bg-gradient-to-tr from-cyan-600 to-indigo-600 text-white shadow-cyan-500/30 scale-105" 
                     : "neon-border-gradient text-slate-800 dark:text-white bg-white/[0.03] group-hover:bg-white/[0.08]"
                 )}>
                   {isActive && (
                     <motion.div 
                       layoutId="active-glow"
-                      className="absolute inset-0 rounded-[22px] bg-cyan-400/20 blur-xl scale-125"
+                      className="absolute inset-0 rounded-[22px] bg-cyan-400/20 blur-md scale-110"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                     />

@@ -21,6 +21,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
   const categories = await db.category.findMany({
     select: { id: true, name: true, icon: true },
+    orderBy: { name: "asc" },
   });
 
   return (
