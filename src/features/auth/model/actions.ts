@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/shared/lib/db";
-import { createSession, validateTelegramWebAppData } from "@/shared/lib/auth";
+import { createSession, validateTelegramWebAppData, logout } from "@/shared/lib/auth";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -123,4 +123,9 @@ export async function mockLogin() {
 
   await createSession(user.id, user.role);
   redirect("/dashboard");
+}
+
+export async function logoutAction() {
+  await logout();
+  redirect("/");
 }

@@ -1,9 +1,8 @@
 import { getUsers } from "@/features/admin/api/get-users";
-import { updateUserRole } from "@/features/admin/api/update-user-role";
 import { Role } from "@/shared/types/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
-import { revalidatePath } from "next/cache";
-import { db } from "@/shared/lib/db";
+import { RoleSelect } from "@/features/admin/ui/role-select";
+import { AdminUserFilters } from "@/features/admin/ui/admin-user-filters";
 
 export default async function AdminUsersPage({
   searchParams,
@@ -25,24 +24,7 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Filters */}
-      <form className="flex gap-3" method="get">
-        <input
-          name="search"
-          defaultValue={search}
-          placeholder="Поиск по имени..."
-          className="flex-1 bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50"
-        />
-        <select
-          name="role"
-          defaultValue={role || ""}
-          className="bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50"
-        >
-          <option value="">Все роли</option>
-          <option value="USER">USER</option>
-          <option value="MASTER">MASTER</option>
-          <option value="ADMIN">ADMIN</option>
-        </select>
-      </form>
+      <AdminUserFilters initialSearch={search} initialRole={role} />
 
       {/* Table */}
       <div className="bg-[#16162a] rounded-2xl border border-white/5 overflow-hidden">
@@ -133,28 +115,5 @@ function RoleBadge({ role }: { role: Role }) {
     <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${colors[role]}`}>
       {role}
     </span>
-  );
-}
-
-function RoleSelect({ userId, currentRole }: { userId: string; currentRole: Role }) {
-  async function handleChange(formData: FormData) {
-    "use server";
-    const role = formData.get("role") as Role;
-    await updateUserRole(userId, role);
-  }
-
-  return (
-    <form action={handleChange}>
-      <select
-        name="role"
-        defaultValue={currentRole}
-        onChange={(e) => e.target.form?.requestSubmit()}
-        className="bg-[#1a1a2e] border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500/50"
-      >
-        <option value="USER">USER</option>
-        <option value="MASTER">MASTER</option>
-        <option value="ADMIN">ADMIN</option>
-      </select>
-    </form>
   );
 }

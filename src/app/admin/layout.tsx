@@ -2,7 +2,9 @@ import { getSession } from "@/shared/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/shared/lib/db";
 import Link from "next/link";
-import { LayoutDashboard, Users, Award, ClipboardList, MessageSquare, BarChart3, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, Award, ClipboardList, MessageSquare, BarChart3, ArrowLeft, LogOut } from "lucide-react";
+import { logoutAction } from "@/features/auth/model/actions";
+import { Button } from "@/shared/ui/button";
 
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Дашборд" },
@@ -70,6 +72,16 @@ export default async function AdminLayout({
             <ArrowLeft className="w-5 h-5" />
             Вернуться в приложение
           </Link>
+          
+          <form action={logoutAction} className="mt-1">
+            <button
+              type="submit"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              Выйти
+            </button>
+          </form>
         </div>
       </aside>
 
