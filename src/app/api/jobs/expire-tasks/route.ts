@@ -4,11 +4,10 @@ import { expireOldTasks } from "@/shared/lib/jobs/expire-tasks";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
-  // В идеале здесь должна быть проверка секретного ключа в заголовках
-  // const authHeader = request.headers.get("authorization");
-  // if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-  //   return new Response("Unauthorized", { status: 401 });
-  // }
+  const authHeader = request.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return new Response("Unauthorized", { status: 401 });
+  }
 
   try {
     const archivedCount = await expireOldTasks();

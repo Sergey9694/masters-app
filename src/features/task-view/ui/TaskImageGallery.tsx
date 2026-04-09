@@ -47,8 +47,8 @@ export function TaskImageGallery({ images }: TaskImageGalleryProps) {
 
   // Gesture handling
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  const bind = useGesture(
+
+  useGesture(
     {
       onPinch: ({ offset: [d], memo }) => {
         // d is the distance, we map it to scale. Default scale starts at 1.

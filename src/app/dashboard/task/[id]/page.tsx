@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck, Mail, Calendar, MessageSquare } from "lucide-react";
-import { formatSmartDate, formatRelativeTime } from "@/shared/lib/date";
+import { Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck, MessageSquare } from "lucide-react";
+import { formatSmartDate } from "@/shared/lib/date";
 import { getMapUrl } from "@/shared/lib/maps";
 
 import { db } from "@/shared/lib/db";
@@ -12,7 +12,6 @@ import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { RespondForm } from "@/features/task-response/ui/RespondForm";
-import { BackButton } from "@/shared/ui/back-button";
 import { AcceptResponseButton } from "@/features/task-response/ui/AcceptResponseButton";
 import { TaskStatusButtons } from "@/features/task-response/ui/TaskStatusButtons";
 import { ReviewForm } from "@/features/review/ui/ReviewForm";

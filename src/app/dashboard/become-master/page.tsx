@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { ChevronLeft, Hammer } from "lucide-react";
-import Link from "next/link";
+import { Hammer } from "lucide-react";
 
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";

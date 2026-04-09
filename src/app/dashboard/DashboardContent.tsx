@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/shared/lib/cn";
 import { STAGGER_CONTAINER, STAGGER_ITEM, HOVER_GLOW, CLICK_SCALE } from "@/shared/lib/motion";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Loader2, Navigation, Crosshair } from "lucide-react";
+import { MapPin, Loader2, Navigation } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { BLUR_IN, CLICK_SCALE } from "@/shared/lib/motion";

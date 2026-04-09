@@ -4,7 +4,6 @@ import { TelegramAuth } from "@/features/auth/ui/TelegramAuth";
 import { Button } from "@/shared/ui/button";
 import { Card } from "@/shared/ui/card";
 import { ShieldCheck, MapPin, Users, Hammer } from "lucide-react";
-import Link from "next/link";
 import { mockLogin } from "@/features/auth/model/actions";
 import { motion } from "framer-motion";
 import {

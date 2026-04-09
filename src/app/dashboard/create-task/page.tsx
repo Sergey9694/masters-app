@@ -1,6 +1,4 @@
 import { Metadata } from "next";
-import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
 
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";

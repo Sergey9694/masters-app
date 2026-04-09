@@ -11,7 +11,7 @@ export const taskSchema = z.object({
     .max(1000, { message: "Описание слишком длинное" }),
   categoryId: z.string().min(1, { message: "Пожалуйста, выберите категорию" }),
   budget: z.string().optional(),
-  address: z.string().min(5, "Адрес слишком короткий"),
+  address: z.string().min(5, "Адрес слишком короткий").optional(),
   images: z.array(z.string()).optional(),
 });
 

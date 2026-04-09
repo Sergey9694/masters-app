@@ -48,19 +48,31 @@ export async function uploadImagesAction(formData: FormData): Promise<{ urls?: s
 
     const files = parsed.data.images;
     const urls: string[] = [];
+    let uploadError: string | null = null;
     for (const file of files) {
       if (file.size === 0) continue;
       try {
         const url = await uploadFile(file);
         urls.push(url);
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+        uploadError = "Ошибка при загрузке изображения";
+        break;
+      }
+    }
+
+    if (uploadError) {
+      return { error: uploadError };
     }
 
     let avatarUrl: string | undefined = undefined;
     if (rawAvatar instanceof File && rawAvatar.size > 0) {
       try {
         avatarUrl = await uploadFile(rawAvatar);
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error(err);
+        return { error: "Ошибка при загрузке аватара" };
+      }
     }
 
     return { urls, avatarUrl };

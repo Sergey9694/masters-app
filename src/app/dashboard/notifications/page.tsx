@@ -5,7 +5,6 @@ import { getCurrentUser } from "@/shared/lib/get-user";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
-import { BackButton } from "@/shared/ui/back-button";
 import { MarkAllReadButton } from "./MarkAllReadButton";
 import { NotificationItem } from "@/features/notifications/ui/NotificationItem";
 import { PageHeader } from "@/shared/ui/page-header";
@@ -57,7 +56,6 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
 
   const unreadCount = notifications.filter((n) => !n.read).length;
   const totalPages = Math.ceil(totalCount / DEFAULT_PAGE_SIZE);
-  const unreadAnywhere = totalCount > 0; // Simplified for UI check
 
   return (
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">

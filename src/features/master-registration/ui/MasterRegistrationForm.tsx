@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Hammer, SendHorizontal, Check, Briefcase, Banknote, Camera } from "lucide-react";
+import { Loader2, SendHorizontal, Check, Briefcase, Banknote, Camera } from "lucide-react";
 
 import { SLIDE_UP, HOVER_GLOW, CLICK_SCALE } from "@/shared/lib/motion";
 import { Button } from "@/shared/ui/button";
