@@ -26,6 +26,12 @@ export async function getCurrentUser() {
             bio: true,
             isVerified: true,
             rating: true,
+            experienceYears: true,
+            minPrice: true,
+            portfolio: true,
+            categories: {
+              select: { categoryId: true }
+            }
           },
         },
       },

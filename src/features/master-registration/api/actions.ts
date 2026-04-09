@@ -9,15 +9,11 @@ type Result =
   | { success: true; redirect: string }
   | { error: string };
 
-export async function createMasterProfileAction(
+export async function saveMasterProfileAction(
   data: MasterProfileFormValues,
 ): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return { error: "Необходима авторизация" };
-
-  if (user.masterProfile) {
-    return { error: "У вас уже есть профиль мастера" };
-  }
 
   const parsed = masterProfileSchema.safeParse(data);
   if (!parsed.success) {
@@ -26,7 +22,6 @@ export async function createMasterProfileAction(
   const { bio, categoryIds, experienceYears, minPrice, portfolio, avatarUrl } = parsed.data;
 
   try {
-    // Проверяем, что все переданные категории существуют
     const existingCategories = await db.category.findMany({
       where: { id: { in: categoryIds } },
       select: { id: true },
@@ -35,9 +30,26 @@ export async function createMasterProfileAction(
       return { error: "Одна из категорий недоступна" };
     }
 
-    await db.$transaction([
-      db.masterProfile.create({
-        data: {
+    await db.$transaction(async (tx) => {
+      // Если профиль уже есть, удаляем старые связи с категориями
+      if (user.masterProfile) {
+        await tx.masterCategory.deleteMany({
+          where: { masterId: user.masterProfile.id }
+        });
+      }
+
+      await tx.masterProfile.upsert({
+        where: { userId: user.id },
+        update: {
+          bio,
+          experienceYears,
+          minPrice,
+          portfolio,
+          categories: {
+            create: categoryIds.map((categoryId) => ({ categoryId })),
+          },
+        },
+        create: {
           userId: user.id,
           bio,
           experienceYears,
@@ -47,21 +59,22 @@ export async function createMasterProfileAction(
             create: categoryIds.map((categoryId) => ({ categoryId })),
           },
         },
-      }),
-      db.user.update({
+      });
+
+      await tx.user.update({
         where: { id: user.id },
         data: { 
           role: "MASTER",
           ...(avatarUrl && { avatar: avatarUrl })
         },
-      }),
-    ]);
+      });
+    });
 
     revalidatePath("/dashboard");
-    revalidatePath("/dashboard/feed");
+    revalidatePath("/dashboard/become-master");
     return { success: true, redirect: "/dashboard" };
   } catch (error) {
-    console.error("[createMasterProfileAction] error:", error);
-    return { error: "Не удалось создать профиль. Попробуйте позже." };
+    console.error("[saveMasterProfileAction] error:", error);
+    return { error: "Не удалось сохранить профиль. Попробуйте позже." };
   }
 }

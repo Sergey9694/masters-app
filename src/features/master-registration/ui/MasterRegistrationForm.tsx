@@ -23,7 +23,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import { Card } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/cn";
 import { MasterProfileFormValues, masterProfileSchema } from "../model/schema";
-import { createMasterProfileAction } from "../api/actions";
+import { saveMasterProfileAction } from "../api/actions";
 import { AvatarUpload } from "./AvatarUpload";
 import { PhotoUploadField } from "@/features/task-creation/ui/PhotoUploadField";
 import { uploadImagesAction } from "@/features/task-creation/api/upload-action";
@@ -31,10 +31,10 @@ import { Input } from "@/shared/ui/input";
 
 interface Props {
   categories: { id: string; name: string }[];
-  initialAvatar?: string | null;
+  initialData?: Partial<MasterProfileFormValues>;
 }
 
-export function MasterRegistrationForm({ categories, initialAvatar }: Props) {
+export function MasterRegistrationForm({ categories, initialData }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
@@ -44,12 +44,12 @@ export function MasterRegistrationForm({ categories, initialAvatar }: Props) {
   const form = useForm<MasterProfileFormValues>({
     resolver: zodResolver(masterProfileSchema),
     defaultValues: { 
-      bio: "", 
-      categoryIds: [],
-      experienceYears: 0,
-      minPrice: 0,
-      portfolio: [],
-      avatarUrl: initialAvatar || ""
+      bio: initialData?.bio || "", 
+      categoryIds: initialData?.categoryIds || [],
+      experienceYears: initialData?.experienceYears || 0,
+      minPrice: initialData?.minPrice || 0,
+      portfolio: initialData?.portfolio || [],
+      avatarUrl: initialData?.avatarUrl || ""
     },
   });
 
@@ -82,7 +82,7 @@ export function MasterRegistrationForm({ categories, initialAvatar }: Props) {
           }
         }
 
-        const res = await createMasterProfileAction({ 
+        const res = await saveMasterProfileAction({ 
           ...vals, 
           portfolio: portfolioUrls,
           avatarUrl: vals.avatarUrl

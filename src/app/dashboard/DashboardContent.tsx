@@ -36,27 +36,34 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
     >
       {/* Header */}
       <motion.header className="flex items-center justify-between mb-8" variants={STAGGER_ITEM}>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20">
-            <Avatar className="w-full h-full rounded-full border-2 border-white/20 dark:border-slate-800 overflow-hidden bg-slate-200 dark:bg-slate-900">
-              <AvatarImage src={user.avatar || ""} alt={user.firstName} className="object-cover" />
-              <AvatarFallback className="flex items-center justify-center text-lg font-black text-slate-500 uppercase bg-transparent">
-                {user.firstName[0]}
-              </AvatarFallback>
-            </Avatar>
+        <Link href="/dashboard/become-master" className="block group/profile">
+          <div className="flex items-center gap-4 group-hover/profile:opacity-90 transition-opacity">
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20"
+            >
+              <Avatar className="w-full h-full rounded-full border-2 border-white/20 dark:border-slate-800 overflow-hidden bg-slate-200 dark:bg-slate-900">
+                <AvatarImage src={user.avatar || ""} alt={user.firstName} className="object-cover" />
+                <AvatarFallback className="flex items-center justify-center text-lg font-black text-slate-500 uppercase bg-transparent">
+                  {user.firstName[0]}
+                </AvatarFallback>
+              </Avatar>
+            </motion.div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-tight flex items-center gap-2">
+                Привет, {user.firstName}!
+                <ArrowRight className="w-4 h-4 text-blue-500 opacity-0 -translate-x-2 group-hover/profile:opacity-100 group-hover/profile:translate-x-0 transition-all" />
+              </h1>
+              {isMaster && (
+                <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-1.5 mt-1">
+                  <Hammer className="w-3 h-3" />
+                  Мастер
+                </p>
+              )}
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-              Привет, {user.firstName}!
-            </h1>
-            {isMaster && (
-              <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-1.5 mt-1">
-                <Hammer className="w-3 h-3" />
-                Мастер
-              </p>
-            )}
-          </div>
-        </div>
+        </Link>
 
         <Link href="/dashboard/notifications">
           <Button

@@ -19,24 +19,34 @@ export const metadata: Metadata = {
 export default async function BecomeMasterPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/");
-  if (user.masterProfile) redirect("/dashboard");
 
   const categories = await db.category.findMany({
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
 
+  const masterProfileData = user.masterProfile ? {
+    bio: user.masterProfile.bio || "",
+    experienceYears: user.masterProfile.experienceYears || 0,
+    minPrice: user.masterProfile.minPrice || 0,
+    portfolio: user.masterProfile.portfolio,
+    avatarUrl: user.avatar || "",
+    categoryIds: user.masterProfile.categories.map((c) => c.categoryId),
+  } : {
+    avatarUrl: user.avatar || "",
+  };
+
   return (
-    <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
+    <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto overflow-x-hidden">
       <TelegramBackButton />
       
       <PageHeader 
-        title="Стать мастером"
-        subtitle="Заполните профиль"
+        title={user.masterProfile ? "Профиль мастера" : "Стать мастером"}
+        subtitle={user.masterProfile ? "Редактирование данных" : "Заполните профиль"}
       />
 
       <StaggerItem>
-        <MasterRegistrationForm categories={categories} initialAvatar={user.avatar} />
+        <MasterRegistrationForm categories={categories} initialData={masterProfileData} />
       </StaggerItem>
     </StaggerWrap>
   );
