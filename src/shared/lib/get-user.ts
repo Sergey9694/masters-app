@@ -19,7 +19,6 @@ export async function getCurrentUser() {
         avatar: true,
         role: true,
         phone: true,
-        telegramId: true,
         masterProfile: {
           select: {
             id: true,
@@ -38,6 +37,7 @@ export async function getCurrentUser() {
     });
     return user;
   } catch (error) {
+    console.error("[getCurrentUser DB Error]:", error);
     return null;
   }
 }

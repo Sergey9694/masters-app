@@ -18,9 +18,6 @@ export function TelegramAuth() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Prevent re-login if we already succeeded in this session
-    if (sessionStorage.getItem("auth_attempted") === "1") return;
-
     // Poll for Telegram WebApp (script may not be ready yet on first tick)
     let attempts = 0;
     const maxAttempts = 20; // 20 * 100ms = 2s
@@ -49,8 +46,6 @@ export function TelegramAuth() {
       const result = await loginWithTelegram(initData);
 
       if (result.success) {
-        // Mark as attempted so we don't re-login if redirected back to /
-        sessionStorage.setItem("auth_attempted", "1");
         toast.custom(() => (
           <MotionToast type="success">Добро пожаловать!</MotionToast>
         ));
