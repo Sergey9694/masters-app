@@ -39,6 +39,9 @@ model MasterProfile {
   userId      String   @unique
   user        User     @relation(fields: [userId], references: [id])
   bio         String?
+  experienceYears Int?
+  portfolio   String[]
+  minPrice    Float?
 
   categories  MasterCategory[]
 

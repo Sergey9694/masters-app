@@ -1,12 +1,12 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Hammer, SendHorizontal, Check } from "lucide-react";
+import { Loader2, Hammer, SendHorizontal, Check, Briefcase, Banknote, Camera } from "lucide-react";
 
 import { SLIDE_UP, HOVER_GLOW, CLICK_SCALE } from "@/shared/lib/motion";
 import { Button } from "@/shared/ui/button";
@@ -22,36 +22,84 @@ import {
 import { Textarea } from "@/shared/ui/textarea";
 import { Card } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/cn";
-import {
-  masterProfileSchema,
-  type MasterProfileFormValues,
-} from "../model/schema";
+import { MasterProfileFormValues, masterProfileSchema } from "../model/schema";
 import { createMasterProfileAction } from "../api/actions";
+import { AvatarUpload } from "./AvatarUpload";
+import { PhotoUploadField } from "@/features/task-creation/ui/PhotoUploadField";
+import { uploadImagesAction } from "@/features/task-creation/api/upload-action";
+import { Input } from "@/shared/ui/input";
 
 interface Props {
   categories: { id: string; name: string }[];
+  initialAvatar?: string | null;
 }
 
-export function MasterRegistrationForm({ categories }: Props) {
+export function MasterRegistrationForm({ categories, initialAvatar }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewImages, setPreviewImages] = useState<{ file: File; url: string }[]>([]);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const form = useForm<MasterProfileFormValues>({
     resolver: zodResolver(masterProfileSchema),
-    defaultValues: { bio: "", categoryIds: [] },
+    defaultValues: { 
+      bio: "", 
+      categoryIds: [],
+      experienceYears: 0,
+      minPrice: 0,
+      portfolio: [],
+      avatarUrl: initialAvatar || ""
+    },
   });
 
-  const onSubmit = (vals: MasterProfileFormValues) => {
+  const onSubmit: SubmitHandler<MasterProfileFormValues> = (vals) => {
     startTransition(async () => {
-      const res = await createMasterProfileAction(vals);
-      if ("success" in res) {
-        toast.custom(() => (
-          <MotionToast type="success">Вы теперь мастер!</MotionToast>
-        ));
-        setTimeout(() => router.push(res.redirect), 800);
-        return;
+      try {
+        let portfolioUrls: string[] = [];
+        
+        if (previewImages.length > 0 || avatarFile) {
+          setIsUploading(true);
+          const fd = new FormData();
+          previewImages.forEach((p) => fd.append("images", p.file));
+          
+          if (avatarFile) {
+            fd.append("avatar", avatarFile);
+          }
+          
+          const uploadRes = await uploadImagesAction(fd);
+          setIsUploading(false);
+
+          if (uploadRes.error) {
+            toast.error(uploadRes.error);
+            return;
+          }
+          portfolioUrls = uploadRes.urls || [];
+          const uploadedAvatarUrl = uploadRes.avatarUrl;
+
+          if (uploadedAvatarUrl) {
+            vals.avatarUrl = uploadedAvatarUrl;
+          }
+        }
+
+        const res = await createMasterProfileAction({ 
+          ...vals, 
+          portfolio: portfolioUrls,
+          avatarUrl: vals.avatarUrl
+        });
+
+        if ("success" in res) {
+          toast.custom(() => (
+            <MotionToast type="success">Вы теперь мастер!</MotionToast>
+          ));
+          setTimeout(() => router.push(res.redirect), 800);
+          return;
+        }
+        toast.error(res.error);
+      } catch (error) {
+        toast.error("Ошибка при сохранении профиля");
+        setIsUploading(false);
       }
-      toast.error(res.error);
     });
   };
 
@@ -64,10 +112,20 @@ export function MasterRegistrationForm({ categories }: Props) {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-8"
       >
-        <Card className="glass-premium border-none p-5 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 blur-[100px] -mr-24 -mt-24 pointer-events-none" />
+        <Card className="glass-premium border-none p-6 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative overflow-hidden group/card">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 blur-[100px] -mr-24 -mt-24 pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 blur-[100px] -ml-24 -mb-24 pointer-events-none" />
 
-          <header className="space-y-1 mb-6 relative z-10">
+          <AvatarUpload 
+            value={form.getValues("avatarUrl")}
+            onChange={(url, file) => {
+              if (file) setAvatarFile(file);
+              form.setValue("avatarUrl", url || "");
+            }}
+            className="mb-8"
+          />
+
+          <header className="space-y-1 mb-8 relative z-10">
             <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
               Стать мастером
               <Hammer className="w-5 h-5 text-emerald-400" />
@@ -78,7 +136,7 @@ export function MasterRegistrationForm({ categories }: Props) {
           </header>
 
           <div className="space-y-6 relative z-10">
-            <FormField
+            <FormField<MasterProfileFormValues>
               control={form.control}
               name="bio"
               render={({ field }) => (
@@ -88,8 +146,8 @@ export function MasterRegistrationForm({ categories }: Props) {
                   </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Расскажите о вашем опыте, квалификации, какие работы выполняете..."
-                      className="min-h-[140px]"
+                      placeholder="Расскажите о вашем опыте, дипломах, какими инструментами владеете..."
+                      className="min-h-[120px]"
                       {...field}
                     />
                   </FormControl>
@@ -98,25 +156,68 @@ export function MasterRegistrationForm({ categories }: Props) {
               )}
             />
 
-            <Controller
+            <div className="grid grid-cols-2 gap-4">
+              <FormField<MasterProfileFormValues>
+                control={form.control}
+                name="experienceYears"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1 flex items-center gap-2">
+                      Опыт (лет) <Briefcase className="w-3 h-3" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField<MasterProfileFormValues>
+                control={form.control}
+                name="minPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1 flex items-center gap-2">
+                      Цена от (₽) <Banknote className="w-3 h-3" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1 flex items-center gap-2">
+                Портфолио <Camera className="w-3 h-3" />
+              </FormLabel>
+              <PhotoUploadField previewImages={previewImages} setPreviewImages={setPreviewImages} />
+            </div>
+
+            <Controller<MasterProfileFormValues, "categoryIds">
               control={form.control}
               name="categoryIds"
-              render={({ field, fieldState }) => (
+              render={({ field, fieldState }) => {
+                const value = field.value as string[];
+                return (
                 <FormItem>
                   <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">
                     В каких категориях работаете?
                   </FormLabel>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((cat) => {
-                      const selected = field.value.includes(cat.id);
+                      const selected = value.includes(cat.id);
                       return (
                         <button
                           key={cat.id}
                           type="button"
                           onClick={() => {
                             const next = selected
-                              ? field.value.filter((id) => id !== cat.id)
-                              : [...field.value, cat.id];
+                              ? value.filter((id) => id !== cat.id)
+                              : [...value, cat.id];
                             field.onChange(next);
                           }}
                           className={cn(
@@ -138,7 +239,8 @@ export function MasterRegistrationForm({ categories }: Props) {
                     </p>
                   )}
                 </FormItem>
-              )}
+              );
+              }}
             />
           </div>
 
@@ -147,11 +249,11 @@ export function MasterRegistrationForm({ categories }: Props) {
             variant="premium"
             size="xl"
             asChild
-            disabled={isPending}
+            disabled={isPending || isUploading}
             className="w-full relative group rounded-[var(--ui-radius-premium)] mt-8"
           >
             <motion.button whileHover={HOVER_GLOW} whileTap={CLICK_SCALE}>
-              {isPending ? (
+              {isPending || isUploading ? (
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (
                 <div className="flex items-center gap-2 sm:gap-4">

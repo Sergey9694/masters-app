@@ -36,7 +36,7 @@ export default async function BecomeMasterPage() {
       />
 
       <StaggerItem>
-        <MasterRegistrationForm categories={categories} />
+        <MasterRegistrationForm categories={categories} initialAvatar={user.avatar} />
       </StaggerItem>
     </StaggerWrap>
   );

@@ -24,7 +24,7 @@ const uploadImagesSchema = z.object({
   ).max(5, "Maximum 5 images allowed").optional().default([]),
 });
 
-export async function uploadImagesAction(formData: FormData): Promise<{ urls?: string[]; error?: string }> {
+export async function uploadImagesAction(formData: FormData): Promise<{ urls?: string[]; avatarUrl?: string; error?: string }> {
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -37,7 +37,8 @@ export async function uploadImagesAction(formData: FormData): Promise<{ urls?: s
     }
 
     const rawImages = formData.getAll("images");
-    console.log(`[uploadAction] User ${user.id} uploading ${rawImages.length} files`);
+    const rawAvatar = formData.get("avatar");
+    console.log(`[uploadAction] User ${user.id} uploading ${rawImages.length} images and avatar: ${!!rawAvatar}`);
     
     const parsed = uploadImagesSchema.safeParse({ images: rawImages });
     if (!parsed.success) {
@@ -46,25 +47,23 @@ export async function uploadImagesAction(formData: FormData): Promise<{ urls?: s
     }
 
     const files = parsed.data.images;
-    if (files.length === 0) {
-      return { urls: [] };
-    }
-
     const urls: string[] = [];
     for (const file of files) {
       if (file.size === 0) continue;
-      console.log(`[uploadAction] Processing ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB, type: ${file.type})`);
-      
       try {
         const url = await uploadFile(file);
         urls.push(url);
-      } catch (uploadError) {
-        console.error(`[uploadAction] Failed to upload ${file.name}:`, uploadError);
-        // Не валим весь процесс, если один файл не загрузился
-      }
+      } catch (err) { console.error(err); }
     }
 
-    return { urls };
+    let avatarUrl: string | undefined = undefined;
+    if (rawAvatar instanceof File && rawAvatar.size > 0) {
+      try {
+        avatarUrl = await uploadFile(rawAvatar);
+      } catch (err) { console.error(err); }
+    }
+
+    return { urls, avatarUrl };
   } catch (globalError: unknown) {
     console.error("[uploadAction] Fatal global error:", globalError);
     return { error: "Внутренняя ошибка сервера при загрузке" };

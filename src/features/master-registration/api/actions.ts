@@ -23,7 +23,7 @@ export async function createMasterProfileAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Неверные данные" };
   }
-  const { bio, categoryIds } = parsed.data;
+  const { bio, categoryIds, experienceYears, minPrice, portfolio, avatarUrl } = parsed.data;
 
   try {
     // Проверяем, что все переданные категории существуют
@@ -40,6 +40,9 @@ export async function createMasterProfileAction(
         data: {
           userId: user.id,
           bio,
+          experienceYears,
+          minPrice,
+          portfolio,
           categories: {
             create: categoryIds.map((categoryId) => ({ categoryId })),
           },
@@ -47,7 +50,10 @@ export async function createMasterProfileAction(
       }),
       db.user.update({
         where: { id: user.id },
-        data: { role: "MASTER" },
+        data: { 
+          role: "MASTER",
+          ...(avatarUrl && { avatar: avatarUrl })
+        },
       }),
     ]);
 
