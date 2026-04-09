@@ -32,9 +32,10 @@ import { Input } from "@/shared/ui/input";
 interface Props {
   categories: { id: string; name: string }[];
   initialData?: Partial<MasterProfileFormValues>;
+  isUpdate?: boolean;
 }
 
-export function MasterRegistrationForm({ categories, initialData }: Props) {
+export function MasterRegistrationForm({ categories, initialData, isUpdate }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
@@ -90,7 +91,9 @@ export function MasterRegistrationForm({ categories, initialData }: Props) {
 
         if ("success" in res) {
           toast.custom(() => (
-            <MotionToast type="success">Вы теперь мастер!</MotionToast>
+            <MotionToast type="success">
+              {isUpdate ? "Профиль обновлен!" : "Вы теперь мастер!"}
+            </MotionToast>
           ));
           setTimeout(() => router.push(res.redirect), 800);
           return;
@@ -248,7 +251,7 @@ export function MasterRegistrationForm({ categories, initialData }: Props) {
                 <Loader2 className="w-6 h-6 animate-spin" />
               ) : (
                 <div className="flex items-center gap-2 sm:gap-4">
-                  <span>Зарегистрироваться как мастер</span>
+                  <span>{isUpdate ? "Сохранить изменения" : "Зарегистрироваться как мастер"}</span>
                   <SendHorizontal className="w-4 h-4 sm:w-5 sm:h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all flex-shrink-0" />
                 </div>
               )}

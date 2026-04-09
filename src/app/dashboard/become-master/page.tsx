@@ -47,7 +47,11 @@ export default async function BecomeMasterPage() {
       />
 
       <StaggerItem>
-        <MasterRegistrationForm categories={categories} initialData={masterProfileData} />
+        <MasterRegistrationForm 
+          categories={categories} 
+          initialData={masterProfileData} 
+          isUpdate={!!user.masterProfile} 
+        />
       </StaggerItem>
     </StaggerWrap>
   );
