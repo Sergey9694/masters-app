@@ -93,7 +93,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         {/* ── Categories ── */}
         <motion.div variants={STAGGER_ITEM} className="px-1">
           <SectionHeader title="Категории услуг" accentColor="indigo" className="mb-5" />
-          <CategoryGrid initialCategories={categories} />
+          <CategoryGrid initialCategories={categories} variant="row" />
         </motion.div>
 
         {/* ── Master Section ── */}

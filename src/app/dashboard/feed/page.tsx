@@ -52,7 +52,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             <div className="h-24 bg-white/5 rounded-[32px] animate-pulse w-full max-lg mx-auto" />
           }
         >
-          <CategoryGrid initialCategories={categories} variant="scroll" showAll={true} />
+          <CategoryGrid initialCategories={categories} variant="row" />
         </Suspense>
       </StaggerItem>
 

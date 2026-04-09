@@ -16,13 +16,11 @@ interface Category {
 export function CategoryGrid({ 
   initialCategories, 
   className,
-  variant = 'grid',
-  showAll = true
+  variant = 'row' // renamed row to filter-bar
 }: { 
   initialCategories: Category[], 
   className?: string,
-  variant?: 'grid' | 'scroll',
-  showAll?: boolean
+  variant?: 'grid' | 'row'
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -40,68 +38,63 @@ export function CategoryGrid({
     router.push(`/dashboard/feed?${params.toString()}`);
   }, [router, searchParams, activeCategoryId]);
 
-  const categoriesToRender = showAll 
-    ? [{ id: 'all', name: 'Все', icon: 'LayoutGrid' }, ...initialCategories]
-    : initialCategories;
+  const categoriesToRender = [{ id: 'all', name: 'Все', icon: 'LayoutGrid' }, ...initialCategories];
 
   return (
-    <div className={cn("w-full transition-all duration-500", className)}>
+    <div className={cn("w-full relative py-1", className)}>
       <motion.div 
         variants={STAGGER_CONTAINER}
-        className={cn(
-          "gap-x-4 transition-all duration-500",
-          variant === 'grid' 
-            ? "grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-y-6" 
-            : "flex overflow-x-auto no-scrollbar py-3 px-4 -mx-4 scroll-smooth"
-        )}
+        className="flex items-center gap-3 overflow-x-auto no-scrollbar px-[15px] -mx-[15px] sm:px-[var(--ui-desktop-px)] sm:-mx-[var(--ui-desktop-px)] py-4 scroll-smooth"
       >
         {categoriesToRender.map((cat) => {
            const Icon = (Icons as any)[cat.icon || "Hammer"] || Icons.Hammer;
            const isActive = activeCategoryId === cat.id || (cat.id === 'all' && !activeCategoryId);
            
            return (
-             <motion.div 
+             <motion.button
                key={cat.id} 
                variants={STAGGER_ITEM}
-               whileHover={{ scale: 1.05 }}
-               whileTap={{ scale: 0.9 }}
+               whileHover={{ scale: 1.02 }}
+               whileTap={{ scale: 0.95 }}
                onClick={() => onCategoryClick(cat.id)}
                className={cn(
-                 "flex flex-col items-center gap-2 group relative cursor-pointer flex-shrink-0 transition-all",
-                 variant === 'scroll' && "w-20"
+                 "relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-full transition-all duration-500 whitespace-nowrap overflow-hidden group flex-shrink-0",
+                 "border border-white/10 backdrop-blur-md",
+                 isActive 
+                   ? "bg-white/20 shadow-[0_0_20px_rgba(34,211,238,0.2)] border-cyan-500/50" 
+                   : "bg-white/[0.04] hover:bg-white/[0.08]"
                )}
              >
-                {/* Icon Container with Neon Gradient Border */}
-                <div className={cn(
-                  "rounded-[22px] flex items-center justify-center transition-all duration-500 shadow-md relative",
-                  variant === 'grid' ? "w-16 h-16" : "w-14 h-14",
-                  isActive 
-                    ? "bg-gradient-to-tr from-cyan-600 to-indigo-600 text-white shadow-cyan-500/30 scale-105" 
-                    : "neon-border-gradient text-slate-800 dark:text-white bg-white/[0.03] group-hover:bg-white/[0.08]"
-                )}>
-                  {isActive && (
-                    <motion.div 
-                      layoutId="active-glow"
-                      className="absolute inset-0 rounded-[22px] bg-cyan-400/20 blur-md scale-110"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                    />
-                  )}
-                  <Icon className={cn(
-                    "stroke-[1.8] relative z-10 transition-colors duration-300",
-                    variant === 'grid' ? "w-7 h-7" : "w-6 h-6",
-                    isActive ? "text-white" : "group-hover:text-cyan-400"
-                  )} />
-                </div>
+                {/* Active Background Liquid Glow */}
+                {isActive && (
+                  <motion.div 
+                    layoutId="pill-active-bg"
+                    className="absolute inset-0 bg-gradient-to-r from-cyan-600/20 to-indigo-600/20 z-0"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+                )}
+
+                <Icon className={cn(
+                   "w-4 h-4 transition-all duration-300 relative z-10",
+                   isActive ? "text-cyan-400 scale-110" : "text-slate-400 group-hover:text-white"
+                )} />
 
                 <span className={cn(
-                  "font-black uppercase tracking-wider text-center leading-[1.3] max-w-[70px] transition-colors duration-300",
-                  variant === 'grid' ? "text-[10px]" : "text-[9px]",
-                  isActive ? "text-cyan-400" : "text-slate-900 dark:text-slate-100 group-hover:text-cyan-400"
+                  "text-xs font-bold uppercase tracking-widest relative z-10 transition-all duration-300",
+                  isActive ? "text-white" : "text-slate-500 group-hover:text-slate-300 shadow-text-sm"
                 )}>
-                  {cat.name.replace(' и ', ' & ')}
+                  {cat.name}
                 </span>
-             </motion.div>
+
+                {isActive && (
+                   <motion.div 
+                     layoutId="active-underline"
+                     className="absolute bottom-0 left-1/4 right-1/4 h-[2px] bg-cyan-400 shadow-[0_0_10px_#22d3ee] rounded-full"
+                   />
+                )}
+             </motion.button>
            )
         })}
       </motion.div>
