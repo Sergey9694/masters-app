@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Hammer } from "lucide-react";
 import Link from "next/link";
 
 import { db } from "@/shared/lib/db";
@@ -43,6 +43,7 @@ export default async function BecomeMasterPage() {
       <PageHeader 
         title={user.masterProfile ? "Профиль мастера" : "Стать мастером"}
         subtitle={user.masterProfile ? "Редактирование данных" : "Заполните профиль"}
+        icon={<Hammer className="w-5 h-5 text-emerald-400" />}
       />
 
       <StaggerItem>

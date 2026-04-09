@@ -7,6 +7,7 @@ import { StaggerItem } from "./stagger-item";
 interface PageHeaderProps {
   title: string;
   subtitle?: string | React.ReactNode;
+  icon?: React.ReactNode;
   showBack?: boolean;
   fallbackUrl?: string;
   rightAction?: React.ReactNode;
@@ -20,6 +21,7 @@ interface PageHeaderProps {
 export function PageHeader({
   title,
   subtitle,
+  icon,
   showBack = true,
   fallbackUrl,
   rightAction,
@@ -29,8 +31,9 @@ export function PageHeader({
     <StaggerItem className={cn("flex items-center gap-4 mb-8", className)}>
       {showBack && <BackButton fallbackUrl={fallbackUrl} />}
       <div className="flex-1 min-w-0">
-        <h1 className="text-2xl font-black tracking-tight text-white truncate">
+        <h1 className="text-2xl font-black tracking-tight text-white truncate flex items-center gap-2">
           {title}
+          {icon && <span className="opacity-80 flex-shrink-0">{icon}</span>}
         </h1>
         {subtitle && (
           <div className="mt-1">

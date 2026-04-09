@@ -26,7 +26,7 @@ COPY . .
 
 # Применяем переменные окружения для билда (клиентские NEXT_PUBLIC)
 ARG NEXT_PUBLIC_BOT_NAME
-ENV NEXT_PUBLIC_BOT_NAME $NEXT_PUBLIC_BOT_NAME
+ENV NEXT_PUBLIC_BOT_NAME="$NEXT_PUBLIC_BOT_NAME"
 
 # 👇 Используем кэш Next.js (.next/cache)
 RUN --mount=type=cache,target=/app/.next/cache \
@@ -36,7 +36,7 @@ RUN --mount=type=cache,target=/app/.next/cache \
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV="production"
 
 # Добавляем необходимые пакеты
 RUN apk add --no-cache openssl libc6-compat curl
@@ -60,7 +60,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts/startup.js ./startup.js
 USER nextjs
 
 EXPOSE 3000
-ENV PORT 3000
-ENV HOSTNAME 0.0.0.0
+ENV PORT="3000"
+ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "startup.js"]

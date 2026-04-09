@@ -116,6 +116,7 @@ export function MasterRegistrationForm({ categories, initialData }: Props) {
           <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 blur-[100px] -mr-24 -mt-24 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 blur-[100px] -ml-24 -mb-24 pointer-events-none" />
 
+
           <AvatarUpload 
             value={form.getValues("avatarUrl")}
             onChange={(url, file) => {
@@ -124,16 +125,6 @@ export function MasterRegistrationForm({ categories, initialData }: Props) {
             }}
             className="mb-8"
           />
-
-          <header className="space-y-1 mb-8 relative z-10">
-            <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-              Стать мастером
-              <Hammer className="w-5 h-5 text-emerald-400" />
-            </h1>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">
-              District Master • Onboarding
-            </p>
-          </header>
 
           <div className="space-y-6 relative z-10">
             <FormField<MasterProfileFormValues>
