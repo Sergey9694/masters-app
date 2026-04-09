@@ -1,0 +1,160 @@
+import { getUsers } from "@/features/admin/api/get-users";
+import { updateUserRole } from "@/features/admin/api/update-user-role";
+import { Role } from "@/shared/types/auth";
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
+import { revalidatePath } from "next/cache";
+import { db } from "@/shared/lib/db";
+
+export default async function AdminUsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; role?: string; page?: string }>;
+}) {
+  const params = await searchParams;
+  const search = params.search || "";
+  const role = (params.role as Role | undefined) || undefined;
+  const page = Number(params.page) || 1;
+
+  const data = await getUsers({ page, search, role });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-black text-white">Пользователи</h1>
+        <p className="text-slate-500 mt-1">Всего: {data.total}</p>
+      </div>
+
+      {/* Filters */}
+      <form className="flex gap-3" method="get">
+        <input
+          name="search"
+          defaultValue={search}
+          placeholder="Поиск по имени..."
+          className="flex-1 bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50"
+        />
+        <select
+          name="role"
+          defaultValue={role || ""}
+          className="bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50"
+        >
+          <option value="">Все роли</option>
+          <option value="USER">USER</option>
+          <option value="MASTER">MASTER</option>
+          <option value="ADMIN">ADMIN</option>
+        </select>
+      </form>
+
+      {/* Table */}
+      <div className="bg-[#16162a] rounded-2xl border border-white/5 overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-white/5 text-slate-500 text-xs uppercase tracking-wider">
+              <th className="text-left p-4 font-bold">Пользователь</th>
+              <th className="text-left p-4 font-bold">Роль</th>
+              <th className="text-left p-4 font-bold">Дата</th>
+              <th className="text-left p-4 font-bold">Статус</th>
+              <th className="text-left p-4 font-bold">Действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.users.map((user) => (
+              <tr key={user.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                <td className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-8 h-8">
+                      <AvatarImage src={user.avatar || ""} />
+                      <AvatarFallback className="text-xs font-bold bg-slate-800 text-slate-400">
+                        {user.firstName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-bold text-white">{user.firstName}</p>
+                      <p className="text-xs text-slate-500">
+                        {user.telegramId ? `TG: ${user.telegramId}` : "No TG"}
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="p-4">
+                  <RoleBadge role={user.role} />
+                </td>
+                <td className="p-4 text-slate-500 text-xs">
+                  {new Date(user.createdAt).toLocaleDateString("ru-RU")}
+                </td>
+                <td className="p-4">
+                  {user.masterProfile ? (
+                    user.masterProfile.isVerified ? (
+                      <span className="text-xs font-bold text-emerald-500">Верифицирован</span>
+                    ) : (
+                      <span className="text-xs font-bold text-amber-500">Не верифицирован</span>
+                    )
+                  ) : (
+                    <span className="text-xs text-slate-600">—</span>
+                  )}
+                </td>
+                <td className="p-4">
+                  <RoleSelect userId={user.id} currentRole={user.role} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {data.totalPages > 1 && (
+        <div className="flex gap-2">
+          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
+            <a
+              key={p}
+              href={`?page=${p}${search ? `&search=${search}` : ""}${role ? `&role=${role}` : ""}`}
+              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
+                p === page
+                  ? "bg-blue-600 text-white"
+                  : "bg-[#1a1a2e] text-slate-500 hover:text-white"
+              }`}
+            >
+              {p}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RoleBadge({ role }: { role: Role }) {
+  const colors: Record<Role, string> = {
+    USER: "bg-slate-700/50 text-slate-300",
+    MASTER: "bg-emerald-700/50 text-emerald-300",
+    ADMIN: "bg-violet-700/50 text-violet-300",
+  };
+  return (
+    <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${colors[role]}`}>
+      {role}
+    </span>
+  );
+}
+
+function RoleSelect({ userId, currentRole }: { userId: string; currentRole: Role }) {
+  async function handleChange(formData: FormData) {
+    "use server";
+    const role = formData.get("role") as Role;
+    await updateUserRole(userId, role);
+  }
+
+  return (
+    <form action={handleChange}>
+      <select
+        name="role"
+        defaultValue={currentRole}
+        onChange={(e) => e.target.form?.requestSubmit()}
+        className="bg-[#1a1a2e] border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500/50"
+      >
+        <option value="USER">USER</option>
+        <option value="MASTER">MASTER</option>
+        <option value="ADMIN">ADMIN</option>
+      </select>
+    </form>
+  );
+}

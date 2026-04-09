@@ -32,16 +32,22 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // 3. Проверяем валидность токена
+  // 3. Проверяем валидность токена и извлекаем роль
+  let payload: Awaited<ReturnType<typeof decrypt>>;
   try {
-    await decrypt(session);
+    payload = await decrypt(session);
   } catch {
     const res = NextResponse.redirect(new URL("/", request.url));
     res.cookies.set("session", "", { expires: new Date(0) });
     return res;
   }
 
-  // 4. Токен валидный — продлеваем сессию и пропускаем запрос
+  // 4. Админ-роуты — только для ADMIN
+  if (request.nextUrl.pathname.startsWith("/admin") && payload.role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/dashboard?error=forbidden", request.url));
+  }
+
+  // 5. Токен валидный — продлеваем сессию и пропускаем запрос
   return await updateSession(request);
 }
 
