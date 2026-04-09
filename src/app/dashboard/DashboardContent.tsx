@@ -324,7 +324,7 @@ function ActionCard({
     <motion.div variants={STAGGER_ITEM} whileHover={HOVER_GLOW} whileTap={CLICK_SCALE}>
       <Card className="p-6 border-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] dark:shadow-none glass flex flex-col items-start gap-5 hover:bg-white/10 dark:hover:bg-slate-800 transition-all duration-500 cursor-pointer group active:scale-[0.97] rounded-[32px] border border-white/10 dark:border-white/20 select-none relative overflow-visible">
         {badge && (
-          <span className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-blue-600 text-[10px] font-black text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap animate-in fade-in zoom-in duration-300 z-20 border border-white/10">
+          <span className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] whitespace-nowrap animate-in fade-in zoom-in duration-300 z-20 border border-white/10">
             {badge}
           </span>
         )}

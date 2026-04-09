@@ -22,7 +22,7 @@ import {
 import { Textarea } from "@/shared/ui/textarea";
 import { Card } from "@/shared/ui/card";
 import { cn } from "@/shared/lib/cn";
-import { MasterProfileFormValues, masterProfileSchema } from "../model/schema";
+import { MasterProfileFormValues, MasterProfileFormInput, masterProfileSchema } from "../model/schema";
 import { saveMasterProfileAction } from "../api/actions";
 import { AvatarUpload } from "./AvatarUpload";
 import { PhotoUploadField } from "@/features/task-creation/ui/PhotoUploadField";
@@ -42,13 +42,13 @@ export function MasterRegistrationForm({ categories, initialData, isUpdate }: Pr
   const [previewImages, setPreviewImages] = useState<{ file: File; url: string }[]>([]);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
-  const form = useForm<MasterProfileFormValues>({
+  const form = useForm<MasterProfileFormInput, any, MasterProfileFormValues>({
     resolver: zodResolver(masterProfileSchema),
     defaultValues: { 
-      bio: initialData?.bio || "", 
+      bio: (initialData?.bio as string) || "", 
       categoryIds: initialData?.categoryIds || [],
-      experienceYears: initialData?.experienceYears || 0,
-      minPrice: initialData?.minPrice || 0,
+      experienceYears: initialData?.experienceYears ?? 0,
+      minPrice: initialData?.minPrice ?? 0,
       portfolio: initialData?.portfolio || [],
       avatarUrl: initialData?.avatarUrl || ""
     },
@@ -130,7 +130,7 @@ export function MasterRegistrationForm({ categories, initialData, isUpdate }: Pr
           />
 
           <div className="space-y-6 relative z-10">
-            <FormField<MasterProfileFormValues>
+            <FormField
               control={form.control}
               name="bio"
               render={({ field }) => (
@@ -151,7 +151,7 @@ export function MasterRegistrationForm({ categories, initialData, isUpdate }: Pr
             />
 
             <div className="grid grid-cols-2 gap-4">
-              <FormField<MasterProfileFormValues>
+              <FormField
                 control={form.control}
                 name="experienceYears"
                 render={({ field }) => (
@@ -167,7 +167,7 @@ export function MasterRegistrationForm({ categories, initialData, isUpdate }: Pr
                 )}
               />
 
-              <FormField<MasterProfileFormValues>
+              <FormField
                 control={form.control}
                 name="minPrice"
                 render={({ field }) => (
@@ -191,7 +191,7 @@ export function MasterRegistrationForm({ categories, initialData, isUpdate }: Pr
               <PhotoUploadField previewImages={previewImages} setPreviewImages={setPreviewImages} />
             </div>
 
-            <Controller<MasterProfileFormValues, "categoryIds">
+            <Controller
               control={form.control}
               name="categoryIds"
               render={({ field, fieldState }) => {
