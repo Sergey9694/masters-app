@@ -1,7 +1,8 @@
 import { getAllReviews } from "@/features/admin/api/get-all-reviews";
-import { deleteReview } from "@/features/admin/api/moderate-review";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
-import { Trash2, Star } from "lucide-react";
+import { Star } from "lucide-react";
+import { ReviewModerationActions } from "@/features/admin/ui/review-moderation-actions";
+import { Pagination } from "@/shared/ui/custom/pagination";
 
 export default async function AdminReviewsPage({
   searchParams,
@@ -55,15 +56,11 @@ export default async function AdminReviewsPage({
                     ))}
                   </div>
                 </div>
-                <form action={async () => { "use server"; await deleteReview(review.id); }}>
-                  <button
-                    type="submit"
-                    className="p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-red-400 transition-colors"
-                    title="Удалить"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </form>
+                
+                <ReviewModerationActions 
+                  reviewId={review.id} 
+                  authorName={review.author.firstName} 
+                />
               </div>
 
               {review.text && (
@@ -73,7 +70,7 @@ export default async function AdminReviewsPage({
               )}
 
               <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
-                <span>{review.task.title}</span>
+                <span className="truncate max-w-[200px]">{review.task.title}</span>
                 <span>·</span>
                 <span>{new Date(review.createdAt).toLocaleDateString("ru-RU")}</span>
               </div>
@@ -82,24 +79,7 @@ export default async function AdminReviewsPage({
         ))}
       </div>
 
-      {/* Pagination */}
-      {data.totalPages > 1 && (
-        <div className="flex gap-2">
-          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
-            <a
-              key={p}
-              href={`?page=${p}`}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                p === page
-                  ? "bg-blue-600 text-white"
-                  : "bg-[#1a1a2e] text-slate-500 hover:text-white"
-              }`}
-            >
-              {p}
-            </a>
-          ))}
-        </div>
-      )}
+      <Pagination totalPages={data.totalPages} currentPage={page} />
     </div>
   );
 }

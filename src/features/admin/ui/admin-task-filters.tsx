@@ -1,15 +1,17 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { TaskStatus } from "@prisma/client";
 import { useTransition, useState, useRef } from "react";
 import { Search, Loader2 } from "lucide-react";
 
-interface AdminUserFiltersProps {
+interface AdminTaskFiltersProps {
   initialSearch?: string;
-  initialRole?: string;
+  initialStatus?: string;
+  statusLabels: Record<TaskStatus, string>;
 }
 
-export function AdminUserFilters({ initialSearch = "", initialRole = "" }: AdminUserFiltersProps) {
+export function AdminTaskFilters({ initialSearch = "", initialStatus = "", statusLabels }: AdminTaskFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -36,12 +38,12 @@ export function AdminUserFilters({ initialSearch = "", initialRole = "" }: Admin
     }, 450);
   };
 
-  const updateRole = (role: string) => {
+  const updateStatus = (status: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (role) {
-      params.set("role", role);
+    if (status) {
+      params.set("status", status);
     } else {
-      params.delete("role");
+      params.delete("status");
     }
     params.set("page", "1");
     
@@ -58,7 +60,7 @@ export function AdminUserFilters({ initialSearch = "", initialRole = "" }: Admin
           type="text"
           value={searchValue}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Живой поиск по имени или ID..."
+          placeholder="Живой поиск по названию, описанию или клиенту..."
           className="w-full bg-[#16162a] border border-white/10 rounded-xl pl-11 pr-11 py-3 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-all shadow-inner"
         />
         {isPending && (
@@ -69,14 +71,14 @@ export function AdminUserFilters({ initialSearch = "", initialRole = "" }: Admin
       </div>
 
       <select
-        defaultValue={initialRole}
-        onChange={(e) => updateRole(e.target.value)}
-        className="bg-[#16162a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50 appearance-none min-w-[140px] cursor-pointer"
+        defaultValue={initialStatus}
+        onChange={(e) => updateStatus(e.target.value)}
+        className="bg-[#16162a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-blue-500/50 appearance-none min-w-[160px] cursor-pointer"
       >
-        <option value="">Все роли</option>
-        <option value="USER">USER</option>
-        <option value="MASTER">MASTER</option>
-        <option value="ADMIN">ADMIN</option>
+        <option value="">Все статусы</option>
+        {Object.entries(statusLabels).map(([key, val]) => (
+          <option key={key} value={key}>{val}</option>
+        ))}
       </select>
     </div>
   );

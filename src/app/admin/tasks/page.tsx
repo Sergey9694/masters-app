@@ -1,6 +1,8 @@
 import { getAllTasks } from "@/features/admin/api/get-all-tasks";
 import { TaskStatus } from "@prisma/client";
 import { TaskModerationActions } from "@/features/admin/ui/task-moderation-actions";
+import { AdminTaskFilters } from "@/features/admin/ui/admin-task-filters";
+import { Pagination } from "@/shared/ui/custom/pagination";
 
 const statusLabels: Record<TaskStatus, string> = {
   OPEN: "Открыта",
@@ -38,24 +40,11 @@ export default async function AdminTasksPage({
       </div>
 
       {/* Filters */}
-      <form className="flex gap-3" method="get">
-        <input
-          name="search"
-          defaultValue={search}
-          placeholder="Поиск..."
-          className="flex-1 bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50"
-        />
-        <select
-          name="status"
-          defaultValue={status || ""}
-          className="bg-[#1a1a2e] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500/50"
-        >
-          <option value="">Все статусы</option>
-          {Object.entries(statusLabels).map(([key, val]) => (
-            <option key={key} value={key}>{val}</option>
-          ))}
-        </select>
-      </form>
+      <AdminTaskFilters 
+        initialSearch={search} 
+        initialStatus={status} 
+        statusLabels={statusLabels} 
+      />
 
       {/* Table */}
       <div className="bg-[#16162a] rounded-2xl border border-white/5 overflow-hidden">
@@ -97,23 +86,7 @@ export default async function AdminTasksPage({
       </div>
 
       {/* Pagination */}
-      {data.totalPages > 1 && (
-        <div className="flex gap-2">
-          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
-            <a
-              key={p}
-              href={`?page=${p}${status ? `&status=${status}` : ""}${search ? `&search=${search}` : ""}`}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                p === page
-                  ? "bg-blue-600 text-white"
-                  : "bg-[#1a1a2e] text-slate-500 hover:text-white"
-              }`}
-            >
-              {p}
-            </a>
-          ))}
-        </div>
-      )}
+      <Pagination totalPages={data.totalPages} currentPage={page} />
     </div>
   );
 }

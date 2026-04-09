@@ -7,7 +7,7 @@ export async function getAllTasks(params: {
   search?: string;
 }) {
   const page = params.page ?? 1;
-  const pageSize = 20;
+  const pageSize = 10;
   const skip = (page - 1) * pageSize;
 
   const where: Record<string, unknown> = {};

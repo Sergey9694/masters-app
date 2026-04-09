@@ -3,6 +3,7 @@ import { Role } from "@/shared/types/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { RoleSelect } from "@/features/admin/ui/role-select";
 import { AdminUserFilters } from "@/features/admin/ui/admin-user-filters";
+import { Pagination } from "@/shared/ui/custom/pagination";
 
 export default async function AdminUsersPage({
   searchParams,
@@ -84,23 +85,7 @@ export default async function AdminUsersPage({
       </div>
 
       {/* Pagination */}
-      {data.totalPages > 1 && (
-        <div className="flex gap-2">
-          {Array.from({ length: data.totalPages }, (_, i) => i + 1).map((p) => (
-            <a
-              key={p}
-              href={`?page=${p}${search ? `&search=${search}` : ""}${role ? `&role=${role}` : ""}`}
-              className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-colors ${
-                p === page
-                  ? "bg-blue-600 text-white"
-                  : "bg-[#1a1a2e] text-slate-500 hover:text-white"
-              }`}
-            >
-              {p}
-            </a>
-          ))}
-        </div>
-      )}
+      <Pagination totalPages={data.totalPages} currentPage={page} />
     </div>
   );
 }
