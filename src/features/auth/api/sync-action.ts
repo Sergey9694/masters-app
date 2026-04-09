@@ -18,10 +18,13 @@ export async function syncProfileAction(data: {
 
   try {
     // Only update if something actually changed to avoid DB noise
+    const isManualAvatar = user.avatar?.startsWith("/api/uploads/");
+    const shouldUpdateAvatar = data.avatar && data.avatar !== user.avatar && !isManualAvatar;
+
     const hasChanges = 
       (data.firstName && data.firstName !== user.firstName) ||
       (data.lastName && data.lastName !== user.lastName) ||
-      (data.avatar && data.avatar !== user.avatar);
+      shouldUpdateAvatar;
 
     if (hasChanges) {
       await db.user.update({
@@ -29,7 +32,7 @@ export async function syncProfileAction(data: {
         data: {
           firstName: data.firstName || user.firstName,
           lastName: data.lastName ?? user.lastName,
-          avatar: data.avatar ?? user.avatar,
+          avatar: shouldUpdateAvatar ? data.avatar : user.avatar,
         },
       });
       revalidatePath("/dashboard");

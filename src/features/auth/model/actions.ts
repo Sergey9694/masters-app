@@ -65,9 +65,21 @@ export async function loginWithTelegram(initData: string) {
     const lastName = tgUser.last_name ? String(tgUser.last_name) : null;
     const avatar = tgUser.photo_url ? String(tgUser.photo_url) : null;
 
+    const existingUser = await db.user.findUnique({
+      where: { telegramId },
+      select: { avatar: true }
+    });
+
     const user = await db.user.upsert({
       where: { telegramId },
-      update: { firstName, lastName, avatar },
+      update: { 
+        firstName, 
+        lastName, 
+        // Sync avatar ONLY if the current one is null or is an external (Telegram) URL
+        avatar: (existingUser?.avatar && existingUser.avatar.startsWith("/api/uploads/")) 
+          ? existingUser.avatar 
+          : avatar 
+      },
       create: {
         telegramId,
         firstName,

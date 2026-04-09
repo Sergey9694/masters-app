@@ -30,7 +30,7 @@ export async function saveMasterProfileAction(
       return { error: "Одна из категорий недоступна" };
     }
 
-    await db.$transaction(async (tx) => {
+    const masterResult = await db.$transaction(async (tx) => {
       // Если профиль уже есть, удаляем старые связи с категориями
       if (user.masterProfile) {
         await tx.masterCategory.deleteMany({
@@ -38,7 +38,7 @@ export async function saveMasterProfileAction(
         });
       }
 
-      await tx.masterProfile.upsert({
+      const result = await tx.masterProfile.upsert({
         where: { userId: user.id },
         update: {
           bio,
@@ -68,10 +68,14 @@ export async function saveMasterProfileAction(
           ...(avatarUrl && { avatar: avatarUrl })
         },
       });
+
+      return result;
     });
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/become-master");
+    revalidatePath(`/dashboard/masters/${masterResult.id}`);
+    
     return { success: true, redirect: "/dashboard" };
   } catch (error) {
     console.error("[saveMasterProfileAction] error:", error);
