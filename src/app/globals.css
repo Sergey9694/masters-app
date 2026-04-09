@@ -16,6 +16,8 @@
   --color-cyan: #22d3ee;
   --color-indigo: #6366f1;
   --color-emerald: #10b981;
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
   
   /* System Mapping */
   --color-primary: var(--ui-accent-cyan);

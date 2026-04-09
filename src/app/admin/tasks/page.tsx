@@ -1,7 +1,6 @@
 import { getAllTasks } from "@/features/admin/api/get-all-tasks";
-import { hideTask, deleteTask } from "@/features/admin/api/moderate-task";
 import { TaskStatus } from "@prisma/client";
-import { Eye, Trash2 } from "lucide-react";
+import { TaskModerationActions } from "@/features/admin/ui/task-moderation-actions";
 
 const statusLabels: Record<TaskStatus, string> = {
   OPEN: "Открыта",
@@ -89,18 +88,7 @@ export default async function AdminTasksPage({
                   {new Date(task.createdAt).toLocaleDateString("ru-RU")}
                 </td>
                 <td className="p-4">
-                  <div className="flex gap-1">
-                    <form action={async () => { "use server"; await hideTask(task.id); }}>
-                      <button type="submit" className="p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-amber-400 transition-colors" title="Скрыть">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </form>
-                    <form action={async () => { "use server"; await deleteTask(task.id); }}>
-                      <button type="submit" className="p-1.5 rounded-lg hover:bg-white/5 text-slate-500 hover:text-red-400 transition-colors" title="Удалить">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </form>
-                  </div>
+                  <TaskModerationActions taskId={task.id} status={task.status} />
                 </td>
               </tr>
             ))}

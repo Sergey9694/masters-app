@@ -47,15 +47,16 @@ export default function RootLayout({
         <Toaster 
           theme="dark" 
           closeButton
-          position="top-center" 
+          position="bottom-right" 
           toastOptions={{
             duration: 4000,
-            className: "!border-none !rounded-[24px] !p-0 !font-sans",
+            className: "!border-none !rounded-[24px] !p-4 !font-sans",
             style: {
                background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.4), rgba(79, 70, 229, 0.4))',
                backdropFilter: 'blur(32px) saturate(200%)',
                WebkitBackdropFilter: 'blur(32px) saturate(200%)',
-               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(8, 145, 178, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.15)',
+               border: '1px solid rgba(255, 255, 255, 0.15)',
+               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
             }
           }}
         />

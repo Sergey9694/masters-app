@@ -1,7 +1,7 @@
 import { getPendingMasters } from "@/features/admin/api/get-pending-masters";
-import { verifyMaster, rejectMaster } from "@/features/admin/api/verify-master";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
-import { Check, X, Star, Briefcase, MessageSquare } from "lucide-react";
+import { Star, Briefcase, MessageSquare } from "lucide-react";
+import { MasterModerationActions } from "@/features/admin/ui/master-moderation-actions";
 
 export default async function AdminMasterApplicationsPage() {
   const masters = await getPendingMasters();
@@ -99,26 +99,10 @@ export default async function AdminMasterApplicationsPage() {
               )}
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <form action={async () => { "use server"; await verifyMaster(m.id); }}>
-                  <button
-                    type="submit"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition-colors"
-                  >
-                    <Check className="w-4 h-4" />
-                    Аппрувить
-                  </button>
-                </form>
-                <form action={async () => { "use server"; await rejectMaster(m.id); }}>
-                  <button
-                    type="submit"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600/20 hover:bg-red-600/40 text-red-400 text-sm font-bold transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                    Отклонить
-                  </button>
-                </form>
-              </div>
+              <MasterModerationActions 
+                masterId={m.id} 
+                masterName={m.user.firstName} 
+              />
             </div>
           ))}
         </div>
