@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { CheckCircle2, AlertCircle, Info, Bell } from "lucide-react";
 import { TOAST_VARIANTS } from "@/shared/lib/motion";
 import { ReactNode } from "react";
 import { cn } from "@/shared/lib/cn";
@@ -17,11 +18,20 @@ interface MotionToastProps {
  */
 export function MotionToast({ children, className, type = 'default' }: MotionToastProps) {
   const typeStyles = {
-    success: "bg-gradient-to-tr from-cyan-600 to-indigo-600 border-white/40 shadow-[0_20px_50px_-10px_rgba(34,211,238,0.5)]",
-    error: "bg-red-600 border-white/30 shadow-[0_15px_40px_-5px_rgba(239,68,68,0.5)]",
-    info: "bg-gradient-to-tr from-indigo-600 to-purple-600 border-white/40",
-    default: "glass-premium border-white/10 shadow-2xl",
+    success: "shadow-[0_20px_50px_-10px_rgba(34,211,238,0.3)]",
+    error: "shadow-[0_15px_40px_-5px_rgba(239,68,68,0.3)]",
+    info: "",
+    default: "",
   };
+
+  const Icon = {
+    success: CheckCircle2,
+    error: AlertCircle,
+    info: Info,
+    default: Bell,
+  }[type];
+
+  const isShortText = typeof children === 'string' && children.length < 30;
 
   return (
     <motion.div
@@ -30,12 +40,26 @@ export function MotionToast({ children, className, type = 'default' }: MotionToa
       animate="animate"
       exit="exit"
       className={cn(
-        "flex w-full items-center gap-4 px-6 py-4 rounded-[24px] border text-white font-outfit font-bold",
+        "flex min-w-[280px] max-w-sm items-center gap-3 px-5 py-3.5 rounded-[22px] text-white font-outfit font-bold",
         typeStyles[type],
         className
       )}
     >
-      {children}
+      <div className={cn(
+        "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+        type === 'success' && "bg-emerald-500/20 text-emerald-400",
+        type === 'error' && "bg-red-500/20 text-red-400",
+        type === 'info' && "bg-indigo-500/20 text-indigo-400",
+        type === 'default' && "bg-white/10 text-white",
+      )}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className={cn(
+        "flex-1 leading-snug",
+        isShortText ? "text-[16px]" : "text-[14px] font-medium"
+      )}>
+        {children}
+      </div>
     </motion.div>
   );
 }
