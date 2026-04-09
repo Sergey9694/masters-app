@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
+const nextConfig: any = {
   output: "standalone",
+  allowedDevOrigins: ["*.ngrok-free.app", "*.ngrok-free.dev", "*.ngrok.io", "*.loca.lt"],
 
   experimental: {
     // Allow large photo uploads from phones (iPhone photos 3-5 MB each, up to 5 photos)

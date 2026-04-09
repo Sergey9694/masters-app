@@ -81,6 +81,23 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "WARNING: seed failed (continuing to start server)." -ForegroundColor Yellow
 }
 
-# 5. Start Server
+# 5. Start Ngrok (Optional)
+Write-Host "--- Checking Ngrok ---" -ForegroundColor Cyan
+# Try to find ngrok URL in .env.local or .env
+$envFile = if (Test-Path ".env.local") { Get-Content ".env.local" -Raw } else { Get-Content ".env" -Raw }
+if ($envFile -match 'NEXT_PUBLIC_APP_URL="(https://[^"]+ngrok[^"]+)"') {
+    $ngrokUrl = $Matches[1]
+    Write-Host "Auto-starting Ngrok for: $ngrokUrl" -ForegroundColor Green
+    
+    # Kill any existing ngrok first to avoid port conflicts
+    Stop-Process -Name ngrok -Force -ErrorAction SilentlyContinue
+    
+    # Start Ngrok in a new window
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "npx ngrok http 3000 --url=$ngrokUrl" -WindowStyle Normal
+} else {
+    Write-Host "Ngrok URL not found in .env files, skipping auto-start." -ForegroundColor Gray
+}
+
+# 6. Start Server
 Write-Host "--- Starting Next.js Dev Server ---" -ForegroundColor Cyan
 npx next dev
