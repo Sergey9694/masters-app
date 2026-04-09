@@ -36,6 +36,7 @@ export async function loadTasksAction(
       id: true,
       title: true,
       description: true,
+      images: true,
       budget: true,
       address: true,
       createdAt: true,

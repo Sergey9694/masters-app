@@ -42,6 +42,7 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
         title: true,
         status: true,
         budget: true,
+        images: true,
         createdAt: true,
         description: true,
         category: { select: { name: true } },

@@ -66,6 +66,7 @@ export default async function MyResponsesPage({ searchParams }: MyResponsesPageP
             id: true,
             title: true,
             status: true,
+            images: true,
             assignedMasterId: true,
             description: true,
             category: { select: { name: true } },

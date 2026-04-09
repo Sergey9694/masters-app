@@ -83,30 +83,30 @@ export function TaskListItem({
           )}
 
           <div className="flex items-center gap-3">
-             {/* Price with Premium Style */}
-             <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                  <Banknote className="w-3.5 h-3.5" />
-                </div>
-                <span className="text-xs font-black text-slate-200">
-                  {price !== undefined && price !== null ? `${price.toLocaleString()} ₽` : "Договорная"}
-                </span>
-             </div>
+              {/* Price with Premium Style */}
+              <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                   <Banknote className="w-4 h-4" />
+                 </div>
+                 <span className="text-xs font-black text-slate-200">
+                   {price !== undefined && price !== null ? `${price.toLocaleString()} ₽` : "Договорная"}
+                 </span>
+              </div>
 
-             {/* Address with Premium Style */}
-             {address && (
-                <div 
-                  className="flex items-center gap-2 group/addr"
-                  onClick={handleAddressClick}
-                >
-                  <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/addr:bg-blue-500/20 transition-colors">
-                    <MapPin className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-400 truncate max-w-[120px] group-hover/addr:text-blue-400 transition-colors">
-                    {address}
-                  </span>
-                </div>
-             )}
+              {/* Address with Premium Style */}
+              {address && (
+                 <div 
+                   className="flex items-center gap-2 group/addr"
+                   onClick={handleAddressClick}
+                 >
+                   <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/addr:bg-blue-500/20 transition-colors">
+                     <MapPin className="w-4 h-4" />
+                   </div>
+                   <span className="text-xs font-bold text-slate-400 truncate max-w-[120px] group-hover/addr:text-blue-400 transition-colors">
+                     {address}
+                   </span>
+                 </div>
+              )}
 
              {responsesCount !== undefined && responsesCount > 0 && (
                 <span className="px-2.5 py-1 rounded-full bg-indigo-500/10 text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-1.5 border border-indigo-500/10">

@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck, Mail, Calendar } from "lucide-react";
+import { ChevronLeft, Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck, Mail, Calendar, MessageSquare } from "lucide-react";
 import { formatSmartDate, formatRelativeTime } from "@/shared/lib/date";
 import { getMapUrl } from "@/shared/lib/maps";
 
@@ -95,7 +95,8 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
                   {task.customer.firstName}
                 </p>
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">
+                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
                   {formatSmartDate(task.createdAt)}
                 </p>
               </div>
@@ -112,7 +113,9 @@ export default async function TaskDetailPage({ params }: PageProps) {
 
           <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/10">
             <div className="flex items-center gap-2 text-slate-200">
-              <Banknote className="w-4 h-4 text-emerald-400" />
+              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                <Banknote className="w-4 h-4" />
+              </div>
               <span className="text-sm font-black">
                 {task.budget ? `${task.budget.toLocaleString()} ₽` : "Договорная"}
               </span>
@@ -125,7 +128,9 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group/map"
               >
-                <MapPin className="w-4 h-4 text-blue-400 group-hover/map:animate-bounce" />
+                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/map:bg-blue-500/20 transition-colors">
+                  <MapPin className="w-4 h-4 group-hover/map:animate-bounce" />
+                </div>
                 <span className="text-sm font-bold group-hover/map:underline decoration-blue-500/30 underline-offset-4">
                   {task.address}
                 </span>
@@ -133,7 +138,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
             )}
 
             <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-widest ml-auto">
-              <Clock className="w-3.5 h-3.5" />
+              <MessageSquare className="w-3.5 h-3.5" />
               {task.responses.length} отклик(ов)
             </div>
           </div>
