@@ -31,7 +31,7 @@ export function BackButton({ className, fallbackUrl = "/dashboard" }: BackButton
       type="button"
       onClick={handleBack}
       className={cn(
-        "w-10 h-10 rounded-full glass border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors flex-shrink-0",
+        "w-10 h-10 rounded-full glass-card border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors flex-shrink-0 shadow-lg",
         className
       )}
     >

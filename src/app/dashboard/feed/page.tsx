@@ -25,7 +25,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
   });
 
   return (
-    <StaggerWrap className="container-standard space-y-12 pt-6">
+    <StaggerWrap className="container-standard space-y-8 pt-6">
       <TelegramBackButton />
 
       {/* Search Header */}
@@ -43,7 +43,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       </div>
 
       {/* Categories Filter Bar */}
-      <StaggerItem className="space-y-4">
+      <StaggerItem className="space-y-2">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center justify-center gap-2 italic opacity-70">
           — Фильтр по категориям —
         </h3>

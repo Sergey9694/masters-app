@@ -70,10 +70,10 @@ export function NotificationItem({ notification: n }: NotificationItemProps) {
       className={`block transition-all cursor-pointer ${isPending ? "opacity-70" : "hover:opacity-90"}`}
     >
       <Card
-        className={`glass border-none p-4 rounded-[20px] transition-all ${
+        className={`glass-card p-4 rounded-[20px] transition-all ${
           n.read
             ? "opacity-60"
-            : "border-l-2 border-l-blue-500 bg-white/5"
+            : "border-l-2 border-l-blue-500 bg-white/10 shadow-lg shadow-blue-500/5 scale-[1.02]"
         }`}
       >
         <div className="flex items-start gap-3">

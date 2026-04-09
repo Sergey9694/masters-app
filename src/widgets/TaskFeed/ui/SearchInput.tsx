@@ -45,7 +45,7 @@ export function SearchInput() {
         placeholder="Поиск по названию или описанию..."
         defaultValue={searchParams.get("search") ?? ""}
         onChange={(e) => onInput(e.target.value)}
-        className="pl-12 h-14 bg-white/50 dark:bg-slate-900/50 border-white/20 dark:border-slate-800 rounded-3xl text-base font-medium shadow-xl shadow-black/5"
+        className="pl-12 h-14 rounded-3xl text-base font-medium shadow-xl shadow-black/20"
       />
     </div>
   );

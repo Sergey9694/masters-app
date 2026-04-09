@@ -41,10 +41,10 @@ export function CategoryGrid({
   const categoriesToRender = [{ id: 'all', name: 'Все', icon: 'LayoutGrid' }, ...initialCategories];
 
   return (
-    <div className={cn("w-full relative py-1", className)}>
+    <div className={cn("w-full relative py-0", className)}>
       <motion.div 
         variants={STAGGER_CONTAINER}
-        className="flex items-center gap-3 overflow-x-auto no-scrollbar px-[15px] -mx-[15px] sm:px-[var(--ui-desktop-px)] sm:-mx-[var(--ui-desktop-px)] py-8 scroll-smooth"
+        className="flex items-center gap-3 overflow-x-auto no-scrollbar px-[15px] -mx-[15px] sm:px-[var(--ui-desktop-px)] sm:-mx-[var(--ui-desktop-px)] py-4 scroll-smooth"
       >
         {categoriesToRender.map((cat) => {
            const Icon = (Icons as any)[cat.icon || "Hammer"] || Icons.Hammer;

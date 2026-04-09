@@ -71,7 +71,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
           <Button
             variant="outline"
             size="icon"
-            className="rounded-2xl w-12 h-12 border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl group hover:scale-105 active:scale-95 transition-all relative"
+            className="rounded-2xl w-12 h-12 glass-card hover:scale-110 active:scale-90 transition-all relative border-white/10 shadow-lg"
           >
             <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400 group-hover:text-blue-500 transition-colors" />
             {stats.unreadNotificationsCount > 0 && (
@@ -83,7 +83,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         </Link>
       </motion.header>
 
-      <div className="space-y-8 pb-32">
+      <div className="space-y-6 pb-32">
         {/* ── Direct Search Bar ── */}
         <motion.div variants={STAGGER_ITEM} className="px-1">
           <SectionHeader title="Поиск" accentColor="blue" className="mb-4" />
@@ -92,7 +92,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
 
         {/* ── Categories ── */}
         <motion.div variants={STAGGER_ITEM} className="px-1">
-          <SectionHeader title="Категории услуг" accentColor="indigo" className="mb-5" />
+          <SectionHeader title="Категории услуг" accentColor="indigo" className="mb-3" />
           <CategoryGrid initialCategories={categories} variant="row" />
         </motion.div>
 
