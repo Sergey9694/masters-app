@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { STAGGER_ITEM } from "@/shared/lib/motion";
 import { ReactNode } from "react";
 import { cn } from "@/shared/lib/cn";
@@ -8,7 +8,7 @@ import { cn } from "@/shared/lib/cn";
 interface StaggerItemProps {
   children: ReactNode;
   className?: string;
-  variants?: any;
+  variants?: Variants;
 }
 
 /**

@@ -1,8 +1,13 @@
 import { db } from "@/shared/lib/db";
 import type { NotificationType } from "@prisma/client";
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const WEBAPP_URL = process.env.NEXT_PUBLIC_APP_URL || "";
+function getBotToken() {
+  return process.env.TELEGRAM_BOT_TOKEN;
+}
+
+function getWebAppUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL || "";
+}
 
 interface NotifyParams {
   userId: string;
@@ -30,7 +35,9 @@ export async function notify(params: NotifyParams) {
     });
 
     // 2. Send Telegram message if bot token is configured
-    if (!BOT_TOKEN) return;
+    const botToken = getBotToken();
+    const webAppUrl = getWebAppUrl();
+    if (!botToken) return;
 
     const user = await db.user.findUnique({
       where: { id: params.userId },
@@ -40,23 +47,23 @@ export async function notify(params: NotifyParams) {
     if (!user?.telegramId) return;
 
     const taskUrl = params.taskId
-      ? `${WEBAPP_URL}/dashboard/task/${params.taskId}`
-      : `${WEBAPP_URL}/dashboard/notifications`;
+      ? `${webAppUrl}/dashboard/task/${params.taskId}`
+      : `${webAppUrl}/dashboard/notifications`;
 
     const text = `<b>${escapeHtml(params.title)}</b>\n${escapeHtml(params.body)}`;
 
-    const isHttps = WEBAPP_URL.startsWith("https://");
+    const isHttps = webAppUrl.startsWith("https://");
     const reply_markup = {
       inline_keyboard: [
         [
           isHttps
             ? { text: "Открыть", web_app: { url: taskUrl } }
-            : { text: "Открыть", url: taskUrl.startsWith("http") ? taskUrl : `${WEBAPP_URL}${taskUrl}` },
+            : { text: "Открыть", url: taskUrl.startsWith("http") ? taskUrl : `${webAppUrl}${taskUrl}` },
         ],
       ],
     };
 
-    const telegramRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const telegramRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -117,15 +124,17 @@ export async function notifyMastersInCategories(
     }
 
     // Send Telegram pushes (non-blocking)
-    if (!BOT_TOKEN) return;
+    const botToken2 = getBotToken();
+    const webAppUrl2 = getWebAppUrl();
+    if (!botToken2) return;
 
     const users = await db.user.findMany({
       where: { id: { in: userIds }, telegramId: { not: null } },
       select: { telegramId: true },
     });
 
-    const isHttps = WEBAPP_URL.startsWith("https://");
-    const taskUrl = `${WEBAPP_URL}/dashboard/task/${taskId}`;
+    const isHttps = webAppUrl2.startsWith("https://");
+    const taskUrl = `${webAppUrl2}/dashboard/task/${taskId}`;
 
     await Promise.allSettled(
       users.map(async (u) => {
@@ -139,7 +148,7 @@ export async function notifyMastersInCategories(
           ],
         };
 
-        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const res = await fetch(`https://api.telegram.org/bot${botToken2}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

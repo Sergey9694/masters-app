@@ -49,13 +49,13 @@ export function LocationFilter() {
         // Шаг 1: Пробуем GPS (точность) - 3 секунды
         const pos = await getPos(true, 3000);
         handleSuccess(pos.coords.latitude, pos.coords.longitude);
-      } catch (err: any) {
+      } catch {
         // Шаг 2: Фолбек на Wi-Fi (браузер) - 4 секунды
         console.warn("[GEO_DEBUG] GPS не ответил. Пробуем Wi-Fi/Браузер...");
         try {
           const fastPos = await getPos(false, 4000);
           handleSuccess(fastPos.coords.latitude, fastPos.coords.longitude);
-        } catch (fastErr: any) {
+        } catch {
           // Шаг 3 (ФИНАЛ): Сетевой поиск по IP (ipapi.co) - 100% надежность
           console.warn("[GEO_DEBUG] Браузерный поиск заблокирован или не сработал. Фолбек на IP-API...");
           try {
@@ -68,8 +68,8 @@ export function LocationFilter() {
             } else {
               throw new Error("IP API вернул некорректные данные");
             }
-          } catch (ipErr: any) {
-            handleError(ipErr);
+          } catch {
+            handleError();
           }
         }
       }
@@ -86,11 +86,11 @@ export function LocationFilter() {
       toast.success("Локация обновлена!");
     };
 
-    const handleError = (err: any) => {
+    const handleError = (err?: unknown) => {
       let msg = "Не удалось определить координаты";
-      if (err.code === 1) msg = "Доступ к геопозиции запрещен (проверьте настройки)";
-      
-      console.error(`[GEO_DEBUG] ФАТАЛЬНАЯ ОШИБКА: Code: ${err.code}, Msg: ${err.message}`);
+      if (err && typeof err === "object" && "code" in err && err.code === 1) msg = "Доступ к геопозиции запрещен (проверьте настройки)";
+
+      console.error("[GEO_DEBUG] ФАТАЛЬНАЯ ОШИБКА геолокации");
       haptics.notification("error");
       toast.error(msg);
       setIsLocating(false);

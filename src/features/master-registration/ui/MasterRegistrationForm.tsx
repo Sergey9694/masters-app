@@ -25,8 +25,8 @@ import { cn } from "@/shared/lib/cn";
 import { MasterProfileFormValues, MasterProfileFormInput, masterProfileSchema } from "../model/schema";
 import { saveMasterProfileAction } from "../api/actions";
 import { AvatarUpload } from "./AvatarUpload";
-import { PhotoUploadField } from "@/features/task-creation/ui/PhotoUploadField";
-import { uploadImagesAction } from "@/features/task-creation/api/upload-action";
+import { PhotoUploadField } from "@/shared/ui/photo-upload-field";
+import { uploadImagesAction } from "@/shared/lib/upload-action";
 import { Input } from "@/shared/ui/input";
 
 interface Props {

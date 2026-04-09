@@ -13,7 +13,7 @@ interface TaskListItemProps {
   title: string;
   description?: string;
   category: string;
-  status: any;
+  status: string;
   price?: number | null;
   address?: string | null;
   date: Date;

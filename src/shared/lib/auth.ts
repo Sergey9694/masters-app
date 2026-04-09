@@ -114,7 +114,8 @@ export type TelegramValidationResult =
 export function validateTelegramWebAppData(
   initData: string,
 ): TelegramValidationResult {
-  if (!process.env.TELEGRAM_BOT_TOKEN) return { ok: false, reason: "no_token" };
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return { ok: false, reason: "no_token" };
 
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get("hash");
@@ -128,7 +129,7 @@ export function validateTelegramWebAppData(
 
   const secretKey = crypto
     .createHmac("sha256", "WebAppData")
-    .update(process.env.TELEGRAM_BOT_TOKEN)
+    .update(botToken)
     .digest();
 
   const hmac = crypto

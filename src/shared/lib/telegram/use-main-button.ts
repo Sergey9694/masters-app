@@ -17,7 +17,7 @@ interface MainButtonOptions {
  * Позволяет динамически менять состояние кнопки из любого компонента.
  * @version 2026.1
  */
-export function useMainButton(options: MainButtonOptions, deps: any[] = []) {
+export function useMainButton(options: MainButtonOptions, deps: unknown[] = []) {
   useEffect(() => {
     if (typeof window === 'undefined' || !(window as any).Telegram?.WebApp) return;
 
