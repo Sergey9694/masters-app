@@ -51,8 +51,17 @@ export function TaskListItem({
   return (
     <Link href={href} className={cn("block group", className)}>
       <Card className="glass border-none p-5 rounded-[32px] hover:bg-white/5 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="flex-1 min-w-0">
+        <div className="flex flex-col gap-4 mb-4">
+          <div className="flex items-center justify-between">
+            <Badge variant="category" className="whitespace-nowrap">
+              {category}
+            </Badge>
+            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-500 group-hover:text-white group-hover:bg-blue-500/20 group-hover:translate-x-1 transition-all">
+               <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+          
+          <div className="min-w-0">
             <h3 className="text-xl font-black text-white leading-tight mb-2 group-hover:text-blue-400 transition-colors">
               {truncatedTitle}
             </h3>
@@ -62,18 +71,13 @@ export function TaskListItem({
               </p>
             )}
           </div>
-          <div className="flex flex-col items-end gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-500 group-hover:text-white group-hover:bg-blue-500/20 group-hover:translate-x-1 transition-all">
-               <ChevronRight className="w-4 h-4" />
-            </div>
-            <Badge variant="category" className="whitespace-nowrap">
-              {category}
-            </Badge>
+
+          <div className="flex">
+            <StatusBadge status={status} />
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-white/5">
-          <StatusBadge status={status} />
           
           {isChosen && (
             <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-emerald-400 bg-emerald-500/10 flex items-center gap-1.5 border border-emerald-500/20">

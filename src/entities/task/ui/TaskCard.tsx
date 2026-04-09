@@ -9,6 +9,7 @@ import { STAGGER_ITEM } from "@/shared/lib/motion";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { Badge } from "@/shared/ui/badge";
+import { StatusBadge } from "@/shared/ui/status-badge";
 import { cn } from "@/shared/lib/cn";
 import { getMapUrl } from "@/shared/lib/maps";
 
@@ -20,6 +21,7 @@ interface TaskCardProps {
     budget: number | null;
     address: string | null;
     createdAt: Date;
+    status: string;
     category: {
       name: string;
     };
@@ -38,11 +40,11 @@ const formatDistance = (m: number) => {
 };
 
 export function TaskCard({ task }: TaskCardProps) {
-  const { title, description, budget, address, createdAt, category, customer, images, distance } = task;
+  const { title, description, budget, address, createdAt, category, customer, images, distance, status } = task;
   const haptics = useHaptics();
 
   const truncatedTitle = title.length > 30 ? title.substring(0, 27) + "..." : title;
-  const truncatedDesc = description.length > 30 ? description.substring(0, 27) + "..." : description;
+  const truncatedDesc = description.length > 50 ? description.substring(0, 47) + "..." : description;
 
   const handleAddressClick = (e: React.MouseEvent) => {
     if (!address) return;
@@ -62,51 +64,56 @@ export function TaskCard({ task }: TaskCardProps) {
       <Link href={`/dashboard/task/${task.id}`} className="block">
       <Card className="p-0 border-none glass-card overflow-hidden rounded-[32px] hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
         <div className="p-6">
-          {/* Header: User & Category */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10 rounded-full border-2 border-white/20 overflow-hidden bg-slate-200 dark:bg-slate-800">
-                <AvatarImage src={customer.avatar || ""} alt={customer.firstName} className="object-cover" />
-                <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-500 font-bold text-xs uppercase">
-                  {customer.firstName[0]}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
-                  {customer.firstName}
-                </p>
-                <div className="flex items-center gap-1.5 opacity-60">
-                  <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                  <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Мастер в районе</p>
-                </div>
-              </div>
-            </div>
-            
+          {/* Top Row: Category (Left) & User (Right) */}
+          <div className="flex items-center justify-between mb-5">
             <Badge variant="category">
               {category.name}
             </Badge>
+
+            <div className="flex items-center gap-2.5">
+              <div className="text-right flex flex-col items-end">
+                <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
+                  {customer.firstName}
+                </p>
+                <div className="flex items-center gap-1.5 opacity-60">
+                   <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                   <p className="text-[8px] font-bold text-slate-500 uppercase">В районе</p>
+                </div>
+              </div>
+              <Avatar className="w-9 h-9 rounded-full border border-white/10 overflow-hidden bg-slate-800">
+                <AvatarImage src={customer.avatar || ""} alt={customer.firstName} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-500 font-bold text-[10px] uppercase">
+                  {customer.firstName[0]}
+                </AvatarFallback>
+              </Avatar>
+            </div>
           </div>
 
           {/* Optional Image Preview */}
           {images && images.length > 0 && (
-            <div className="mb-6 -mx-2 aspect-[16/9] rounded-2xl overflow-hidden border border-white/10 group-hover:border-blue-500/30 transition-colors">
+            <div className="mb-5 aspect-[16/9] rounded-2xl overflow-hidden border border-white/5 group-hover:border-blue-500/20 transition-colors">
               <img 
                 src={images[0]} 
                 alt={title} 
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
                 loading="lazy"
               />
             </div>
           )}
 
-          {/* Content */}
-          <div className="space-y-2 mb-6 text-left">
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight group-hover:text-blue-500 transition-colors">
+          {/* Content: Title & Description */}
+          <div className="space-y-2 mb-4 text-left">
+            <h3 className="text-xl font-black text-white leading-tight group-hover:text-blue-400 transition-colors">
               {truncatedTitle}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-normal opacity-80">
+            <p className="text-sm text-slate-400 leading-relaxed font-medium opacity-70">
               {truncatedDesc}
             </p>
+          </div>
+
+          {/* Status Row */}
+          <div className="mb-6 flex">
+             <StatusBadge status={status} className="px-3" />
           </div>
 
           {/* Meta Info: Budget & Address */}

@@ -44,7 +44,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
 
       {/* Categories Filter Bar */}
       <StaggerItem className="space-y-2">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center justify-center gap-2 italic opacity-70">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center justify-center gap-2 italic opacity-60">
           — Фильтр по категориям —
         </h3>
         <Suspense

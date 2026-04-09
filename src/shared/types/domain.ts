@@ -48,6 +48,7 @@ export interface TaskCardData {
     firstName: string;
     avatar: string | null;
   };
+  status: string;
 }
 
 /** Nearby task with distance (PostGIS) */

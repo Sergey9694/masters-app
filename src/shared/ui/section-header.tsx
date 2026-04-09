@@ -25,7 +25,7 @@ export function SectionHeader({
 
   return (
     <div className={cn("flex items-center gap-3 px-1", className)}>
-      <h2 className="text-[16px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+      <h2 className="text-[16px] font-black uppercase tracking-[0.2em] text-white">
         {title}
       </h2>
 

@@ -53,7 +53,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
               </Avatar>
             </motion.div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white leading-tight flex items-center gap-2">
+              <h1 className="text-2xl font-black tracking-tight text-white leading-tight flex items-center gap-2">
                 Привет, {user.firstName}!
                 <ArrowRight className="w-4 h-4 text-blue-500 opacity-0 -translate-x-2 group-hover/profile:opacity-100 group-hover/profile:translate-x-0 transition-all" />
               </h1>
