@@ -87,7 +87,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
               <Avatar className="w-10 h-10 rounded-full bg-slate-800 border-2 border-white/20 overflow-hidden">
                 <AvatarImage src={task.customer.avatar || ""} alt={task.customer.firstName} className="object-cover" />
                 <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-400 font-bold text-xs uppercase bg-transparent">
-                  {task.customer.firstName[0]}
+                  {task.customer.firstName?.[0] ?? "?"}
                 </AvatarFallback>
               </Avatar>
               <div>
@@ -178,7 +178,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 </p>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                   <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                  {task.assignedMaster.rating.toFixed(1)}
+                  {(task.assignedMaster.rating ?? 0).toFixed(1)}
                 </p>
               </div>
             </div>
@@ -279,7 +279,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                         </p>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
                           <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                          {r.master.rating.toFixed(1)}
+                          {(r.master.rating ?? 0).toFixed(1)}
                         </p>
                       </div>
                     </div>
