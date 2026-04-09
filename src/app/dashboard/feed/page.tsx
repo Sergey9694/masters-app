@@ -34,7 +34,6 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
           title="Поиск заказов" 
           subtitle="Найдите работу в вашем районе" 
           showBack={false} 
-          className="mb-0"
         />
 
         <Suspense>
@@ -43,10 +42,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
       </div>
 
       {/* Categories Filter Bar */}
-      <StaggerItem className="space-y-2">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center justify-center gap-2 italic opacity-60">
-          — Фильтр по категориям —
-        </h3>
+      <StaggerItem>
         <Suspense
           fallback={
             <div className="h-24 bg-white/5 rounded-[32px] animate-pulse w-full max-lg mx-auto" />

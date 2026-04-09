@@ -3,7 +3,7 @@ import { TaskFeedClient } from "./TaskFeedClient";
 import type { TaskCardData } from "@/shared/types/domain";
 import { getCurrentUser } from "@/shared/lib/get-user";
 
-const PAGE_SIZE = 10;
+import { DEFAULT_PAGE_SIZE as PAGE_SIZE } from "@/shared/lib/constants";
 
 interface TaskFeedProps {
   categoryId?: string;
@@ -68,7 +68,7 @@ export async function TaskFeed({ categoryId, search }: TaskFeedProps) {
 
   return (
     <TaskFeedClient
-      key={`${categoryId ?? 'all'}-${search ?? ''}`}
+      key={`${categoryId ?? 'all'}-${search ?? ''}-${total}`}
       initialTasks={page}
       initialCursor={nextCursor}
       categoryId={categoryId}
