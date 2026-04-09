@@ -13,10 +13,12 @@ type TelegramWebApp = {
 
 export function TelegramAuth() {
   const [isLoading, setIsLoading] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || attempted) return;
+    setAttempted(true);
 
     // Poll for Telegram WebApp (script may not be ready yet on first tick)
     let attempts = 0;
@@ -65,7 +67,7 @@ export function TelegramAuth() {
     };
 
     tryLogin();
-  }, [router]);
+  }, [attempted, router]);
 
   if (isLoading) {
     return (
