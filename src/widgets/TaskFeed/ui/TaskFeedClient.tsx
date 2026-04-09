@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/button";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { SectionHeader } from "@/shared/ui/section-header";
-import { TaskCard } from "./TaskCard";
+import { TaskCard } from "@/entities/task";
 import { loadTasksAction } from "../api/load-tasks";
 import type { TaskCardData } from "@/shared/types/domain";
 

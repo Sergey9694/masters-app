@@ -87,7 +87,7 @@ export function TaskCard({ task }: TaskCardProps) {
             </Badge>
           </div>
 
-          {/* Optional Image Preview (New Feature) */}
+          {/* Optional Image Preview */}
           {images && images.length > 0 && (
             <div className="mb-6 -mx-2 aspect-[16/9] rounded-2xl overflow-hidden border border-white/10 group-hover:border-blue-500/30 transition-colors">
               <img 

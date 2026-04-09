@@ -8,7 +8,7 @@ import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
 import { StatusAccordion } from "@/shared/ui/status-accordion";
-import { TaskListItem } from "@/shared/ui/task-list-item";
+import { TaskListItem } from "@/entities/task";
 
 import { 
   Pagination, 
@@ -45,6 +45,7 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
         createdAt: true,
         description: true,
         category: { select: { name: true } },
+        address: true,
         _count: { select: { responses: true } },
       },
     }),
@@ -100,6 +101,7 @@ export default async function MyTasksPage({ searchParams }: MyTasksPageProps) {
                     category={task.category.name}
                     status={task.status}
                     price={task.budget}
+                    address={task.address}
                     responsesCount={task._count.responses}
                     date={task.createdAt}
                     href={`/dashboard/task/${task.id}`}
