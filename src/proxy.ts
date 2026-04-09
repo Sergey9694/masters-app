@@ -18,10 +18,11 @@ export async function proxy(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Публичные страницы (лендинг, логин) пускаем
+    // Публичные страницы (лендинг, логин, админ-логин) пускаем
     if (
       request.nextUrl.pathname === "/" ||
       request.nextUrl.pathname === "/login" ||
+      request.nextUrl.pathname === "/admin/login" ||
       request.nextUrl.pathname.startsWith("/_next") ||
       request.nextUrl.pathname === "/favicon.ico"
     ) {

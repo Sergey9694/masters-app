@@ -20,7 +20,7 @@ export default async function AdminLayout({
 }) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
-    redirect("/dashboard?error=forbidden");
+    redirect("/admin/login");
   }
 
   const user = await db.user.findUnique({
