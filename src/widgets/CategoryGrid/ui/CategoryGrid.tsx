@@ -44,7 +44,7 @@ export function CategoryGrid({
     <div className={cn("w-full relative py-1", className)}>
       <motion.div 
         variants={STAGGER_CONTAINER}
-        className="flex items-center gap-3 overflow-x-auto no-scrollbar px-[15px] -mx-[15px] sm:px-[var(--ui-desktop-px)] sm:-mx-[var(--ui-desktop-px)] py-4 scroll-smooth"
+        className="flex items-center gap-3 overflow-x-auto no-scrollbar px-[15px] -mx-[15px] sm:px-[var(--ui-desktop-px)] sm:-mx-[var(--ui-desktop-px)] py-8 scroll-smooth"
       >
         {categoriesToRender.map((cat) => {
            const Icon = (Icons as any)[cat.icon || "Hammer"] || Icons.Hammer;
@@ -58,11 +58,10 @@ export function CategoryGrid({
                whileTap={{ scale: 0.95 }}
                onClick={() => onCategoryClick(cat.id)}
                className={cn(
-                 "relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-full transition-all duration-500 whitespace-nowrap overflow-hidden group flex-shrink-0",
-                 "border border-white/10 backdrop-blur-md",
+                 "relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap overflow-hidden group flex-shrink-0 transition-all duration-500",
                  isActive 
-                   ? "bg-white/20 shadow-[0_0_20px_rgba(34,211,238,0.2)] border-cyan-500/50" 
-                   : "bg-white/[0.04] hover:bg-white/[0.08]"
+                   ? "bg-white/20 shadow-[0_0_20px_rgba(34,211,238,0.2)] border-cyan-500/50 backdrop-blur-md" 
+                   : "glass-card shadow-none"
                )}
              >
                 {/* Active Background Liquid Glow */}

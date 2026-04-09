@@ -60,7 +60,7 @@ export function TaskCard({ task }: TaskCardProps) {
       className="group cursor-pointer"
     >
       <Link href={`/dashboard/task/${task.id}`} className="block">
-      <Card className="p-0 border-none glass overflow-hidden rounded-[32px] hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
+      <Card className="p-0 border-none glass-card overflow-hidden rounded-[32px] hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500">
         <div className="p-6">
           {/* Header: User & Category */}
           <div className="flex items-center justify-between mb-6">
