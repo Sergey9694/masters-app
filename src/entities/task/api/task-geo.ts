@@ -13,6 +13,7 @@ interface RawNearbyTask {
   description: string;
   budget: number | null;
   address: string | null;
+  status: string;
   createdAt: Date;
   categoryName: string;
   customerName: string;
@@ -40,6 +41,7 @@ export async function getTasksNearby(
         t.description, 
         t.budget, 
         t.address, 
+        t.status,
         t."createdAt",
         c.name as "categoryName",
         u."firstName" as "customerName",
@@ -69,6 +71,7 @@ export async function getTasksNearby(
       description: t.description,
       budget: t.budget ? Number(t.budget) : null,
       address: t.address,
+      status: t.status,
       distance: Math.round(Number(t.distance)),
       createdAt: new Date(t.createdAt),
       category: {

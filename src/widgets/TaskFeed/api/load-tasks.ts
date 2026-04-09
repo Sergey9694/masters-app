@@ -58,6 +58,7 @@ export async function loadTasksAction(
       budget: true,
       address: true,
       createdAt: true,
+      status: true,
       category: { select: { name: true } },
       customer: { select: { firstName: true, avatar: true } },
     },
