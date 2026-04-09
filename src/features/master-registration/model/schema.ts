@@ -9,11 +9,11 @@ export const masterProfileSchema = z.object({
     .array(z.string().min(1))
     .min(1, { message: "Выберите хотя бы одну категорию" })
     .max(8, { message: "Не больше 8 категорий" }),
-  experienceYears: z
+  experienceYears: z.coerce
     .number()
     .min(0, "Стаж не может быть отрицательным")
     .max(50, "Ого, солидный стаж! Но давайте ограничимся 50"),
-  minPrice: z
+  minPrice: z.coerce
     .number()
     .min(0, "Цена не может быть отрицательной"),
   portfolio: z.array(z.string()),

@@ -161,28 +161,30 @@ export default async function TaskDetailPage({ params }: PageProps) {
       {task.assignedMaster && (task.status === "IN_PROGRESS" || task.status === "COMPLETED") && (
         <StaggerItem className="mb-6">
           <SectionHeader title="Исполнитель" accentColor="emerald" className="mb-4" />
-          <Card className="glass border border-emerald-500/20 p-5 rounded-[24px]">
-            <div className="flex items-center gap-3">
-              <Avatar className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
-                <AvatarImage src={task.assignedMaster.user.avatar || ""} alt="" className="object-cover" />
-                <AvatarFallback className="flex items-center justify-center text-slate-400 bg-transparent">
-                  <UserIcon className="w-4 h-4" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <p className="text-sm font-black text-white leading-none mb-1 flex items-center gap-2">
-                  {task.assignedMaster.user.firstName}
-                  {task.assignedMaster.isVerified && (
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  )}
-                </p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                  {(task.assignedMaster.rating ?? 0).toFixed(1)}
-                </p>
+          <Link href={`/dashboard/masters/${task.assignedMaster.id}`}>
+            <Card className="glass border border-emerald-500/20 p-5 rounded-[24px] hover:bg-emerald-500/5 transition-colors cursor-pointer group">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+                  <AvatarImage src={task.assignedMaster.user.avatar || ""} alt="" className="object-cover" />
+                  <AvatarFallback className="flex items-center justify-center text-slate-400 bg-transparent">
+                    <UserIcon className="w-4 h-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="text-sm font-black text-white leading-none mb-1 flex items-center gap-2 group-hover:text-emerald-400 transition-colors">
+                    {task.assignedMaster.user.firstName}
+                    {task.assignedMaster.isVerified && (
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    )}
+                  </p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />
+                    {(task.assignedMaster.rating ?? 0).toFixed(1)}
+                  </p>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         </StaggerItem>
       )}
 
@@ -263,7 +265,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
               {filteredResponses.map((r) => (
                 <Card key={r.id} className="glass border-none p-5 rounded-[24px]">
                   <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex items-center gap-3">
+                    <Link href={`/dashboard/masters/${r.masterId}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                       <Avatar className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
                         <AvatarImage src={r.master.user.avatar || ""} alt="" className="object-cover" />
                         <AvatarFallback className="flex items-center justify-center text-slate-400 bg-transparent">
@@ -282,7 +284,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                           {(r.master.rating ?? 0).toFixed(1)}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                     {r.price && (
                       <div className="text-sm font-black text-emerald-400 whitespace-nowrap">
                         {r.price.toLocaleString()} ₽

@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Briefcase,
   ArrowRight,
+  User as UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
@@ -123,7 +124,16 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
               <motion.div variants={STAGGER_ITEM}>
                 <SectionHeader title="Заказы" accentColor="emerald" className="mb-5" />
               </motion.div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <motion.div variants={STAGGER_ITEM} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href={`/dashboard/masters/${user.masterProfile?.id}`}>
+                  <ActionCard
+                    title="Мой профиль"
+                    desc="Посмотрите как видят ваш профиль заказчики"
+                    icon={<UserIcon className="w-6 h-6" />}
+                    color="bg-amber-600"
+                    badge="Публичный"
+                  />
+                </Link>
                 <Link href="/dashboard/feed">
                   <ActionCard
                     title="Найти заказы"
@@ -146,7 +156,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                     }
                   />
                 </Link>
-              </div>
+              </motion.div>
             </div>
           </>
         )}
