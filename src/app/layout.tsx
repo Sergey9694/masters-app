@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 
 import Script from "next/script";
 import { ProfileSync } from "@/features/auth/ui/ProfileSync";
+import { GlobalHaptics } from "@/shared/lib/telegram/GlobalHaptics";
 
 export default function RootLayout({
   children,
@@ -33,6 +34,7 @@ export default function RootLayout({
       </head>
       <body className={`${robotoCondensed.variable} ${jetbrainsMono.variable} font-sans`}>
         <ProfileSync />
+        <GlobalHaptics />
         {/*
            GLOBAL APP ROOT:
            All layout paddings are moved to .container-standard utility 
