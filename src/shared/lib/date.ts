@@ -21,6 +21,9 @@ export function formatSmartDate(date: Date | string | number) {
 /**
  * Обертка над formatDistanceToNow с русской локалью
  */
-export function formatRelativeTime(date: Date | string | number) {
-  return formatDistanceToNow(new Date(date), { addSuffix: true, locale: ru });
+export function formatRelativeTime(date: Date | string | number | undefined | null) {
+  if (!date) return "неизвестно";
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "неизвестно";
+  return formatDistanceToNow(d, { addSuffix: true, locale: ru });
 }

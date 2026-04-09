@@ -108,10 +108,10 @@ export default async function TaskDetailPage({ params }: PageProps) {
           image={task.images.length > 0 ? <TaskImageGallery images={task.images} /> : undefined}
           budget={
             <div className="flex items-center gap-2 text-slate-200">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
                 <Banknote className="w-4 h-4" />
               </div>
-              <span className="text-sm font-black">
+              <span className="text-sm font-black whitespace-nowrap">
                 {task.budget ? `${task.budget.toLocaleString()} ₽` : "Договорная"}
               </span>
             </div>
@@ -121,12 +121,12 @@ export default async function TaskDetailPage({ params }: PageProps) {
               href={getMapUrl(task.address)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group/address"
+              className="flex items-center gap-2 text-slate-400 hover:text-blue-400 transition-colors group/address overflow-hidden"
             >
-              <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/address:bg-blue-500/20 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/address:bg-blue-500/20 transition-colors shrink-0">
                 <MapPin className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold underline decoration-blue-500/30 underline-offset-4">
+              <span className="text-xs font-bold underline decoration-blue-500/30 underline-offset-4 truncate">
                 {task.address}
               </span>
             </a>

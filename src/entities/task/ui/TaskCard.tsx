@@ -29,7 +29,7 @@ interface TaskCardProps {
       firstName: string;
       avatar: string | null;
     };
-    images?: string[]; 
+    images?: string[];
     distance?: number;
     _count?: {
       responses: number;
@@ -62,8 +62,8 @@ export function TaskCard({ task }: TaskCardProps) {
               {customer.firstName}
             </p>
             <div className="flex items-center gap-1.5 opacity-60">
-               <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-               <p className="text-[8px] font-bold text-slate-500 uppercase">В районе</p>
+              <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+              <p className="text-[8px] font-bold text-slate-500 uppercase">В районе</p>
             </div>
           </div>
         </div>
@@ -74,10 +74,10 @@ export function TaskCard({ task }: TaskCardProps) {
         </Badge>
       }
       image={images && images.length > 0 ? (
-        <img 
-          src={images[0]} 
-          alt={title} 
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+        <img
+          src={images[0]}
+          alt={title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           loading="lazy"
         />
       ) : undefined}
@@ -90,30 +90,32 @@ export function TaskCard({ task }: TaskCardProps) {
       status={<StatusBadge status={status} className="px-3" />}
       budget={
         <div className="flex items-center gap-2 text-slate-200">
-          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+          <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
             <Banknote className="w-4 h-4" />
           </div>
-          <span className="text-sm font-black">
+          <span className="text-sm font-black whitespace-nowrap">
             {budget ? `${budget.toLocaleString()} ₽` : "Договорная"}
           </span>
         </div>
       }
-      address={address ? (
-        <div 
-          className="flex items-center gap-2 text-slate-400 group/address transition-colors hover:text-blue-400 cursor-pointer"
+      address={
+        <div
+          className="flex items-center gap-2 text-slate-400 group/address transition-colors hover:text-blue-400 cursor-pointer overflow-hidden"
           onClick={(e) => {
-            e.stopPropagation();
-            window.open(getMapUrl(address), "_blank", "noopener,noreferrer");
+            if (address) {
+              e.stopPropagation();
+              window.open(getMapUrl(address), "_blank", "noopener,noreferrer");
+            }
           }}
         >
-          <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/address:bg-blue-500/20 transition-colors">
+          <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover/address:bg-blue-500/20 transition-colors shrink-0">
             <MapPin className="w-4 h-4" />
           </div>
-          <span className="text-xs font-bold truncate max-w-[150px] underline decoration-blue-500/30 underline-offset-4">
-            {address}
+          <span className="text-xs font-bold truncate underline decoration-blue-500/30 underline-offset-4">
+            {address || "В районе"}
           </span>
         </div>
-      ) : undefined}
+      }
       date={
         <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold uppercase tracking-widest opacity-60">
           <Clock className="w-3.5 h-3.5" />
