@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
+import { SearchInput } from "@/widgets/TaskFeed/ui/SearchInput";
 import type { DashboardPageData } from "@/shared/types/domain";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { SectionHeader } from "@/shared/ui/section-header";
@@ -82,9 +83,15 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         </Link>
       </motion.header>
 
-      <div className="space-y-10 pb-32">
+      <div className="space-y-8 pb-32">
+        {/* ── Direct Search Bar ── */}
+        <motion.div variants={STAGGER_ITEM} className="px-1">
+          <SectionHeader title="Поиск" accentColor="blue" className="mb-4" />
+          <SearchInput />
+        </motion.div>
+
         {/* ── Categories ── */}
-        <motion.div variants={STAGGER_ITEM}>
+        <motion.div variants={STAGGER_ITEM} className="px-1">
           <SectionHeader title="Категории услуг" accentColor="indigo" className="mb-5" />
           <CategoryGrid initialCategories={categories} />
         </motion.div>

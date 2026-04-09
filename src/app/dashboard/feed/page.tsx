@@ -41,20 +41,18 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
         </Suspense>
       </div>
 
-      {/* Categories Filter */}
+      {/* Categories Filter Bar */}
       <StaggerItem className="space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 flex items-center justify-center gap-2 italic opacity-70">
-          — Выберите нужную категорию —
+          — Фильтр по категориям —
         </h3>
-        <div className="flex overflow-x-auto gap-4 py-8 no-scrollbar scroll-smooth justify-center items-center">
-          <Suspense
-            fallback={
-              <div className="h-24 bg-white/5 rounded-[32px] animate-pulse w-full max-lg mx-auto" />
-            }
-          >
-            <CategoryGrid initialCategories={categories} />
-          </Suspense>
-        </div>
+        <Suspense
+          fallback={
+            <div className="h-24 bg-white/5 rounded-[32px] animate-pulse w-full max-lg mx-auto" />
+          }
+        >
+          <CategoryGrid initialCategories={categories} variant="scroll" showAll={true} />
+        </Suspense>
       </StaggerItem>
 
       {/* Main Feed Content */}

@@ -2,6 +2,7 @@
 
 import { db } from "@/shared/lib/db";
 import type { TaskCardData } from "@/shared/types/domain";
+import { getCurrentUser } from "@/shared/lib/get-user";
 
 const PAGE_SIZE = 10;
 
@@ -20,9 +21,26 @@ export async function loadTasksAction(
   params: LoadTasksParams,
 ): Promise<LoadTasksResult> {
   const { categoryId, search, cursor } = params;
+  const user = await getCurrentUser();
 
-  const where: Record<string, unknown> = { status: "OPEN" as const };
-  if (categoryId) where.categoryId = categoryId;
+  const where: Record<string, any> = { status: "OPEN" as const };
+  
+  // 1. Если категория выбрана явно (и это не "все")
+  if (categoryId && categoryId !== 'all') {
+    where.categoryId = categoryId;
+  } 
+  // 2. Если категория НЕ выбрана, но пользователь - мастер (ставим умный дефолт)
+  else if (!categoryId && user?.masterProfile) {
+    const masterCategories = await db.masterCategory.findMany({
+      where: { masterId: user.masterProfile.id },
+      select: { categoryId: true },
+    });
+    if (masterCategories.length > 0) {
+      where.categoryId = { in: masterCategories.map(mc => mc.categoryId) };
+    }
+  }
+  // 3. Если categoryId === 'all', фильтр не добавляем (показываем всё)
+
   if (search && search.trim().length >= 2) {
     where.OR = [
       { title: { contains: search.trim(), mode: "insensitive" } },

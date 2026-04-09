@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useRef, useCallback } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/shared/ui/input";
@@ -8,22 +8,34 @@ import { Input } from "@/shared/ui/input";
 export function SearchInput() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onInput = useCallback(
     (value: string) => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams(searchParams?.toString() || "");
+        
         if (value.trim()) {
           params.set("search", value.trim());
         } else {
           params.delete("search");
         }
-        router.replace(`?${params.toString()}`);
+
+        const query = params.toString();
+        const targetPath = "/dashboard/feed";
+        
+        // If we are already on the feed, just replace params. 
+        // If on dashboard, navigate to feed with params.
+        if (pathname === targetPath) {
+          router.replace(`?${query}`);
+        } else if (value.trim()) {
+          router.push(`${targetPath}?${query}`);
+        }
       }, 350);
     },
-    [router, searchParams],
+    [router, searchParams, pathname],
   );
 
   return (

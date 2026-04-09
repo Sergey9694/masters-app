@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { Button } from "@/shared/ui/button";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
@@ -17,6 +18,7 @@ interface Props {
   categoryId?: string;
   search?: string;
   totalLabel: string;
+  isDefaultFilter?: boolean;
 }
 
 export function TaskFeedClient({
@@ -25,6 +27,7 @@ export function TaskFeedClient({
   categoryId,
   search,
   totalLabel,
+  isDefaultFilter = false,
 }: Props) {
   const [tasks, setTasks] = useState(initialTasks);
   const [cursor, setCursor] = useState(initialCursor);
@@ -66,8 +69,22 @@ export function TaskFeedClient({
 
   return (
     <StaggerWrap className="space-y-6">
-      <StaggerItem className="mb-8">
-        <SectionHeader title="Свежие тендеры" countLabel={totalLabel} accentColor="blue" />
+      <StaggerItem className="mb-2">
+        <div className="flex flex-col gap-3">
+          <SectionHeader title="Свежие тендеры" countLabel={totalLabel} accentColor="blue" />
+          
+          {isDefaultFilter && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl w-fit"
+            >
+              <p className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-500 leading-none">
+                ✨ По вашим специальностям
+              </p>
+            </motion.div>
+          )}
+        </div>
       </StaggerItem>
 
       <StaggerWrap className="grid grid-cols-1 gap-6 pb-4">
