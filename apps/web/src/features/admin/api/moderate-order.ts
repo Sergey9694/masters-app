@@ -1,44 +1,55 @@
 "use server";
 
-import { getSession } from "@/shared/lib/auth";
 import { db } from "@/shared/lib/db";
 import { revalidatePath } from "next/cache";
+import { adminActionClient } from "@/shared/lib/safe-action";
+import { z } from "zod";
 
-export async function toggleOrderVisibility(referenceId: string) {
-  const session = await getSession();
-  if (!session || session.role !== "ADMIN") {
-    throw new Error("Forbidden");
-  }
+/**
+ * Переключить видимость заказа (только для ADMIN)
+ */
+export const toggleOrderVisibility = adminActionClient
+  .schema(z.string()) // referenceId
+  .action(async ({ parsedInput: referenceId }) => {
+    try {
+      const order = await db.order.findUnique({
+        where: { id: referenceId },
+        select: { status: true }
+      });
 
-  const order = await db.order.findUnique({
-    where: { id: referenceId },
-    select: { status: true }
+      if (!order) throw new Error("Order not found");
+
+      // Toggle between OPEN and CANCELED
+      const newStatus = order.status === "CANCELED" ? "OPEN" : "CANCELED";
+
+      await db.order.update({
+        where: { id: referenceId },
+        data: { status: newStatus },
+      });
+
+      revalidatePath("/admin/orders");
+      return { success: true, status: newStatus };
+    } catch (error) {
+      console.error("[toggleOrderVisibility] error:", error);
+      throw new Error("Не удалось изменить видимость заказа");
+    }
   });
 
-  if (!order) throw new Error("Order not found");
+/**
+ * Удалить заказ (только для ADMIN)
+ */
+export const deleteOrderAction = adminActionClient
+  .schema(z.string()) // referenceId
+  .action(async ({ parsedInput: referenceId }) => {
+    try {
+      // Delete proposals first (FK constraint)
+      await db.proposal.deleteMany({ where: { orderId: referenceId } });
+      await db.order.delete({ where: { id: referenceId } });
 
-  // Toggle between OPEN and CANCELED
-  const newStatus = order.status === "CANCELED" ? "OPEN" : "CANCELED";
-
-  await db.order.update({
-    where: { id: referenceId },
-    data: { status: newStatus as any },
+      revalidatePath("/admin/orders");
+      return { success: true };
+    } catch (error) {
+      console.error("[deleteOrderAction] error:", error);
+      throw new Error("Не удалось удалить заказ");
+    }
   });
-
-  revalidatePath("/admin/orders");
-  return { success: true, status: newStatus };
-}
-
-export async function deleteOrderAction(referenceId: string) {
-  const session = await getSession();
-  if (!session || session.role !== "ADMIN") {
-    throw new Error("Forbidden");
-  }
-
-  // Delete proposals first (FK constraint)
-  await db.proposal.deleteMany({ where: { orderId: referenceId } });
-  await db.order.delete({ where: { id: referenceId } });
-
-  revalidatePath("/admin/orders");
-  return { success: true };
-}

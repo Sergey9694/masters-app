@@ -4,7 +4,7 @@ import { db } from "@/shared/lib/db";
 import authConfig from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(db as any),
   session: { strategy: "jwt" }, // NextAuth v5 + Prisma Adapter defaults to database sessions, but we can use JWT for easier middleware checks if needed.
   ...authConfig,
   callbacks: {

@@ -19,27 +19,27 @@ export function OrderModerationActions({ referenceId, status }: Props) {
 
   const toggleVisibility = () => {
     startTransition(async () => {
-      try {
-        await toggleOrderVisibility(referenceId);
-        toast.success(isCanceled ? "Заказ восстановлен" : "Заказ скрыт", {
-          description: `Статус зазака изменен на ${isCanceled ? "Открыта" : "Отменена"}`,
-        });
-      } catch (e) {
-        toast.error("Ошибка при обновлении статуса");
+      const res = await toggleOrderVisibility(referenceId);
+      if (res?.serverError) {
+        toast.error(res.serverError);
+        return;
       }
+      toast.success(isCanceled ? "Заказ восстановлен" : "Заказ скрыт", {
+        description: `Статус зазака изменен на ${isCanceled ? "Открыта" : "Отменена"}`,
+      });
     });
   };
 
   const confirmDelete = () => {
     startTransition(async () => {
-      try {
-        await deleteOrderAction(referenceId);
-        toast.success("Заказ удален", {
-          description: "Объект и все связанные отклики безвозвратно удалены.",
-        });
-      } catch (e) {
-        toast.error("Ошибка при удалении");
+      const res = await deleteOrderAction(referenceId);
+      if (res?.serverError) {
+        toast.error(res.serverError);
+        return;
       }
+      toast.success("Заказ удален", {
+        description: "Объект и все связанные отклики безвозвратно удалены.",
+      });
     });
   };
 

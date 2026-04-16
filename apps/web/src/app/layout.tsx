@@ -18,7 +18,6 @@ export const metadata: Metadata = {
   description: "Доска объявлений услуг в вашем городе. Найдите исполнителя или предложите свои услуги.",
 };
 
-import Script from "next/script";
 import { ProfileSync } from "@/features/auth/ui/ProfileSync";
 import { GlobalHaptics } from "@/shared/lib/telegram/GlobalHaptics";
 
@@ -29,10 +28,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className="dark">
-      <head>
-        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
-      </head>
       <body className={`${robotoCondensed.variable} ${jetbrainsMono.variable} font-sans`}>
+        <script 
+          src="https://telegram.org/js/telegram-web-app.js" 
+          defer
+        />
         <ProfileSync />
         <GlobalHaptics />
         {/*

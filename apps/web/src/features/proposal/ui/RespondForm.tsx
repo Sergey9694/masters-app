@@ -42,7 +42,7 @@ export function RespondForm({ referenceId }: Props) {
   const onSubmit = (vals: TaskResponseFormValues) => {
     startTransition(async () => {
       const res = await submitProposalAction(vals);
-      if ("success" in res) {
+      if (res?.data?.success) {
         toast.custom(() => (
           <MotionToast type="success">Отклик отправлен!</MotionToast>
         ));
@@ -50,7 +50,9 @@ export function RespondForm({ referenceId }: Props) {
         router.refresh();
         return;
       }
-      toast.error(res.error);
+      if (res?.serverError) {
+        toast.error(res.serverError);
+      }
     });
   };
 

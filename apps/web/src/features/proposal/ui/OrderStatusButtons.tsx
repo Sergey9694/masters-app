@@ -22,45 +22,45 @@ export function OrderStatusButtons({ referenceId, status, isOwner, isAssignedMas
 
   const onComplete = () => {
     startTransition(async () => {
-      const res = await completeOrderAction(referenceId);
-      if ("success" in res) {
+      const res = await completeOrderAction({ referenceId });
+      if (res?.data?.success) {
         toast.custom(() => (
           <MotionToast type="success">Заявка завершена</MotionToast>
         ));
         router.refresh();
         return;
       }
-      toast.error(res.error);
+      if (res?.serverError) toast.error(res.serverError);
     });
   };
 
   const onCancel = () => {
     if (!confirm("Отменить заявку?")) return;
     startTransition(async () => {
-      const res = await cancelOrderAction(referenceId);
-      if ("success" in res) {
+      const res = await cancelOrderAction({ referenceId });
+      if (res?.data?.success) {
         toast.custom(() => (
           <MotionToast type="success">Заявка отменена</MotionToast>
         ));
         router.refresh();
         return;
       }
-      toast.error(res.error);
+      if (res?.serverError) toast.error(res.serverError);
     });
   };
 
   const onRefuse = () => {
     if (!confirm("Вы действительно хотите отказаться от выполнения заказа?")) return;
     startTransition(async () => {
-      const res = await refuseOrderAction(referenceId);
-      if ("success" in res) {
+      const res = await refuseOrderAction({ referenceId });
+      if (res?.data?.success) {
         toast.custom(() => (
           <MotionToast type="success">Вы отказались от заказа</MotionToast>
         ));
         router.refresh();
         return;
       }
-      toast.error(res.error);
+      if (res?.serverError) toast.error(res.serverError);
     });
   };
 

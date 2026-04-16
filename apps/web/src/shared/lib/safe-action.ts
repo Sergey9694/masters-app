@@ -23,7 +23,7 @@ export const authActionClient = actionClient.use(async ({ next }) => {
 
   return next({
     ctx: {
-      userId: session.user.id,
+      userId: session.user.id as string,
       // @ts-ignore
       role: session.user.role,
     },
