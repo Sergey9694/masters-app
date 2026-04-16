@@ -1,5 +1,6 @@
 import { createSafeActionClient } from "next-safe-action";
 import { auth } from "@/auth";
+import { db } from "./db";
 
 /**
  * Базовый клиент для публичных действий (доступен всем)
@@ -19,6 +20,16 @@ export const authActionClient = actionClient.use(async ({ next }) => {
 
   if (!session || !session.user) {
     throw new Error("Session not found!");
+  }
+
+  // Check database for banned status
+  const user = await db.user.findUnique({
+    where: { id: session.user.id },
+    select: { isBanned: true }
+  });
+
+  if (user?.isBanned) {
+    throw new Error("Ваш аккаунт заблокирован");
   }
 
   return next({

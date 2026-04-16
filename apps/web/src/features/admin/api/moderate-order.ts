@@ -3,6 +3,7 @@
 import { db } from "@/shared/lib/db";
 import { revalidatePath } from "next/cache";
 import { adminActionClient } from "@/shared/lib/safe-action";
+import { logAudit } from "@/shared/lib/audit";
 import { z } from "zod";
 
 /**
@@ -10,7 +11,7 @@ import { z } from "zod";
  */
 export const toggleOrderVisibility = adminActionClient
   .schema(z.string()) // referenceId
-  .action(async ({ parsedInput: referenceId }) => {
+  .action(async ({ parsedInput: referenceId, ctx }) => {
     try {
       const order = await db.order.findUnique({
         where: { id: referenceId },
@@ -27,6 +28,14 @@ export const toggleOrderVisibility = adminActionClient
         data: { status: newStatus },
       });
 
+      await logAudit({
+        userId: ctx.userId,
+        action: "UPDATE",
+        entity: "Order",
+        entityId: referenceId,
+        metadata: { status: newStatus },
+      });
+
       revalidatePath("/admin/orders");
       return { success: true, status: newStatus };
     } catch (error) {
@@ -40,11 +49,18 @@ export const toggleOrderVisibility = adminActionClient
  */
 export const deleteOrderAction = adminActionClient
   .schema(z.string()) // referenceId
-  .action(async ({ parsedInput: referenceId }) => {
+  .action(async ({ parsedInput: referenceId, ctx }) => {
     try {
       // Delete proposals first (FK constraint)
       await db.proposal.deleteMany({ where: { orderId: referenceId } });
       await db.order.delete({ where: { id: referenceId } });
+
+      await logAudit({
+        userId: ctx.userId,
+        action: "DELETE",
+        entity: "Order",
+        entityId: referenceId,
+      });
 
       revalidatePath("/admin/orders");
       return { success: true };

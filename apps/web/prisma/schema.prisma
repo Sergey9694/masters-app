@@ -41,6 +41,7 @@ model User {
   ordersCreated   Order[]
   reviewsLeft     Review[]         @relation("Author")
   notifications   Notification[]
+  auditLogs       AuditLog[]
 
   // Auth.js
   emailVerified DateTime?
@@ -222,4 +223,19 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String   // e.g., "Order", "Proposal"
+  entityId  String
+  metadata  Json?    // old/new values
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
 }
