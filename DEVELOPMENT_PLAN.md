@@ -163,30 +163,30 @@ uslugi-ryadom/
 **Шаги:**
 
 ```
-1.1.1  Инициализировать Turborepo в корне проекта
+[x] 1.1.1  Инициализировать Turborepo в корне проекта
        - npm install turbo --save-dev (в корне)
        - Создать turbo.json с pipeline: build, dev, lint, test
        - Настроить workspaces в корневом package.json:
          "workspaces": ["apps/*", "packages/*"]
 
-1.1.2  Перенести текущий Next.js проект в apps/web/
+[x] 1.1.2  Перенести текущий Next.js проект в apps/web/
        - Переместить все файлы (src/, prisma/, public/, next.config.ts, etc.)
        - Обновить пути в tsconfig.json, next.config.ts
        - Обновить Dockerfile (контекст сборки)
        - Обновить docker-compose.yml (build.context)
        - Проверить что `npm run dev` работает из apps/web/
 
-1.1.3  Создать пакет packages/shared-types/
+[x] 1.1.3  Создать пакет packages/shared-types/
        - package.json с name "@uslugi/shared-types"
        - tsconfig.json
        - Пока пустой src/index.ts — заполним в Фазе 3
 
-1.1.4  Создать пакет packages/validation/
+[x] 1.1.4  Создать пакет packages/validation/
        - package.json с name "@uslugi/validation", dependency: zod
        - tsconfig.json
        - Пока пустой src/index.ts — заполним в Фазе 3
 
-1.1.5  Проверить что всё собирается:
+[x] 1.1.5  Проверить что всё собирается:
        - turbo run build
        - turbo run dev (запускается web)
        - docker-compose up --build (деплой работает)
