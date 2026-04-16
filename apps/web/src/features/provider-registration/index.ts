@@ -1,2 +1,2 @@
-export { MasterRegistrationForm } from "./ui/MasterRegistrationForm";
-export { saveMasterProfileAction } from "./api/actions";
+export { ProviderRegistrationForm } from "./ui/ProviderRegistrationForm";
+export { saveProviderProfileAction } from "./api/actions";

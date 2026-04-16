@@ -14,7 +14,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "District Master | Гиперлокальный Двигатель Тендеров",
+  title: "District Provider | Гиперлокальный Двигатель Тендеров",
   description: "Экосистема для поиска мастеров в вашем районе (Академический). Быстро, надежно, рядом.",
 };
 

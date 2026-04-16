@@ -22,10 +22,10 @@ export default async function AdminDashboardPage() {
         />
         <MetricCard
           label="Задачи"
-          value={stats.tasks.open + stats.tasks.inProgress + stats.tasks.completed}
+          value={stats.orders.open + stats.orders.inProgress + stats.orders.completed}
           icon={<ClipboardList className="w-5 h-5" />}
           accent="from-emerald-600 to-teal-600"
-          sub={`${stats.tasks.open} открытых · ${stats.tasks.inProgress} в работе · ${stats.tasks.completed} завершено`}
+          sub={`${stats.orders.open} открытых · ${stats.orders.inProgress} в работе · ${stats.orders.completed} завершено`}
         />
         <MetricCard
           label="Ожидают верификации"
@@ -33,7 +33,7 @@ export default async function AdminDashboardPage() {
           icon={<Award className="w-5 h-5" />}
           accent="from-amber-600 to-orange-600"
           sub={`${stats.responsesToday} откликов сегодня`}
-          href="/admin/master-applications"
+          href="/admin/provider-applications"
         />
         <MetricCard
           label="Средний рейтинг"
@@ -44,7 +44,7 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      {/* Tasks by day chart */}
+      {/* Orders by day chart */}
       <div className="bg-[#16162a] rounded-2xl border border-white/5 p-6">
         <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-500" />

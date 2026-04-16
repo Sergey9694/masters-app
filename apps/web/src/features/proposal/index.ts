@@ -1,9 +1,9 @@
 export { RespondForm } from "./ui/RespondForm";
 export { AcceptResponseButton } from "./ui/AcceptResponseButton";
-export { TaskStatusButtons } from "./ui/TaskStatusButtons";
+export { OrderStatusButtons } from "./ui/OrderStatusButtons";
 export {
-  respondToTaskAction,
-  acceptResponseAction,
-  completeTaskAction,
-  cancelTaskAction,
+  submitProposalAction,
+  acceptProposalAction,
+  completeOrderAction,
+  cancelOrderAction,
 } from "./api/actions";

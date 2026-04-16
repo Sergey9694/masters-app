@@ -39,8 +39,8 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { Card } from "@/shared/ui/card";
-import { taskSchema, type TaskFormValues } from "../model/task-schema";
-import { createOrderAction } from "../api/create-task-action";
+import { taskSchema, type TaskFormValues } from "../model/order-schema";
+import { createOrderAction } from "../api/create-order-action";
 import { uploadImagesAction } from "../api/upload-action";
 import { PhotoUploadField } from "./PhotoUploadField";
 import { AddressField } from "./AddressField";
@@ -135,7 +135,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
               Создать тендер
               <ShieldCheck className="w-5 h-5 text-indigo-400" />
             </h1>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">District Master • Precision Flow</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">District Provider • Precision Flow</p>
           </header>
 
           <div className="space-y-6 relative z-10">

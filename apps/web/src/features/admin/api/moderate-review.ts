@@ -12,7 +12,7 @@ export async function deleteReview(reviewId: string) {
 
   const review = await db.review.findUnique({
     where: { id: reviewId },
-    select: { masterId: true },
+    select: { providerId: true },
   });
 
   await db.review.delete({ where: { id: reviewId } });
@@ -20,14 +20,14 @@ export async function deleteReview(reviewId: string) {
   // Пересчитать рейтинг мастера
   if (review) {
     const stats = await db.review.aggregate({
-      where: { masterId: review.masterId },
+      where: { providerId: review.providerId },
       _avg: { rating: true },
       _count: { rating: true },
     });
 
     const newRating = stats._count.rating > 0 ? Number(stats._avg.rating) : 5.0;
-    await db.masterProfile.update({
-      where: { id: review.masterId },
+    await db.providerProfile.update({
+      where: { id: review.providerId },
       data: { rating: newRating },
     });
   }

@@ -41,7 +41,7 @@ export default async function AdminReviewsPage({
                   </span>
                   <span className="text-slate-600">→</span>
                   <span className="font-bold text-emerald-400 text-sm">
-                    {review.master.user.firstName}
+                    {review.provider.user.firstName}
                   </span>
                   <div className="flex items-center gap-0.5 ml-2">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -70,7 +70,7 @@ export default async function AdminReviewsPage({
               )}
 
               <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
-                <span className="truncate max-w-[200px]">{review.task.title}</span>
+                <span className="truncate max-w-[200px]">{review.order.title}</span>
                 <span>·</span>
                 <span>{new Date(review.createdAt).toLocaleDateString("ru-RU")}</span>
               </div>

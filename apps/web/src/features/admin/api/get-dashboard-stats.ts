@@ -21,13 +21,13 @@ export async function getDashboardStats() {
     db.user.count(),
     db.user.count({ where: { createdAt: { gte: todayStart } } }),
     db.user.count({ where: { createdAt: { gte: weekAgo } } }),
-    db.taskRequest.count({ where: { status: "OPEN" } }),
-    db.taskRequest.count({ where: { status: "IN_PROGRESS" } }),
-    db.taskRequest.count({ where: { status: "COMPLETED" } }),
-    db.masterProfile.count({ where: { isVerified: false } }),
-    db.taskResponse.count({ where: { createdAt: { gte: todayStart } } }),
+    db.order.count({ where: { status: "OPEN" } }),
+    db.order.count({ where: { status: "IN_PROGRESS" } }),
+    db.order.count({ where: { status: "COMPLETED" } }),
+    db.providerProfile.count({ where: { isVerified: false } }),
+    db.proposal.count({ where: { createdAt: { gte: todayStart } } }),
     db.review.count(),
-    db.masterProfile.aggregate({
+    db.providerProfile.aggregate({
       _avg: { rating: true },
       _count: { rating: true },
     }),
@@ -35,7 +35,7 @@ export async function getDashboardStats() {
       SELECT
         DATE("createdAt")::text as date,
         COUNT(*)::bigint as count
-      FROM "TaskRequest"
+      FROM "Order"
       WHERE "createdAt" >= NOW() - INTERVAL '30 days'
       GROUP BY DATE("createdAt")
       ORDER BY DATE("createdAt") ASC
@@ -44,7 +44,7 @@ export async function getDashboardStats() {
 
   return {
     users: { total: usersTotal, today: usersToday, week: usersWeek },
-    tasks: {
+    orders: {
       open: tasksOpen,
       inProgress: tasksInProgress,
       completed: tasksCompleted,

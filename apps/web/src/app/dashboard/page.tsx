@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   });
 
   // Load stats in parallel
-  const isMaster = !!user.masterProfile;
+  const isMaster = !!user.providerProfile;
 
   let unreadNotificationsCount = 0;
   try {
@@ -28,44 +28,44 @@ export default async function DashboardPage() {
 
   const [myTasksCount, openTasksCount, customerActiveTasksCount, openResponsesCount] =
     await Promise.all([
-      db.taskRequest.count({ where: { customerId: user.id } }),
-      db.taskRequest.count({ where: { customerId: user.id, status: "OPEN" } }),
-      db.taskRequest.count({
+      db.order.count({ where: { clientId: user.id } }),
+      db.order.count({ where: { clientId: user.id, status: "OPEN" } }),
+      db.order.count({
         where: {
-          customerId: user.id,
+          clientId: user.id,
           status: { in: ["OPEN", "IN_PROGRESS"] },
         },
       }),
-      db.taskRequest.count({
+      db.order.count({
         where: {
-          customerId: user.id,
+          clientId: user.id,
           status: "OPEN",
-          responses: { some: {} },
+          proposals: { some: {} },
         },
       }),
     ]);
 
-  // Master-specific stats
+  // Provider-specific stats
   const masterStats = isMaster
     ? {
-        responsesCount: await db.taskResponse.count({
-          where: { masterId: user.masterProfile!.id },
+        responsesCount: await db.proposal.count({
+          where: { providerId: user.providerProfile!.id },
         }),
-        pendingResponsesCount: await db.taskResponse.count({
+        pendingResponsesCount: await db.proposal.count({
           where: { 
-            masterId: user.masterProfile!.id,
-            task: { status: "OPEN" }
+            providerId: user.providerProfile!.id,
+            order: { status: "OPEN" }
           },
         }),
-        activeTasksCount: await db.taskRequest.count({
+        activeTasksCount: await db.order.count({
           where: {
-            assignedMasterId: user.masterProfile!.id,
+            assignedProviderId: user.providerProfile!.id,
             status: "IN_PROGRESS",
           },
         }),
-        rating: user.masterProfile!.rating,
+        rating: user.providerProfile!.rating,
         reviewsCount: await db.review.count({
-          where: { masterId: user.masterProfile!.id },
+          where: { providerId: user.providerProfile!.id },
         }),
       }
     : null;

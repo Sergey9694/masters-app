@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { expireOldTasks } from "@/shared/lib/jobs/expire-tasks";
+import { expireOldTasks } from "@/shared/lib/jobs/expire-orders";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ 
       success: true, 
       archived: archivedCount,
-      message: `Successfully processed task archiving. Total archived: ${archivedCount}` 
+      message: `Successfully processed order archiving. Total archived: ${archivedCount}` 
     });
   } catch (error) {
     return NextResponse.json({ 

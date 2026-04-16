@@ -9,12 +9,12 @@ import { taskResponseSchema, type TaskResponseFormValues } from "../model/schema
 
 type Result = { success: true } | { error: string };
 
-export async function respondToTaskAction(
+export async function submitProposalAction(
   data: TaskResponseFormValues,
 ): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return { error: "Необходима авторизация" };
-  if (!user.masterProfile) return { error: "Сначала зарегистрируйтесь как мастер" };
+  if (!user.providerProfile) return { error: "Сначала зарегистрируйтесь как мастер" };
 
   const rl = checkRateLimit({ key: `respond:${user.id}`, limit: 15, windowSec: 60 });
   if (!rl.allowed) {
@@ -25,286 +25,286 @@ export async function respondToTaskAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Неверные данные" };
   }
-  const { taskId, price, message } = parsed.data;
+  const { orderId, price, message } = parsed.data;
 
   try {
-    const task = await db.taskRequest.findUnique({
-      where: { id: taskId },
-      select: { id: true, title: true, status: true, customerId: true },
+    const order = await db.order.findUnique({
+      where: { id: orderId },
+      select: { id: true, title: true, status: true, clientId: true },
     });
-    if (!task) return { error: "Заявка не найдена" };
-    if (task.status !== "OPEN") return { error: "Заявка уже не принимает отклики" };
-    if (task.customerId === user.id) {
+    if (!order) return { error: "Заявка не найдена" };
+    if (order.status !== "OPEN") return { error: "Заявка уже не принимает отклики" };
+    if (order.clientId === user.id) {
       return { error: "Нельзя откликаться на свою заявку" };
     }
 
-    const existing = await db.taskResponse.findFirst({
-      where: { taskId, masterId: user.masterProfile.id },
+    const existing = await db.proposal.findFirst({
+      where: { orderId, providerId: user.providerProfile.id },
       select: { id: true },
     });
     if (existing) return { error: "Вы уже откликнулись на эту заявку" };
 
-    await db.taskResponse.create({
+    await db.proposal.create({
       data: {
-        taskId,
-        masterId: user.masterProfile.id,
+        orderId,
+        providerId: user.providerProfile.id,
         price: price ? parseFloat(price) : null,
         message,
       },
     });
 
-    // Notify task owner about new response
+    // Notify order owner about new response
     await notify({
-      userId: task.customerId,
+      userId: order.clientId,
       type: "NEW_RESPONSE",
       title: "Новый отклик",
-      body: `Мастер ${user.firstName} откликнулся на «${task.title}»`,
-      taskId,
+      body: `Мастер ${user.firstName} откликнулся на «${order.title}»`,
+      orderId,
     });
 
-    revalidatePath(`/dashboard/task/${taskId}`);
+    revalidatePath(`/dashboard/order/${orderId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
-    console.error("[respondToTaskAction] error:", error);
+    console.error("[submitProposalAction] error:", error);
     return { error: "Не удалось отправить отклик. Попробуйте позже." };
   }
 }
 
-export async function acceptResponseAction(
+export async function acceptProposalAction(
   responseId: string,
 ): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return { error: "Необходима авторизация" };
 
   try {
-    const response = await db.taskResponse.findUnique({
+    const response = await db.proposal.findUnique({
       where: { id: responseId },
       select: {
         id: true,
-        taskId: true,
-        masterId: true,
-        master: { select: { userId: true } },
-        task: { select: { title: true, customerId: true, status: true } },
+        referenceId: true,
+        providerId: true,
+        provider: { select: { userId: true } },
+        order: { select: { title: true, clientId: true, status: true } },
       },
     });
     if (!response) return { error: "Отклик не найден" };
-    if (response.task.customerId !== user.id) {
+    if (response.order.clientId !== user.id) {
       return { error: "Вы не являетесь автором заявки" };
     }
-    if (response.task.status !== "OPEN") {
+    if (response.order.status !== "OPEN") {
       return { error: "Заявка уже не в статусе OPEN" };
     }
 
-    await db.taskRequest.update({
-      where: { id: response.taskId },
+    await db.order.update({
+      where: { id: response.orderId },
       data: {
         status: "IN_PROGRESS",
-        assignedMasterId: response.masterId,
+        assignedProviderId: response.providerId,
       },
     });
 
-    // Notify master that they were chosen
+    // Notify provider that they were chosen
     await notify({
-      userId: response.master.userId,
+      userId: response.provider.userId,
       type: "RESPONSE_ACCEPTED",
       title: "Вас выбрали!",
-      body: `Вы назначены на заявку «${response.task.title}»`,
-      taskId: response.taskId,
+      body: `Вы назначены на заявку «${response.order.title}»`,
+      referenceId: response.orderId,
     });
 
-    // Notify other masters who were NOT chosen
-    const otherResponses = await db.taskResponse.findMany({
+    // Notify other providers who were NOT chosen
+    const otherResponses = await db.proposal.findMany({
       where: {
-        taskId: response.taskId,
+        referenceId: response.orderId,
         id: { not: responseId },
       },
       select: {
-        master: { select: { userId: true } },
+        provider: { select: { userId: true } },
       },
     });
 
     if (otherResponses.length > 0) {
-      const otherUserIds = otherResponses.map((r) => r.master.userId);
+      const otherUserIds = otherResponses.map((r) => r.provider.userId);
       await Promise.allSettled(
         otherUserIds.map(async (uid) =>
           await notify({
             userId: uid,
             type: "TASK_CANCELED", // Or create a new type if needed, but TASK_CANCELED/CLOSED is close
             title: "Заявка закрыта",
-            body: `Заказчик выбрал другого исполнителя для «${response.task.title}»`,
-            taskId: response.taskId,
+            body: `Заказчик выбрал другого исполнителя для «${response.order.title}»`,
+            referenceId: response.orderId,
           }),
         ),
       );
     }
 
-    revalidatePath(`/dashboard/task/${response.taskId}`);
+    revalidatePath(`/dashboard/order/${response.orderId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
-    console.error("[acceptResponseAction] error:", error);
+    console.error("[acceptProposalAction] error:", error);
     return { error: "Не удалось принять отклик" };
   }
 }
 
-export async function completeTaskAction(taskId: string): Promise<Result> {
+export async function completeOrderAction(referenceId: string): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return { error: "Необходима авторизация" };
 
   try {
-    const task = await db.taskRequest.findUnique({
-      where: { id: taskId },
+    const order = await db.order.findUnique({
+      where: { id: orderId },
       select: {
         id: true,
         title: true,
-        customerId: true,
+        clientId: true,
         status: true,
-        assignedMasterId: true,
-        assignedMaster: { select: { userId: true } },
+        assignedProviderId: true,
+        assignedProvider: { select: { userId: true } },
       },
     });
-    if (!task) return { error: "Заявка не найдена" };
-    if (task.customerId !== user.id) {
+    if (!order) return { error: "Заявка не найдена" };
+    if (order.clientId !== user.id) {
       return { error: "Вы не являетесь автором заявки" };
     }
-    if (task.status !== "IN_PROGRESS") {
+    if (order.status !== "IN_PROGRESS") {
       return { error: "Заявка не в работе" };
     }
 
-    await db.taskRequest.update({
-      where: { id: taskId },
+    await db.order.update({
+      where: { id: orderId },
       data: { status: "COMPLETED" },
     });
 
-    // Notify assigned master
-    if (task.assignedMaster) {
+    // Notify assigned provider
+    if (order.assignedProvider) {
       await notify({
-        userId: task.assignedMaster.userId,
+        userId: order.assignedProvider.userId,
         type: "TASK_COMPLETED",
         title: "Заявка завершена",
-        body: `Заказчик завершил заявку «${task.title}»`,
-        taskId,
+        body: `Заказчик завершил заявку «${order.title}»`,
+        orderId,
       });
     }
 
-    revalidatePath(`/dashboard/task/${taskId}`);
+    revalidatePath(`/dashboard/order/${orderId}`);
     return { success: true };
   } catch (error) {
-    console.error("[completeTaskAction] error:", error);
+    console.error("[completeOrderAction] error:", error);
     return { error: "Не удалось завершить заявку" };
   }
 }
 
-export async function cancelTaskAction(taskId: string): Promise<Result> {
+export async function cancelOrderAction(referenceId: string): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return { error: "Необходима авторизация" };
 
   try {
-    const task = await db.taskRequest.findUnique({
-      where: { id: taskId },
+    const order = await db.order.findUnique({
+      where: { id: orderId },
       select: {
         id: true,
         title: true,
-        customerId: true,
+        clientId: true,
         status: true,
-        assignedMasterId: true,
-        assignedMaster: { select: { userId: true } },
+        assignedProviderId: true,
+        assignedProvider: { select: { userId: true } },
       },
     });
-    if (!task) return { error: "Заявка не найдена" };
-    if (task.customerId !== user.id) {
+    if (!order) return { error: "Заявка не найдена" };
+    if (order.clientId !== user.id) {
       return { error: "Вы не являетесь автором заявки" };
     }
-    if (task.status === "COMPLETED" || task.status === "CANCELED") {
+    if (order.status === "COMPLETED" || order.status === "CANCELED") {
       return { error: "Заявка уже закрыта" };
     }
 
-    await db.taskRequest.update({
-      where: { id: taskId },
+    await db.order.update({
+      where: { id: orderId },
       data: { status: "CANCELED" },
     });
 
-    // Notify assigned master about cancellation
-    if (task.assignedMaster) {
+    // Notify assigned provider about cancellation
+    if (order.assignedProvider) {
       await notify({
-        userId: task.assignedMaster.userId,
+        userId: order.assignedProvider.userId,
         type: "TASK_CANCELED",
         title: "Заявка отменена",
-        body: `Заказчик отменил заявку «${task.title}»`,
-        taskId,
+        body: `Заказчик отменил заявку «${order.title}»`,
+        orderId,
       });
     }
 
-    revalidatePath(`/dashboard/task/${taskId}`);
+    revalidatePath(`/dashboard/order/${orderId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
-    console.error("[cancelTaskAction] error:", error);
+    console.error("[cancelOrderAction] error:", error);
     return { error: "Не удалось отменить заявку" };
   }
 }
 
-export async function refuseTaskAction(taskId: string): Promise<Result> {
+export async function refuseTaskAction(referenceId: string): Promise<Result> {
   const user = await getCurrentUser();
-  if (!user || !user.masterProfile) return { error: "Необходима авторизация мастера" };
+  if (!user || !user.providerProfile) return { error: "Необходима авторизация мастера" };
 
   try {
-    const task = await db.taskRequest.findUnique({
-      where: { id: taskId },
+    const order = await db.order.findUnique({
+      where: { id: orderId },
       select: {
         id: true,
         title: true,
-        customerId: true,
+        clientId: true,
         status: true,
-        assignedMasterId: true,
+        assignedProviderId: true,
         categoryId: true,
       },
     });
 
-    if (!task) return { error: "Заявка не найдена" };
-    if (task.assignedMasterId !== user.masterProfile.id) {
+    if (!order) return { error: "Заявка не найдена" };
+    if (order.assignedProviderId !== user.providerProfile.id) {
       return { error: "Вы не назначены на эту заявку" };
     }
-    if (task.status !== "IN_PROGRESS") {
+    if (order.status !== "IN_PROGRESS") {
       return { error: "Заявка не в работе" };
     }
 
     // Use transaction to ensure data integrity
     await db.$transaction([
-      db.taskRequest.update({
-        where: { id: taskId },
+      db.order.update({
+        where: { id: orderId },
         data: {
           status: "OPEN",
-          assignedMasterId: null,
+          assignedProviderId: null,
         },
       }),
-      // Remove this master's response so someone else can be chosen 
-      // and this master doesn't distract the owner
-      db.taskResponse.deleteMany({
-        where: { taskId, masterId: user.masterProfile.id }
+      // Remove this provider's response so someone else can be chosen 
+      // and this provider doesn't distract the owner
+      db.proposal.deleteMany({
+        where: { orderId, providerId: user.providerProfile.id }
       })
     ]);
 
-    // Notify customer that master refused
+    // Notify client that provider refused
     await notify({
-      userId: task.customerId,
+      userId: order.clientId,
       type: "TASK_CANCELED",
       title: "Мастер отказался",
-      body: `Мастер ${user.firstName} отказался от выполнения «${task.title}». Заявка снова открыта.`,
-      taskId,
+      body: `Мастер ${user.firstName} отказался от выполнения «${order.title}». Заявка снова открыта.`,
+      orderId,
     });
 
-    // Notify other masters in category that job is available again
-    const { notifyMastersInCategories } = await import("@/shared/lib/telegram/bot-notify");
-    await notifyMastersInCategories(
-      [task.categoryId],
+    // Notify other providers in category that job is available again
+    const { notifyProvidersInCategories } = await import("@/shared/lib/telegram/bot-notify");
+    await notifyProvidersInCategories(
+      [order.categoryId],
       user.id, // Exclude the one who just refused
-      `[СНОВА ОТКРЫТА] ${task.title}`,
-      taskId,
+      `[СНОВА ОТКРЫТА] ${order.title}`,
+      orderId,
     );
 
-    revalidatePath(`/dashboard/task/${taskId}`);
+    revalidatePath(`/dashboard/order/${orderId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {

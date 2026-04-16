@@ -13,10 +13,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 export default async function ReviewsPage() {
   const user = await getCurrentUser();
-  if (!user || !user.masterProfile) redirect("/dashboard");
+  if (!user || !user.providerProfile) redirect("/dashboard");
 
   const reviews = await db.review.findMany({
-    where: { masterId: user.masterProfile.id },
+    where: { providerId: user.providerProfile.id },
     orderBy: { createdAt: "desc" },
     include: {
       author: {
@@ -26,7 +26,7 @@ export default async function ReviewsPage() {
           avatar: true,
         }
       },
-      task: {
+      order: {
         select: {
           title: true,
         }
@@ -98,7 +98,7 @@ export default async function ReviewsPage() {
                 <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase tracking-widest border-t border-white/5 pt-3">
                   <Briefcase className="w-3 h-3 text-indigo-500/50" />
                   <span className="opacity-60">Заказ:</span>
-                  <span className="text-slate-400 truncate max-w-[150px]">{review.task.title}</span>
+                  <span className="text-slate-400 truncate max-w-[150px]">{review.order.title}</span>
                 </div>
               </Card>
             </StaggerItem>

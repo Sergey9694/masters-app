@@ -1,7 +1,7 @@
  import { Variants, Transition } from "framer-motion";
 
 /**
- * Глобальный конфиг анимаций District Master 2026.
+ * Глобальный конфиг анимаций District Provider 2026.
  * Используется для обеспечения консистентности (Single Source of Truth) и премиального UX.
  * Все анимации базируются исключительно на Framer Motion (Motion).
  */

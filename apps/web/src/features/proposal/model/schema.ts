@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const taskResponseSchema = z.object({
-  taskId: z.string().min(1),
+  referenceId: z.string().min(1),
   price: z
     .string()
     .optional()

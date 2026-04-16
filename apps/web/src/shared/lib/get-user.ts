@@ -19,7 +19,7 @@ export async function getCurrentUser() {
         avatar: true,
         role: true,
         phone: true,
-        masterProfile: {
+        providerProfile: {
           select: {
             id: true,
             bio: true,

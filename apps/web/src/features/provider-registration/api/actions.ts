@@ -9,7 +9,7 @@ type Result =
   | { success: true; redirect: string }
   | { error: string };
 
-export async function saveMasterProfileAction(
+export async function saveProviderProfileAction(
   data: MasterProfileFormValues,
 ): Promise<Result> {
   const user = await getCurrentUser();
@@ -32,13 +32,13 @@ export async function saveMasterProfileAction(
 
     const masterResult = await db.$transaction(async (tx) => {
       // Если профиль уже есть, удаляем старые связи с категориями
-      if (user.masterProfile) {
-        await tx.masterCategory.deleteMany({
-          where: { masterId: user.masterProfile.id }
+      if (user.providerProfile) {
+        await tx.providerCategory.deleteMany({
+          where: { providerId: user.providerProfile.id }
         });
       }
 
-      const result = await tx.masterProfile.upsert({
+      const result = await tx.providerProfile.upsert({
         where: { userId: user.id },
         update: {
           bio,
@@ -64,7 +64,7 @@ export async function saveMasterProfileAction(
       await tx.user.update({
         where: { id: user.id },
         data: { 
-          role: "MASTER",
+          role: "PROVIDER",
           ...(avatarUrl && { avatar: avatarUrl })
         },
       });
@@ -73,12 +73,12 @@ export async function saveMasterProfileAction(
     });
 
     revalidatePath("/dashboard");
-    revalidatePath("/dashboard/become-master");
-    revalidatePath(`/dashboard/masters/${masterResult.id}`);
+    revalidatePath("/dashboard/become-provider");
+    revalidatePath(`/dashboard/providers/${masterResult.id}`);
     
     return { success: true, redirect: "/dashboard" };
   } catch (error) {
-    console.error("[saveMasterProfileAction] error:", error);
+    console.error("[saveProviderProfileAction] error:", error);
     return { error: "Не удалось сохранить профиль. Попробуйте позже." };
   }
 }

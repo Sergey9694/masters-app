@@ -24,17 +24,17 @@ import { reviewSchema, type ReviewFormValues } from "../model/schema";
 import { createReviewAction } from "../api/actions";
 
 interface Props {
-  taskId: string;
+  referenceId: string;
 }
 
-export function ReviewForm({ taskId }: Props) {
+export function ReviewForm({ orderId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [hoveredRating, setHoveredRating] = useState(0);
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewSchema),
-    defaultValues: { taskId, rating: 5, text: "" },
+    defaultValues: { orderId, rating: 5, text: "" },
   });
 
   const rating = form.watch("rating");

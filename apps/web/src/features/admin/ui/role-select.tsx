@@ -52,7 +52,7 @@ export function RoleSelect({ userId, currentRole }: RoleSelectProps) {
             className="bg-[#1a1a2e] border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-blue-500/50 disabled:opacity-50 transition-opacity cursor-pointer"
           >
             <option value="USER">USER</option>
-            <option value="MASTER">MASTER</option>
+            <option value="PROVIDER">PROVIDER</option>
             <option value="ADMIN">ADMIN</option>
           </select>
         }

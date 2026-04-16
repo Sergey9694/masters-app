@@ -13,7 +13,7 @@ interface NotificationItemProps {
     type: string;
     title: string;
     body: string;
-    taskId: string | null;
+    referenceId: string | null;
     read: boolean;
     createdAt: Date;
   };
@@ -40,7 +40,7 @@ const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
     icon: <Star className="w-4 h-4" />,
     color: "text-amber-400 bg-amber-500/10",
   },
-  NEW_TASK: {
+  NEW_ORDER: {
     icon: <PlusCircle className="w-4 h-4" />,
     color: "text-indigo-400 bg-indigo-500/10",
   },
@@ -57,12 +57,12 @@ export function NotificationItem({ notification: n }: NotificationItemProps) {
       });
     }
     
-    if (n.taskId) {
-      router.push(`/dashboard/task/${n.taskId}`);
+    if (n.orderId) {
+      router.push(`/dashboard/order/${n.orderId}`);
     }
   };
 
-  const config = TYPE_CONFIG[n.type] || TYPE_CONFIG.NEW_TASK;
+  const config = TYPE_CONFIG[n.type] || TYPE_CONFIG.NEW_ORDER;
 
   return (
     <div 

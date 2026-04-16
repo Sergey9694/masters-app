@@ -7,8 +7,8 @@ export interface CategoryItem {
   icon: string | null;
 }
 
-/** Master-specific dashboard stats */
-export interface MasterStats {
+/** Provider-specific dashboard stats */
+export interface ProviderStats {
   responsesCount: number;
   pendingResponsesCount: number;
   activeTasksCount: number;
@@ -23,7 +23,7 @@ export interface DashboardStats {
   activeTasksCount: number;
   openResponsesCount: number;
   unreadNotificationsCount: number;
-  masterStats: MasterStats | null;
+  masterStats: ProviderStats | null;
 }
 
 /** Dashboard page props (typed from RSC data loading) */
@@ -33,8 +33,8 @@ export interface DashboardPageData {
   stats: DashboardStats;
 }
 
-/** Task card data (for feed display) */
-export interface TaskCardData {
+/** Order card data (for feed display) */
+export interface OrderCardData {
   id: string;
   title: string;
   description: string;
@@ -44,14 +44,14 @@ export interface TaskCardData {
   category: {
     name: string;
   };
-  customer: {
+  client: {
     firstName: string;
     avatar: string | null;
   };
   status: string;
 }
 
-/** Nearby task with distance (PostGIS) */
-export interface NearbyTaskCard extends TaskCardData {
+/** Nearby order with distance (PostGIS) */
+export interface NearbyOrderCard extends OrderCardData {
   distance: number;
 }

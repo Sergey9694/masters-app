@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { TaskFeed } from "@/widgets/TaskFeed/ui/TaskFeed";
-import { SearchInput } from "@/widgets/TaskFeed/ui/SearchInput";
+import { OrderFeed } from "@/widgets/OrderFeed/ui/OrderFeed";
+import { SearchInput } from "@/widgets/OrderFeed/ui/SearchInput";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
 import { db } from "@/shared/lib/db";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
@@ -66,7 +66,7 @@ export default async function FeedPage({ searchParams }: FeedPageProps) {
             </div>
           }
         >
-          <TaskFeed categoryId={categoryId} search={search} />
+          <OrderFeed categoryId={categoryId} search={search} />
         </Suspense>
       </StaggerItem>
     </StaggerWrap>

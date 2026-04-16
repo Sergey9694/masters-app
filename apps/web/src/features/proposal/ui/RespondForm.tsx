@@ -24,29 +24,29 @@ import {
   taskResponseSchema,
   type TaskResponseFormValues,
 } from "../model/schema";
-import { respondToTaskAction } from "../api/actions";
+import { submitProposalAction } from "../api/actions";
 
 interface Props {
-  taskId: string;
+  referenceId: string;
 }
 
-export function RespondForm({ taskId }: Props) {
+export function RespondForm({ orderId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<TaskResponseFormValues>({
     resolver: zodResolver(taskResponseSchema),
-    defaultValues: { taskId, price: "", message: "" },
+    defaultValues: { orderId, price: "", message: "" },
   });
 
   const onSubmit = (vals: TaskResponseFormValues) => {
     startTransition(async () => {
-      const res = await respondToTaskAction(vals);
+      const res = await submitProposalAction(vals);
       if ("success" in res) {
         toast.custom(() => (
           <MotionToast type="success">Отклик отправлен!</MotionToast>
         ));
-        form.reset({ taskId, price: "", message: "" });
+        form.reset({ orderId, price: "", message: "" });
         router.refresh();
         return;
       }

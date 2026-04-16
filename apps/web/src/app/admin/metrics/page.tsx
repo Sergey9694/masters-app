@@ -47,8 +47,8 @@ export default async function AdminMetricsPage() {
         <h2 className="text-lg font-bold text-white mb-4">Топ категорий</h2>
         <div className="space-y-3">
           {m.topCategories.map((cat, i) => {
-            const maxTasks = m.topCategories[0]._count.tasks;
-            const pct = maxTasks > 0 ? (cat._count.tasks / maxTasks) * 100 : 0;
+            const maxTasks = m.topCategories[0]._count.orders;
+            const pct = maxTasks > 0 ? (cat._count.orders / maxTasks) * 100 : 0;
             return (
               <div key={cat.name} className="flex items-center gap-4">
                 <span className="text-xs font-bold text-slate-500 w-4">{i + 1}</span>
@@ -60,7 +60,7 @@ export default async function AdminMetricsPage() {
                   />
                 </div>
                 <span className="text-xs font-bold text-slate-500 w-8 text-right">
-                  {cat._count.tasks}
+                  {cat._count.orders}
                 </span>
               </div>
             );

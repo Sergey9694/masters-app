@@ -13,14 +13,14 @@ export async function getAllReviews(params: { page?: number }) {
         text: true,
         createdAt: true,
         author: { select: { firstName: true, avatar: true } },
-        master: {
+        provider: {
           select: {
             id: true,
             user: { select: { firstName: true } },
             rating: true,
           },
         },
-        task: { select: { title: true, status: true } },
+        order: { select: { title: true, status: true } },
       },
       orderBy: { createdAt: "desc" },
       skip,

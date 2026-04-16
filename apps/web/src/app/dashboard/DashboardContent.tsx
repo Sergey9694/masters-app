@@ -21,13 +21,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CategoryGrid } from "@/widgets/CategoryGrid";
-import { SearchInput } from "@/widgets/TaskFeed/ui/SearchInput";
+import { SearchInput } from "@/widgets/OrderFeed/ui/SearchInput";
 import type { DashboardPageData } from "@/shared/types/domain";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { SectionHeader } from "@/shared/ui/section-header";
 
 export function DashboardContent({ user, categories, stats }: DashboardPageData) {
-  const isMaster = !!user.masterProfile;
+  const isMaster = !!user.providerProfile;
 
   return (
     <motion.div
@@ -38,7 +38,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
     >
       {/* Header */}
       <motion.header className="flex items-center justify-between mb-8" variants={STAGGER_ITEM}>
-        <Link href="/dashboard/become-master" className="block group/profile">
+        <Link href="/dashboard/become-provider" className="block group/profile">
           <div className="flex items-center gap-4 group-hover/profile:opacity-90 transition-opacity">
             <motion.div 
               whileHover={{ scale: 1.05 }}
@@ -96,10 +96,10 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
           <CategoryGrid initialCategories={categories} variant="row" />
         </motion.div>
 
-        {/* ── Master Section ── */}
+        {/* ── Provider Section ── */}
         {isMaster && stats.masterStats && (
           <>
-            {/* Master Stats */}
+            {/* Provider Stats */}
             <motion.div variants={STAGGER_ITEM}>
               <SectionHeader title="Панель мастера" accentColor="emerald" className="mb-5" />
               <div className="grid grid-cols-3 gap-3">
@@ -121,18 +121,18 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                   value={String(stats.masterStats.activeTasksCount)}
                   icon={<Briefcase className="w-4 h-4" />}
                   color="text-emerald-400"
-                  href="/dashboard/my-responses"
+                  href="/dashboard/my-proposals"
                 />
               </div>
             </motion.div>
 
-            {/* Master Actions */}
+            {/* Provider Actions */}
             <div className="space-y-5">
               <motion.div variants={STAGGER_ITEM}>
                 <SectionHeader title="Заказы" accentColor="emerald" className="mb-5" />
               </motion.div>
               <motion.div variants={STAGGER_ITEM} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link href={`/dashboard/masters/${user.masterProfile?.id}`}>
+                <Link href={`/dashboard/providers/${user.providerProfile?.id}`}>
                   <ActionCard
                     title="Мой профиль"
                     desc="Посмотрите как видят ваш профиль заказчики"
@@ -150,7 +150,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                     badge={null}
                   />
                 </Link>
-                <Link href="/dashboard/my-responses">
+                <Link href="/dashboard/my-proposals">
                   <ActionCard
                     title="Мои отклики"
                     desc="Отслеживайте статус ваших откликов"
@@ -178,7 +178,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
             />
           </motion.div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link href="/dashboard/create-task">
+            <Link href="/dashboard/create-order">
               <ActionCard
                 title="Создать заявку"
                 desc="Опишите задачу — мастера сами предложат цену"
@@ -187,7 +187,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                 badge={null}
               />
             </Link>
-            <Link href="/dashboard/my-tasks">
+            <Link href="/dashboard/my-orders">
               <ActionCard
                 title="Мои заявки"
                 desc="Статус, отклики мастеров и ход работы"
@@ -205,10 +205,10 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
           </div>
         </div>
 
-        {/* ── Become Master CTA ── */}
+        {/* ── Become Provider CTA ── */}
         {!isMaster && (
           <motion.div variants={STAGGER_ITEM}>
-            <Link href="/dashboard/become-master">
+            <Link href="/dashboard/become-provider">
               <Card className="p-6 rounded-[28px] border border-emerald-500/20 bg-gradient-to-r from-emerald-950/40 to-teal-950/40 hover:from-emerald-950/60 hover:to-teal-950/60 transition-all group cursor-pointer">
                 <div className="flex items-center gap-5">
                   <div className="bg-gradient-to-tr from-emerald-500 to-teal-600 p-4 rounded-[20px] text-white shadow-xl shadow-emerald-500/20 group-hover:scale-110 transition-transform">

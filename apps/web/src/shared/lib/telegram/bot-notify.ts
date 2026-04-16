@@ -14,7 +14,7 @@ interface NotifyParams {
   type: NotificationType;
   title: string;
   body: string;
-  taskId?: string;
+  orderId?: string;
 }
 
 /**
@@ -30,7 +30,7 @@ export async function notify(params: NotifyParams) {
         type: params.type,
         title: params.title,
         body: params.body,
-        taskId: params.taskId ?? null,
+        referenceId: params.orderId ?? null,
       },
     });
 
@@ -46,8 +46,8 @@ export async function notify(params: NotifyParams) {
 
     if (!user?.telegramId) return;
 
-    const taskUrl = params.taskId
-      ? `${webAppUrl}/dashboard/task/${params.taskId}`
+    const taskUrl = params.orderId
+      ? `${webAppUrl}/dashboard/order/${params.orderId}`
       : `${webAppUrl}/dashboard/notifications`;
 
     const text = `<b>${escapeHtml(params.title)}</b>\n${escapeHtml(params.body)}`;
@@ -85,29 +85,29 @@ export async function notify(params: NotifyParams) {
 }
 
 /**
- * Notify all masters in given categories about a new task.
+ * Notify all providers in given categories about a new order.
  */
-export async function notifyMastersInCategories(
+export async function notifyProvidersInCategories(
   categoryIds: string[],
   excludeUserId: string,
   taskTitle: string,
-  taskId: string,
+  referenceId: string,
 ) {
   try {
-    const masters = await db.masterCategory.findMany({
+    const providers = await db.providerCategory.findMany({
       where: { categoryId: { in: categoryIds } },
       select: {
-        master: {
+        provider: {
           select: {
             userId: true,
           },
         },
       },
-      distinct: ["masterId"],
+      distinct: ["providerId"],
     });
 
-    const userIds = masters
-      .map((m) => m.master.userId)
+    const userIds = providers
+      .map((m) => m.provider.userId)
       .filter((id) => id !== excludeUserId);
 
     // Batch create notifications
@@ -115,10 +115,10 @@ export async function notifyMastersInCategories(
       await db.notification.createMany({
         data: userIds.map((uid) => ({
           userId: uid,
-          type: "NEW_TASK" as const,
+          type: "NEW_ORDER" as const,
           title: "Новая заявка",
           body: taskTitle,
-          taskId,
+          orderId,
         })),
       });
     }
@@ -134,7 +134,7 @@ export async function notifyMastersInCategories(
     });
 
     const isHttps = webAppUrl2.startsWith("https://");
-    const taskUrl = `${webAppUrl2}/dashboard/task/${taskId}`;
+    const taskUrl = `${webAppUrl2}/dashboard/order/${orderId}`;
 
     await Promise.allSettled(
       users.map(async (u) => {
@@ -161,12 +161,12 @@ export async function notifyMastersInCategories(
 
         if (!res.ok) {
           const errorText = await res.text();
-          console.error(`[notifyMastersInCategories] Telegram error for ${u.telegramId}: ${res.status} ${errorText}`);
+          console.error(`[notifyProvidersInCategories] Telegram error for ${u.telegramId}: ${res.status} ${errorText}`);
         }
       }),
     );
   } catch (error) {
-    console.error("[notifyMastersInCategories] Error:", error);
+    console.error("[notifyProvidersInCategories] Error:", error);
   }
 }
 

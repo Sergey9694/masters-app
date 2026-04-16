@@ -75,7 +75,7 @@ export function AdminUserFilters({ initialSearch = "", initialRole = "" }: Admin
       >
         <option value="">Все роли</option>
         <option value="USER">USER</option>
-        <option value="MASTER">MASTER</option>
+        <option value="PROVIDER">PROVIDER</option>
         <option value="ADMIN">ADMIN</option>
       </select>
     </div>

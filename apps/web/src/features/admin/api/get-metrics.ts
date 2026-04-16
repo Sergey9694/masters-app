@@ -10,16 +10,16 @@ export async function getMetrics() {
     topCategories,
     activityByDay,
   ] = await Promise.all([
-    db.taskRequest.count(),
-    db.taskRequest.count({ where: { status: "COMPLETED" } }),
-    db.taskRequest.count({ where: { status: "CANCELED" } }),
-    db.taskResponse.count(),
+    db.order.count(),
+    db.order.count({ where: { status: "COMPLETED" } }),
+    db.order.count({ where: { status: "CANCELED" } }),
+    db.proposal.count(),
 
     // Среднее время выполнения (от создания до завершения)
     db.$queryRaw<Array<{ avg_hours: number }>>`
       SELECT AVG(EXTRACT(EPOCH FROM (t2."createdAt" - t1."createdAt")) / 3600) as avg_hours
-      FROM "TaskRequest" t1
-      JOIN "TaskRequest" t2 ON t1.id = t2.id
+      FROM "Order" t1
+      JOIN "Order" t2 ON t1.id = t2.id
       WHERE t1.status = 'COMPLETED'
     `,
 
@@ -27,9 +27,9 @@ export async function getMetrics() {
     db.category.findMany({
       select: {
         name: true,
-        _count: { select: { tasks: true } },
+        _count: { select: { orders: true } },
       },
-      orderBy: { tasks: { _count: "desc" } },
+      orderBy: { orders: { _count: "desc" } },
       take: 10,
     }),
 
@@ -38,7 +38,7 @@ export async function getMetrics() {
       SELECT
         TO_CHAR("createdAt", 'Day') as day,
         COUNT(*)::bigint as count
-      FROM "TaskRequest"
+      FROM "Order"
       GROUP BY TO_CHAR("createdAt", 'Day'), EXTRACT(DOW FROM "createdAt")
       ORDER BY EXTRACT(DOW FROM "createdAt") ASC
     `,

@@ -4,29 +4,29 @@ import { getSession } from "@/shared/lib/auth";
 import { db } from "@/shared/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function verifyMaster(masterId: string) {
+export async function verifyMaster(providerId: string) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
     throw new Error("Forbidden");
   }
 
-  await db.masterProfile.update({
-    where: { id: masterId },
+  await db.providerProfile.update({
+    where: { id: providerId },
     data: { isVerified: true },
   });
 
-  revalidatePath("/admin/master-applications");
+  revalidatePath("/admin/provider-applications");
 }
 
-export async function rejectMaster(masterId: string) {
+export async function rejectMaster(providerId: string) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
     throw new Error("Forbidden");
   }
 
-  await db.masterProfile.delete({
-    where: { id: masterId },
+  await db.providerProfile.delete({
+    where: { id: providerId },
   });
 
-  revalidatePath("/admin/master-applications");
+  revalidatePath("/admin/provider-applications");
 }

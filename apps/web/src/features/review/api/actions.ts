@@ -18,32 +18,32 @@ export async function createReviewAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Неверные данные" };
   }
-  const { taskId, rating, text } = parsed.data;
+  const { orderId, rating, text } = parsed.data;
 
   try {
-    const task = await db.taskRequest.findUnique({
-      where: { id: taskId },
+    const order = await db.order.findUnique({
+      where: { id: orderId },
       select: {
         id: true,
         title: true,
-        customerId: true,
+        clientId: true,
         status: true,
-        assignedMasterId: true,
-        assignedMaster: { select: { userId: true } },
+        assignedProviderId: true,
+        assignedProvider: { select: { userId: true } },
         review: { select: { id: true } },
       },
     });
-    if (!task) return { error: "Заявка не найдена" };
-    if (task.customerId !== user.id) {
+    if (!order) return { error: "Заявка не найдена" };
+    if (order.clientId !== user.id) {
       return { error: "Отзыв может оставить только автор заявки" };
     }
-    if (task.status !== "COMPLETED") {
+    if (order.status !== "COMPLETED") {
       return { error: "Отзыв можно оставить только после завершения" };
     }
-    if (!task.assignedMasterId) {
+    if (!order.assignedProviderId) {
       return { error: "По этой заявке нет выбранного мастера" };
     }
-    if (task.review) {
+    if (order.review) {
       return { error: "Отзыв уже оставлен" };
     }
 
@@ -51,8 +51,8 @@ export async function createReviewAction(
     await db.$transaction(async (tx) => {
       await tx.review.create({
         data: {
-          taskId,
-          masterId: task.assignedMasterId!,
+          orderId,
+          providerId: order.assignedProviderId!,
           authorId: user.id,
           rating,
           text: text || null,
@@ -60,27 +60,27 @@ export async function createReviewAction(
       });
 
       const agg = await tx.review.aggregate({
-        where: { masterId: task.assignedMasterId! },
+        where: { providerId: order.assignedProviderId! },
         _avg: { rating: true },
       });
-      await tx.masterProfile.update({
-        where: { id: task.assignedMasterId! },
+      await tx.providerProfile.update({
+        where: { id: order.assignedProviderId! },
         data: { rating: agg._avg.rating ?? 5 },
       });
     });
 
-    // Notify master about new review
-    if (task.assignedMaster) {
+    // Notify provider about new review
+    if (order.assignedProvider) {
       await notify({
-        userId: task.assignedMaster.userId,
+        userId: order.assignedProvider.userId,
         type: "NEW_REVIEW",
         title: "Новый отзыв",
-        body: `Вам оставили отзыв (${rating}★) за «${task.title}»`,
-        taskId,
+        body: `Вам оставили отзыв (${rating}★) за «${order.title}»`,
+        orderId,
       });
     }
 
-    revalidatePath(`/dashboard/task/${taskId}`);
+    revalidatePath(`/dashboard/order/${orderId}`);
     return { success: true };
   } catch (error) {
     console.error("[createReviewAction] error:", error);

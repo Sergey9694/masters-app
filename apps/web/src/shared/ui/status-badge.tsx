@@ -1,9 +1,9 @@
 import { cn } from "@/shared/lib/cn";
 
-export type TaskStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" | "EXPIRED";
+export type OrderStatus = "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" | "EXPIRED";
 
 interface StatusBadgeProps {
-  status: TaskStatus | string;
+  status: OrderStatus | string;
   className?: string;
 }
 

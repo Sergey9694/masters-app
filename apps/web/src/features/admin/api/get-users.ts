@@ -35,7 +35,7 @@ export async function getUsers(params: {
         role: true,
         phone: true,
         createdAt: true,
-        masterProfile: {
+        providerProfile: {
           select: {
             id: true,
             isVerified: true,

@@ -65,8 +65,8 @@ export default async function AdminUsersPage({
                   {new Date(user.createdAt).toLocaleDateString("ru-RU")}
                 </td>
                 <td className="p-4">
-                  {user.masterProfile ? (
-                    user.masterProfile.isVerified ? (
+                  {user.providerProfile ? (
+                    user.providerProfile.isVerified ? (
                       <span className="text-xs font-bold text-emerald-500">Верифицирован</span>
                     ) : (
                       <span className="text-xs font-bold text-amber-500">Не верифицирован</span>
@@ -93,7 +93,7 @@ export default async function AdminUsersPage({
 function RoleBadge({ role }: { role: Role }) {
   const colors: Record<Role, string> = {
     USER: "bg-slate-700/50 text-slate-300",
-    MASTER: "bg-emerald-700/50 text-emerald-300",
+    PROVIDER: "bg-emerald-700/50 text-emerald-300",
     ADMIN: "bg-violet-700/50 text-violet-300",
   };
   return (
