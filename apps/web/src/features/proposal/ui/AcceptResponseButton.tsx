@@ -10,16 +10,16 @@ import { MotionToast } from "@/shared/ui/motion-toast";
 import { acceptProposalAction } from "../api/actions";
 
 interface Props {
-  responseId: string;
+  proposalId: string;
 }
 
-export function AcceptResponseButton({ responseId }: Props) {
+export function AcceptResponseButton({ proposalId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const onClick = () => {
     startTransition(async () => {
-      const res = await acceptProposalAction(responseId);
+      const res = await acceptProposalAction(proposalId);
       if ("success" in res) {
         toast.custom(() => (
           <MotionToast type="success">Исполнитель выбран</MotionToast>
@@ -44,7 +44,7 @@ export function AcceptResponseButton({ responseId }: Props) {
       ) : (
         <>
           <Check className="w-4 h-4 mr-1.5" />
-          Выбрать мастера
+          Выбрать исполнителя
         </>
       )}
     </Button>

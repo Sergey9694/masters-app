@@ -1,3 +1,3 @@
-export { getTasksNearby } from "./api/order-geo";
+export { getOrdersNearby } from "./api/order-geo";
 export { OrderCard } from "./ui/OrderCard";
 export { OrderListItem } from "./ui/OrderListItem";

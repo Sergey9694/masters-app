@@ -1,7 +1,7 @@
 import { db } from "@/shared/lib/db";
 import { OrderStatus } from "@prisma/client";
 
-export async function getAllTasks(params: {
+export async function getAllOrders(params: {
   page?: number;
   status?: OrderStatus;
   search?: string;

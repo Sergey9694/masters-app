@@ -9,21 +9,21 @@ export interface CategoryItem {
 
 /** Provider-specific dashboard stats */
 export interface ProviderStats {
-  responsesCount: number;
-  pendingResponsesCount: number;
-  activeTasksCount: number;
+  proposalsCount: number;
+  pendingProposalsCount: number;
+  activeOrdersCount: number;
   rating: number;
   reviewsCount: number;
 }
 
 /** Dashboard stats */
 export interface DashboardStats {
-  myTasksCount: number;
-  openTasksCount: number;
-  activeTasksCount: number;
-  openResponsesCount: number;
+  myOrdersCount: number;
+  openOrdersCount: number;
+  activeOrdersCount: number;
+  openProposalsCount: number;
   unreadNotificationsCount: number;
-  masterStats: ProviderStats | null;
+  providerStats: ProviderStats | null;
 }
 
 /** Dashboard page props (typed from RSC data loading) */

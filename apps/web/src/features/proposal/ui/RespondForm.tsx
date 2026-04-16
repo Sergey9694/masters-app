@@ -30,13 +30,13 @@ interface Props {
   referenceId: string;
 }
 
-export function RespondForm({ orderId }: Props) {
+export function RespondForm({ referenceId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<TaskResponseFormValues>({
     resolver: zodResolver(taskResponseSchema),
-    defaultValues: { orderId, price: "", message: "" },
+    defaultValues: { referenceId, price: "", message: "" },
   });
 
   const onSubmit = (vals: TaskResponseFormValues) => {
@@ -46,7 +46,7 @@ export function RespondForm({ orderId }: Props) {
         toast.custom(() => (
           <MotionToast type="success">Отклик отправлен!</MotionToast>
         ));
-        form.reset({ orderId, price: "", message: "" });
+        form.reset({ referenceId, price: "", message: "" });
         router.refresh();
         return;
       }

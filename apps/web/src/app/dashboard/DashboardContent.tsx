@@ -27,7 +27,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { SectionHeader } from "@/shared/ui/section-header";
 
 export function DashboardContent({ user, categories, stats }: DashboardPageData) {
-  const isMaster = !!user.providerProfile;
+  const isProvider = !!user.providerProfile;
 
   return (
     <motion.div
@@ -38,7 +38,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
     >
       {/* Header */}
       <motion.header className="flex items-center justify-between mb-8" variants={STAGGER_ITEM}>
-        <Link href="/dashboard/become-provider" className="block group/profile">
+        <Link href={`/dashboard/providers/${user.providerProfile?.id || ""}`} className="block group/profile">
           <div className="flex items-center gap-4 group-hover/profile:opacity-90 transition-opacity">
             <motion.div 
               whileHover={{ scale: 1.05 }}
@@ -57,10 +57,10 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                 Привет, {user.firstName}!
                 <ArrowRight className="w-4 h-4 text-blue-500 opacity-0 -translate-x-2 group-hover/profile:opacity-100 group-hover/profile:translate-x-0 transition-all" />
               </h1>
-              {isMaster && (
+              {isProvider && (
                 <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest flex items-center gap-1.5 mt-1">
                   <Hammer className="w-3 h-3" />
-                  Мастер
+                  Исполнитель
                 </p>
               )}
             </div>
@@ -97,28 +97,28 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         </motion.div>
 
         {/* ── Provider Section ── */}
-        {isMaster && stats.masterStats && (
+        {isProvider && stats.providerStats && (
           <>
             {/* Provider Stats */}
             <motion.div variants={STAGGER_ITEM}>
-              <SectionHeader title="Панель мастера" accentColor="emerald" className="mb-5" />
+              <SectionHeader title="Панель исполнителя" accentColor="emerald" className="mb-5" />
               <div className="grid grid-cols-3 gap-3">
                 <StatCard
                   label="Рейтинг"
-                  value={stats.masterStats.rating.toFixed(1)}
+                  value={stats.providerStats.rating.toFixed(1)}
                   icon={<Star className="w-4 h-4" />}
                   color="text-amber-400"
                 />
                 <StatCard
                   label="Отзывы"
-                  value={String(stats.masterStats.reviewsCount)}
+                  value={String(stats.providerStats.reviewsCount)}
                   icon={<MessageSquare className="w-4 h-4" />}
                   color="text-blue-400"
                   href="/dashboard/reviews"
                 />
                 <StatCard
                   label="В работе"
-                  value={String(stats.masterStats.activeTasksCount)}
+                  value={String(stats.providerStats.activeOrdersCount)}
                   icon={<Briefcase className="w-4 h-4" />}
                   color="text-emerald-400"
                   href="/dashboard/my-proposals"
@@ -157,8 +157,8 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                     icon={<MessageSquare className="w-6 h-6" />}
                     color="bg-blue-600"
                     badge={
-                      stats.masterStats.pendingResponsesCount > 0 
-                        ? `${stats.masterStats.pendingResponsesCount} активных` 
+                      stats.providerStats.pendingProposalsCount > 0 
+                        ? `${stats.providerStats.pendingProposalsCount} активных` 
                         : null
                     }
                   />
@@ -172,7 +172,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         <div className="space-y-5">
           <motion.div variants={STAGGER_ITEM}>
             <SectionHeader 
-              title={isMaster ? "Как заказчик" : "Мои задачи"} 
+              title={isProvider ? "Как заказчик" : "Мои заказы"} 
               accentColor="indigo" 
               className="mb-5" 
             />
@@ -180,8 +180,8 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link href="/dashboard/create-order">
               <ActionCard
-                title="Создать заявку"
-                desc="Опишите задачу — мастера сами предложат цену"
+                title="Создать заказ"
+                desc="Опишите задачу — исполнители сами предложат цену"
                 icon={<PlusCircle className="w-6 h-6" />}
                 color="bg-blue-600"
                 badge={null}
@@ -189,15 +189,15 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
             </Link>
             <Link href="/dashboard/my-orders">
               <ActionCard
-                title="Мои заявки"
-                desc="Статус, отклики мастеров и ход работы"
+                title="Мои заказы"
+                desc="Статус, отклики исполнителей и ход работы"
                 icon={<ClipboardList className="w-6 h-6" />}
                 color="bg-indigo-600"
                 badge={
-                  stats.openResponsesCount > 0
-                    ? `${stats.openResponsesCount} новых откликов`
-                    : stats.activeTasksCount > 0
-                      ? `${stats.activeTasksCount} активных`
+                  stats.openProposalsCount > 0
+                    ? `${stats.openProposalsCount} новых откликов`
+                    : stats.activeOrdersCount > 0
+                      ? `${stats.activeOrdersCount} активных`
                       : null
                 }
               />
@@ -206,7 +206,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         </div>
 
         {/* ── Become Provider CTA ── */}
-        {!isMaster && (
+        {!isProvider && (
           <motion.div variants={STAGGER_ITEM}>
             <Link href="/dashboard/become-provider">
               <Card className="p-6 rounded-[28px] border border-emerald-500/20 bg-gradient-to-r from-emerald-950/40 to-teal-950/40 hover:from-emerald-950/60 hover:to-teal-950/60 transition-all group cursor-pointer">
@@ -215,7 +215,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
                     <Hammer className="w-7 h-7" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-base font-black text-emerald-400 mb-1">Стать мастером</h3>
+                    <h3 className="text-base font-black text-emerald-400 mb-1">Стать исполнителем</h3>
                     <p className="text-sm text-slate-400 leading-snug">
                       Помогайте соседям и зарабатывайте — бесплатная регистрация
                     </p>
@@ -228,15 +228,15 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
         )}
 
         {/* ── Browse Feed ── */}
-        {!isMaster && (
+        {!isProvider && (
           <div className="space-y-5">
             <motion.div variants={STAGGER_ITEM}>
               <SectionHeader title="Лента заказов" accentColor="indigo" className="mb-5" />
             </motion.div>
             <Link href="/dashboard/feed">
               <ActionCard
-                title="Все заявки"
-                desc="Посмотрите открытые заявки в вашем районе"
+                title="Все заказы"
+                desc="Посмотрите открытые заказы в вашем районе"
                 icon={<TrendingUp className="w-6 h-6" />}
                 color="bg-indigo-600"
                 badge={null}

@@ -25,11 +25,11 @@ export async function submitProposalAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Неверные данные" };
   }
-  const { orderId, price, message } = parsed.data;
+  const { referenceId, price, message } = parsed.data;
 
   try {
     const order = await db.order.findUnique({
-      where: { id: orderId },
+      where: { id: referenceId },
       select: { id: true, title: true, status: true, clientId: true },
     });
     if (!order) return { error: "Заявка не найдена" };
@@ -39,14 +39,14 @@ export async function submitProposalAction(
     }
 
     const existing = await db.proposal.findFirst({
-      where: { orderId, providerId: user.providerProfile.id },
+      where: { orderId: referenceId, providerId: user.providerProfile.id },
       select: { id: true },
     });
     if (existing) return { error: "Вы уже откликнулись на эту заявку" };
 
     await db.proposal.create({
       data: {
-        orderId,
+        orderId: referenceId,
         providerId: user.providerProfile.id,
         price: price ? parseFloat(price) : null,
         message,
@@ -56,13 +56,13 @@ export async function submitProposalAction(
     // Notify order owner about new response
     await notify({
       userId: order.clientId,
-      type: "NEW_RESPONSE",
+      type: "NEW_PROPOSAL",
       title: "Новый отклик",
       body: `Мастер ${user.firstName} откликнулся на «${order.title}»`,
-      orderId,
+      referenceId,
     });
 
-    revalidatePath(`/dashboard/order/${orderId}`);
+    revalidatePath(`/dashboard/order/${referenceId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
@@ -72,74 +72,74 @@ export async function submitProposalAction(
 }
 
 export async function acceptProposalAction(
-  responseId: string,
+  proposalId: string,
 ): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return { error: "Необходима авторизация" };
 
   try {
-    const response = await db.proposal.findUnique({
-      where: { id: responseId },
+    const proposal = await db.proposal.findUnique({
+      where: { id: proposalId },
       select: {
         id: true,
-        referenceId: true,
+        orderId: true,
         providerId: true,
         provider: { select: { userId: true } },
         order: { select: { title: true, clientId: true, status: true } },
       },
     });
-    if (!response) return { error: "Отклик не найден" };
-    if (response.order.clientId !== user.id) {
+    if (!proposal) return { error: "Отклик не найден" };
+    if (proposal.order.clientId !== user.id) {
       return { error: "Вы не являетесь автором заявки" };
     }
-    if (response.order.status !== "OPEN") {
+    if (proposal.order.status !== "OPEN") {
       return { error: "Заявка уже не в статусе OPEN" };
     }
 
     await db.order.update({
-      where: { id: response.orderId },
+      where: { id: proposal.orderId },
       data: {
         status: "IN_PROGRESS",
-        assignedProviderId: response.providerId,
+        assignedProviderId: proposal.providerId,
       },
     });
 
     // Notify provider that they were chosen
     await notify({
-      userId: response.provider.userId,
-      type: "RESPONSE_ACCEPTED",
+      userId: proposal.provider.userId,
+      type: "PROPOSAL_ACCEPTED",
       title: "Вас выбрали!",
-      body: `Вы назначены на заявку «${response.order.title}»`,
-      referenceId: response.orderId,
+      body: `Вы назначены на заявку «${proposal.order.title}»`,
+      referenceId: proposal.orderId,
     });
 
     // Notify other providers who were NOT chosen
-    const otherResponses = await db.proposal.findMany({
+    const otherProposals = await db.proposal.findMany({
       where: {
-        referenceId: response.orderId,
-        id: { not: responseId },
+        orderId: proposal.orderId,
+        id: { not: proposalId },
       },
       select: {
         provider: { select: { userId: true } },
       },
     });
 
-    if (otherResponses.length > 0) {
-      const otherUserIds = otherResponses.map((r) => r.provider.userId);
+    if (otherProposals.length > 0) {
+      const otherUserIds = otherProposals.map((r) => r.provider.userId);
       await Promise.allSettled(
         otherUserIds.map(async (uid) =>
           await notify({
             userId: uid,
-            type: "TASK_CANCELED", // Or create a new type if needed, but TASK_CANCELED/CLOSED is close
+            type: "ORDER_CANCELED", 
             title: "Заявка закрыта",
-            body: `Заказчик выбрал другого исполнителя для «${response.order.title}»`,
-            referenceId: response.orderId,
+            body: `Заказчик выбрал другого исполнителя для «${proposal.order.title}»`,
+            referenceId: proposal.orderId,
           }),
         ),
       );
     }
 
-    revalidatePath(`/dashboard/order/${response.orderId}`);
+    revalidatePath(`/dashboard/order/${proposal.orderId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
@@ -154,7 +154,7 @@ export async function completeOrderAction(referenceId: string): Promise<Result> 
 
   try {
     const order = await db.order.findUnique({
-      where: { id: orderId },
+      where: { id: referenceId },
       select: {
         id: true,
         title: true,
@@ -173,7 +173,7 @@ export async function completeOrderAction(referenceId: string): Promise<Result> 
     }
 
     await db.order.update({
-      where: { id: orderId },
+      where: { id: referenceId },
       data: { status: "COMPLETED" },
     });
 
@@ -181,14 +181,14 @@ export async function completeOrderAction(referenceId: string): Promise<Result> 
     if (order.assignedProvider) {
       await notify({
         userId: order.assignedProvider.userId,
-        type: "TASK_COMPLETED",
+        type: "ORDER_COMPLETED",
         title: "Заявка завершена",
         body: `Заказчик завершил заявку «${order.title}»`,
-        orderId,
+        referenceId,
       });
     }
 
-    revalidatePath(`/dashboard/order/${orderId}`);
+    revalidatePath(`/dashboard/order/${referenceId}`);
     return { success: true };
   } catch (error) {
     console.error("[completeOrderAction] error:", error);
@@ -202,7 +202,7 @@ export async function cancelOrderAction(referenceId: string): Promise<Result> {
 
   try {
     const order = await db.order.findUnique({
-      where: { id: orderId },
+      where: { id: referenceId },
       select: {
         id: true,
         title: true,
@@ -221,7 +221,7 @@ export async function cancelOrderAction(referenceId: string): Promise<Result> {
     }
 
     await db.order.update({
-      where: { id: orderId },
+      where: { id: referenceId },
       data: { status: "CANCELED" },
     });
 
@@ -229,14 +229,14 @@ export async function cancelOrderAction(referenceId: string): Promise<Result> {
     if (order.assignedProvider) {
       await notify({
         userId: order.assignedProvider.userId,
-        type: "TASK_CANCELED",
+        type: "ORDER_CANCELED",
         title: "Заявка отменена",
         body: `Заказчик отменил заявку «${order.title}»`,
-        orderId,
+        referenceId,
       });
     }
 
-    revalidatePath(`/dashboard/order/${orderId}`);
+    revalidatePath(`/dashboard/order/${referenceId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
@@ -245,13 +245,13 @@ export async function cancelOrderAction(referenceId: string): Promise<Result> {
   }
 }
 
-export async function refuseTaskAction(referenceId: string): Promise<Result> {
+export async function refuseOrderAction(referenceId: string): Promise<Result> {
   const user = await getCurrentUser();
   if (!user || !user.providerProfile) return { error: "Необходима авторизация мастера" };
 
   try {
     const order = await db.order.findUnique({
-      where: { id: orderId },
+      where: { id: referenceId },
       select: {
         id: true,
         title: true,
@@ -273,26 +273,25 @@ export async function refuseTaskAction(referenceId: string): Promise<Result> {
     // Use transaction to ensure data integrity
     await db.$transaction([
       db.order.update({
-        where: { id: orderId },
+        where: { id: referenceId },
         data: {
           status: "OPEN",
           assignedProviderId: null,
         },
       }),
-      // Remove this provider's response so someone else can be chosen 
-      // and this provider doesn't distract the owner
+      // Remove this provider's proposal so someone else can be chosen 
       db.proposal.deleteMany({
-        where: { orderId, providerId: user.providerProfile.id }
+        where: { orderId: referenceId, providerId: user.providerProfile.id }
       })
     ]);
 
     // Notify client that provider refused
     await notify({
       userId: order.clientId,
-      type: "TASK_CANCELED",
+      type: "ORDER_CANCELED",
       title: "Мастер отказался",
       body: `Мастер ${user.firstName} отказался от выполнения «${order.title}». Заявка снова открыта.`,
-      orderId,
+      referenceId,
     });
 
     // Notify other providers in category that job is available again
@@ -301,14 +300,14 @@ export async function refuseTaskAction(referenceId: string): Promise<Result> {
       [order.categoryId],
       user.id, // Exclude the one who just refused
       `[СНОВА ОТКРЫТА] ${order.title}`,
-      orderId,
+      referenceId,
     );
 
-    revalidatePath(`/dashboard/order/${orderId}`);
+    revalidatePath(`/dashboard/order/${referenceId}`);
     revalidatePath("/dashboard/feed");
     return { success: true };
   } catch (error) {
-    console.error("[refuseTaskAction] error:", error);
+    console.error("[refuseOrderAction] error:", error);
     return { error: "Не удалось отказаться от заявки" };
   }
 }

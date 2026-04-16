@@ -1,7 +1,7 @@
-import { getAllTasks } from "@/features/admin/api/get-all-orders";
+import { getAllOrders } from "@/features/admin/api/get-all-orders";
 import { OrderStatus } from "@prisma/client";
-import { TaskModerationActions } from "@/features/admin/ui/order-moderation-actions";
-import { AdminTaskFilters } from "@/features/admin/ui/admin-order-filters";
+import { OrderModerationActions } from "@/features/admin/ui/OrderModerationActions";
+import { AdminOrderFilters } from "@/features/admin/ui/AdminOrderFilters";
 import { Pagination } from "@/shared/ui/custom/pagination";
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -20,7 +20,7 @@ const statusColors: Record<OrderStatus, string> = {
   EXPIRED: "bg-amber-700/50 text-amber-300",
 };
 
-export default async function AdminTasksPage({
+export default async function AdminOrdersPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string; search?: string; page?: string }>;
@@ -30,17 +30,17 @@ export default async function AdminTasksPage({
   const search = params.search || "";
   const page = Number(params.page) || 1;
 
-  const data = await getAllTasks({ page, status, search });
+  const data = await getAllOrders({ page, status, search });
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-black text-white">Задачи</h1>
+        <h1 className="text-3xl font-black text-white">Заказы</h1>
         <p className="text-slate-500 mt-1">Всего: {data.total}</p>
       </div>
 
       {/* Filters */}
-      <AdminTaskFilters 
+      <AdminOrderFilters 
         initialSearch={search} 
         initialStatus={status} 
         statusLabels={statusLabels} 
@@ -60,7 +60,7 @@ export default async function AdminTasksPage({
             </tr>
           </thead>
           <tbody>
-            {data.orders.map((order) => (
+            {data.orders.map((order: any) => (
               <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                 <td className="p-4">
                   <p className="font-bold text-white truncate max-w-[250px]">{order.title}</p>
@@ -68,8 +68,8 @@ export default async function AdminTasksPage({
                 </td>
                 <td className="p-4 text-slate-400">{order.category.name}</td>
                 <td className="p-4">
-                  <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${statusColors[order.status]}`}>
-                    {statusLabels[order.status]}
+                  <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${statusColors[order.status as OrderStatus] || ""}`}>
+                    {statusLabels[order.status as OrderStatus] || order.status}
                   </span>
                 </td>
                 <td className="p-4 text-slate-400">{order._count.proposals}</td>
@@ -77,7 +77,7 @@ export default async function AdminTasksPage({
                   {new Date(order.createdAt).toLocaleDateString("ru-RU")}
                 </td>
                 <td className="p-4">
-                  <TaskModerationActions orderId={order.id} status={order.status} />
+                  <OrderModerationActions referenceId={order.id} status={order.status as OrderStatus} />
                 </td>
               </tr>
             ))}

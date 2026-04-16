@@ -39,24 +39,24 @@ import {
   SelectValue,
 } from "@/shared/ui/select";
 import { Card } from "@/shared/ui/card";
-import { taskSchema, type TaskFormValues } from "../model/order-schema";
+import { orderSchema, type OrderFormValues } from "../model/order-schema";
 import { createOrderAction } from "../api/create-order-action";
 import { uploadImagesAction } from "../api/upload-action";
 import { PhotoUploadField } from "./PhotoUploadField";
 import { AddressField } from "./AddressField";
 
-interface TaskCreateFormProps {
+interface OrderCreateFormProps {
   categories: { id: string; name: string }[];
 }
 
-export function TaskCreateForm({ categories }: TaskCreateFormProps) {
+export function OrderCreateForm({ categories }: OrderCreateFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const [previewImages, setPreviewImages] = useState<{ file: File; url: string }[]>([]);
 
-  const form = useForm<TaskFormValues>({
-    resolver: zodResolver(taskSchema),
+  const form = useForm<OrderFormValues>({
+    resolver: zodResolver(orderSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -67,7 +67,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
     },
   });
 
-  const onSubmit = async (vals: TaskFormValues) => {
+  const onSubmit = async (vals: OrderFormValues) => {
     startTransition(async () => {
       try {
         let urls: string[] = [];
@@ -92,7 +92,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
         // Since it's createSafeAction, the result is ActionState:
         if (res.data?.redirect) {
           toast.custom(() => (
-            <MotionToast type="success">Тендер успешно опубликован!</MotionToast>
+            <MotionToast type="success">Заказ успешно опубликован!</MotionToast>
           ));
           setTimeout(() => {
             router.push(res.data!.redirect);
@@ -132,7 +132,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
               <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-              Создать тендер
+              Создать заказ
               <ShieldCheck className="w-5 h-5 text-indigo-400" />
             </h1>
             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">District Provider • Precision Flow</p>
@@ -225,7 +225,7 @@ export function TaskCreateForm({ categories }: TaskCreateFormProps) {
                 <Loader2 className="w-7 h-7 animate-spin" />
               ) : (
                 <div className="flex items-center gap-4">
-                  <span>Опубликовать тендер</span>
+                  <span>Опубликовать заказ</span>
                   <SendHorizontal className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all" />
                 </div>
               )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { toggleTaskVisibility, deleteTask } from "../api/moderate-order";
+import { toggleOrderVisibility, deleteOrderAction } from "../api/moderate-order";
 import { Eye, EyeOff, Trash2, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
@@ -13,16 +13,16 @@ interface Props {
   status: OrderStatus;
 }
 
-export function TaskModerationActions({ orderId, status }: Props) {
+export function OrderModerationActions({ referenceId, status }: Props) {
   const [isPending, startTransition] = useTransition();
   const isCanceled = status === "CANCELED";
 
   const toggleVisibility = () => {
     startTransition(async () => {
       try {
-        await toggleTaskVisibility(orderId);
-        toast.success(isCanceled ? "Задача восстановлена" : "Задача скрыта", {
-          description: `Статус задачи изменен на ${isCanceled ? "Открыта" : "Отменена"}`,
+        await toggleOrderVisibility(referenceId);
+        toast.success(isCanceled ? "Заказ восстановлен" : "Заказ скрыт", {
+          description: `Статус зазака изменен на ${isCanceled ? "Открыта" : "Отменена"}`,
         });
       } catch (e) {
         toast.error("Ошибка при обновлении статуса");
@@ -33,8 +33,8 @@ export function TaskModerationActions({ orderId, status }: Props) {
   const confirmDelete = () => {
     startTransition(async () => {
       try {
-        await deleteTask(orderId);
-        toast.success("Задача удалена", {
+        await deleteOrderAction(referenceId);
+        toast.success("Заказ удален", {
           description: "Объект и все связанные отклики безвозвратно удалены.",
         });
       } catch (e) {
@@ -46,10 +46,10 @@ export function TaskModerationActions({ orderId, status }: Props) {
   return (
     <div className={`flex gap-1 transition-opacity ${isPending ? "opacity-50 pointer-events-none" : ""}`}>
       <ConfirmDialog
-        title={isCanceled ? "Восстановить задачу?" : "Скрыть задачу?"}
+        title={isCanceled ? "Восстановить заказ?" : "Скрыть заказ?"}
         description={isCanceled 
-          ? "Задача снова станет видимой для мастеров в общей ленте." 
-          : "Мастера больше не смогут видеть эту задачу и оставлять отклики."}
+          ? "Заказ снова станет видимым для исполнителей в общей ленте." 
+          : "Исполнители больше не смогут видеть этот заказ и оставлять отклики."}
         variant="warning"
         confirmText={isCanceled ? "Восстановить" : "Скрыть"}
         onConfirm={toggleVisibility}
@@ -72,8 +72,8 @@ export function TaskModerationActions({ orderId, status }: Props) {
       />
 
       <ConfirmDialog
-        title="Удалить задачу?"
-        description="ВНИМАНИЕ! Это действие необратимо. Будут удалены все данные задачи и отклики мастеров."
+        title="Удалить заказ?"
+        description="ВНИМАНИЕ! Это действие необратимо. Будут удалены все данные заказа и отклики исполнителей."
         variant="destructive"
         confirmText="Удалить навсегда"
         onConfirm={confirmDelete}

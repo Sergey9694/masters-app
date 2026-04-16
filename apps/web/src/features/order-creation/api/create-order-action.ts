@@ -5,14 +5,14 @@ import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { notifyProvidersInCategories } from "@/shared/lib/telegram/bot-notify";
-import { taskSchema, type TaskFormValues } from "../model/order-schema";
+import { orderSchema, type OrderFormValues } from "../model/order-schema";
 import { createSafeAction } from "@/shared/lib/create-safe-action";
 
 /**
  * Server Action: Create a new order request
  * All errors are caught and returned as safe messages (no DB internals leak)
  */
-export const createOrderAction = createSafeAction(taskSchema, async (validated: TaskFormValues) => {
+export const createOrderAction = createSafeAction(orderSchema, async (validated: OrderFormValues) => {
   const user = await getCurrentUser();
 
   if (!user) {

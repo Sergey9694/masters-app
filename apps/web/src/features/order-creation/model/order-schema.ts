@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const taskSchema = z.object({
+export const orderSchema = z.object({
   title: z
     .string()
     .min(5, { message: "Заголовок должен быть не менее 5 символов" })
@@ -15,4 +15,4 @@ export const taskSchema = z.object({
   images: z.array(z.string()).optional(),
 });
 
-export type TaskFormValues = z.infer<typeof taskSchema>;
+export type OrderFormValues = z.infer<typeof orderSchema>;

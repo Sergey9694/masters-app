@@ -254,19 +254,19 @@ uslugi-ryadom/
        - responseSchema           → proposalSchema
        - masterProfileSchema      → providerProfileSchema
 
-1.2.3  Переименование в entities/
+[x] 1.2.3  Переименование в entities/
        - entities/task/  → entities/order/
        - TaskCard.tsx    → OrderCard.tsx
        - TaskCardBase    → OrderCardBase
        - TaskListItem    → OrderListItem
 
-1.2.4  Переименование в widgets/
+[x] 1.2.4  Переименование в widgets/
        - widgets/TaskFeed/     → widgets/OrderFeed/
        - TaskFeed.tsx          → OrderFeed.tsx
        - TaskFeedClient.tsx    → OrderFeedClient.tsx
        - loadTasksAction       → loadOrdersAction
 
-1.2.5  Переименование в app/ (роуты)
+[x] 1.2.5  Переименование в app/ (роуты)
        - app/dashboard/create-task/    → app/dashboard/create-order/
        - app/dashboard/my-tasks/       → app/dashboard/my-orders/
        - app/dashboard/my-responses/   → app/dashboard/my-proposals/
@@ -275,12 +275,12 @@ uslugi-ryadom/
        - app/dashboard/become-master/  → app/dashboard/become-provider/
        - app/admin/master-applications → app/admin/provider-applications/
        
-1.2.6  Переименование в shared/
+[x] 1.2.6  Переименование в shared/
        - shared/types/domain.ts: TaskCardData → OrderCardData, MasterStats → ProviderStats
        - shared/lib/telegram/bot-notify.ts: notifyMastersInCategories → notifyProvidersInCategories
        - shared/lib/jobs/expire-tasks.ts → expire-orders.ts
        
-1.2.7  Обновить все импорты (grep + replace)
+[x] 1.2.7  Обновить все импорты (grep + replace)
        Ключевые паттерны для замены:
        - "master" → "provider" (в путях и переменных, учитывая контекст)
        - "task-request" / "taskRequest" → "order"
@@ -289,14 +289,14 @@ uslugi-ryadom/
        - "TaskResponse" → "Proposal" (prisma.proposal.*)
        - "MasterProfile" → "ProviderProfile" (prisma.providerProfile.*)
        
-1.2.8  Обновить тексты UI на русском:
+[x] 1.2.8  Обновить тексты UI на русском:
        - "Мастер" → "Исполнитель"
        - "Стать мастером" → "Стать исполнителем"
        - "Отклик" → "Предложение"
        - "Задача" / "Задание" → "Заказ"
        - "Районный Мастер" → "УслугиРядом"
        
-1.2.9  Запустить проект, убедиться что нет ошибок:
+[x] 1.2.9  Запустить проект, убедиться что нет ошибок:
        - npx tsc --noEmit (проверка типов)
        - npm run build (сборка)
        - npm run dev + проверить ключевые страницы

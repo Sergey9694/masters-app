@@ -20,19 +20,19 @@ interface NotificationItemProps {
 }
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string }> = {
-  NEW_RESPONSE: {
+  NEW_PROPOSAL: {
     icon: <MessageSquare className="w-4 h-4" />,
     color: "text-blue-400 bg-blue-500/10",
   },
-  RESPONSE_ACCEPTED: {
+  PROPOSAL_ACCEPTED: {
     icon: <CheckCheck className="w-4 h-4" />,
     color: "text-emerald-400 bg-emerald-500/10",
   },
-  TASK_COMPLETED: {
+  ORDER_COMPLETED: {
     icon: <Briefcase className="w-4 h-4" />,
     color: "text-emerald-400 bg-emerald-500/10",
   },
-  TASK_CANCELED: {
+  ORDER_CANCELED: {
     icon: <XCircle className="w-4 h-4" />,
     color: "text-red-400 bg-red-500/10",
   },
@@ -57,8 +57,8 @@ export function NotificationItem({ notification: n }: NotificationItemProps) {
       });
     }
     
-    if (n.orderId) {
-      router.push(`/dashboard/order/${n.orderId}`);
+    if (n.referenceId) {
+      router.push(`/dashboard/order/${n.referenceId}`);
     }
   };
 

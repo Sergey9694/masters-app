@@ -27,14 +27,14 @@ interface Props {
   referenceId: string;
 }
 
-export function ReviewForm({ orderId }: Props) {
+export function ReviewForm({ referenceId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [hoveredRating, setHoveredRating] = useState(0);
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewSchema),
-    defaultValues: { orderId, rating: 5, text: "" },
+    defaultValues: { referenceId, rating: 5, text: "" },
   });
 
   const rating = form.watch("rating");
@@ -106,7 +106,7 @@ export function ReviewForm({ orderId }: Props) {
                 </FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Как справился мастер?"
+                    placeholder="Как справился исполнитель?"
                     className="min-h-[80px]"
                     {...field}
                   />

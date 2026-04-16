@@ -6,37 +6,37 @@ import { getCurrentUser } from "@/shared/lib/get-user";
 
 import { DEFAULT_PAGE_SIZE as PAGE_SIZE } from "@/shared/lib/constants";
 
-interface LoadTasksParams {
+interface LoadOrdersParams {
   categoryId?: string;
   search?: string;
   cursor?: string; // id of last order
 }
 
-interface LoadTasksResult {
+interface LoadOrdersResult {
   orders: OrderCardData[];
   nextCursor: string | null;
 }
 
 export async function loadOrdersAction(
-  params: LoadTasksParams,
-): Promise<LoadTasksResult> {
+  params: LoadOrdersParams,
+): Promise<LoadOrdersResult> {
   const { categoryId, search, cursor } = params;
   const user = await getCurrentUser();
 
-  const where: Record<string, any> = { status: "OPEN" as const };
+  const where: any = { status: "OPEN" as const };
   
   // 1. Если категория выбрана явно (и это не "все")
   if (categoryId && categoryId !== 'all') {
     where.categoryId = categoryId;
   } 
-  // 2. Если категория НЕ выбрана, но пользователь - мастер (ставим умный дефолт)
+  // 2. Если категория НЕ выбрана, но пользователь - провайдер (ставим умный дефолт)
   else if (!categoryId && user?.providerProfile) {
-    const masterCategories = await db.providerCategory.findMany({
+    const providerCategories = await db.providerCategory.findMany({
       where: { providerId: user.providerProfile.id },
       select: { categoryId: true },
     });
-    if (masterCategories.length > 0) {
-      where.categoryId = { in: masterCategories.map(mc => mc.categoryId) };
+    if (providerCategories.length > 0) {
+      where.categoryId = { in: providerCategories.map(mc => mc.categoryId) };
     }
   }
   // 3. Если categoryId === 'all', фильтр не добавляем (показываем всё)
@@ -48,7 +48,7 @@ export async function loadOrdersAction(
     ];
   }
 
-  const orders = await db.order.findMany({
+  const ordersRaw = await db.order.findMany({
     where,
     select: {
       id: true,
@@ -67,9 +67,9 @@ export async function loadOrdersAction(
     ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
   });
 
-  const hasMore = orders.length > PAGE_SIZE;
-  const page = hasMore ? orders.slice(0, PAGE_SIZE) : orders;
+  const hasMore = ordersRaw.length > PAGE_SIZE;
+  const page = hasMore ? ordersRaw.slice(0, PAGE_SIZE) : ordersRaw;
   const nextCursor = hasMore ? page[page.length - 1].id : null;
 
-  return { orders: page, nextCursor };
+  return { orders: page as OrderCardData[], nextCursor };
 }

@@ -1,22 +1,22 @@
-import { getPendingMasters } from "@/features/admin/api/get-pending-providers";
+import { getPendingProviders } from "@/features/admin/api/get-pending-providers";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { Star, Briefcase, MessageSquare } from "lucide-react";
-import { MasterModerationActions } from "@/features/admin/ui/provider-moderation-actions";
+import { ProviderModerationActions } from "@/features/admin/ui/ProviderModerationActions";
 import { Pagination } from "@/shared/ui/custom/pagination";
 
-export default async function AdminMasterApplicationsPage({
+export default async function AdminProviderApplicationsPage({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
-  const { providers, total, totalPages } = await getPendingMasters({ page });
+  const { providers, total, totalPages } = await getPendingProviders({ page });
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-black text-white">Заявки мастеров</h1>
+        <h1 className="text-3xl font-black text-white">Заявки исполнителей</h1>
         <p className="text-slate-500 mt-1">
           Ожидают верификации: {total}
         </p>
@@ -62,7 +62,7 @@ export default async function AdminMasterApplicationsPage({
                 {/* Categories */}
                 {m.categories.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {m.categories.map((mc) => (
+                    {m.categories.map((mc: any) => (
                       <span
                         key={mc.categoryId}
                         className="px-2 py-0.5 rounded-md bg-blue-600/20 text-blue-400 text-xs font-bold"
@@ -85,17 +85,17 @@ export default async function AdminMasterApplicationsPage({
                   </span>
                   <span className="flex items-center gap-1">
                     <Briefcase className="w-3.5 h-3.5" />
-                    {m.completedTasks} завершено
+                    {m.completedOrders} завершено
                   </span>
                   <span className="flex items-center gap-1">
-                    {m.responsesCount} откликов
+                    {m.proposalsCount} откликов
                   </span>
                 </div>
 
                 {/* Portfolio */}
                 {m.portfolio && m.portfolio.length > 0 && (
                   <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                    {m.portfolio.map((url, i) => (
+                    {m.portfolio.map((url: string, i: number) => (
                       <img
                         key={i}
                         src={url}
@@ -107,9 +107,9 @@ export default async function AdminMasterApplicationsPage({
                 )}
 
                 {/* Actions */}
-                <MasterModerationActions 
+                <ProviderModerationActions 
                   providerId={m.id} 
-                  masterName={m.user.firstName} 
+                  providerName={m.user.firstName} 
                 />
               </div>
             ))}

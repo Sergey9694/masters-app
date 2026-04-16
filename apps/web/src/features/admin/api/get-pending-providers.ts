@@ -1,6 +1,6 @@
 import { db } from "@/shared/lib/db";
 
-export async function getPendingMasters(params: { page?: number } = {}) {
+export async function getPendingProviders(params: { page?: number } = {}) {
   const page = params.page ?? 1;
   const pageSize = 10;
   const skip = (page - 1) * pageSize;
@@ -26,7 +26,7 @@ export async function getPendingMasters(params: { page?: number } = {}) {
         },
         proposals: { select: { id: true } },
         reviews: { select: { id: true, rating: true } },
-        assignedTasks: { select: { id: true, status: true } },
+        assignedOrders: { select: { id: true, status: true } },
       },
       orderBy: { user: { createdAt: "desc" } },
       skip,
@@ -37,13 +37,13 @@ export async function getPendingMasters(params: { page?: number } = {}) {
 
   const mapped = profiles.map((p) => ({
     ...p,
-    responsesCount: p.proposals.length,
+    proposalsCount: p.proposals.length,
     reviewsCount: p.reviews.length,
     rating:
       p.reviews.length > 0
-        ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length
+        ? p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / p.reviews.length
         : 0,
-    completedTasks: p.assignedTasks.filter((t) => t.status === "COMPLETED").length,
+    completedOrders: p.assignedOrders.filter((t: any) => t.status === "COMPLETED").length,
   }));
 
   return {

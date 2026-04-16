@@ -2,18 +2,18 @@ import { Metadata } from "next";
 
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
-import { TaskCreateForm } from "@/features/order-creation/ui/TaskCreateForm";
+import { OrderCreateForm } from "@/features/order-creation/ui/OrderCreateForm";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
 import { PageHeader } from "@/shared/ui/page-header";
 
 export const metadata: Metadata = {
-  title: "Создать тендер | Районный Мастер",
-  description: "Опубликуйте заказ и найдите лучших мастеров в вашем районе",
+  title: "Создать заказ | УслугиРядом",
+  description: "Опубликуйте заказ и найдите лучших исполнителей в вашем районе",
 };
 
-export default async function CreateTaskPage() {
+export default async function CreateOrderPage() {
   const user = await getCurrentUser();
   const categories = await db.category.findMany({
     orderBy: { name: "asc" },
@@ -24,12 +24,12 @@ export default async function CreateTaskPage() {
       <TelegramBackButton />
       
       <PageHeader 
-        title="Новый тендер"
+        title="Новый заказ"
         subtitle="Опишите задачу"
       />
 
       <StaggerItem>
-        <TaskCreateForm 
+        <OrderCreateForm 
           categories={categories.map(c => ({ id: c.id, name: c.name }))} 
         />
       </StaggerItem>

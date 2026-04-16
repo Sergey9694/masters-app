@@ -5,13 +5,13 @@ import { OrderStatus } from "@prisma/client";
 import { useTransition, useState, useRef } from "react";
 import { Search, Loader2 } from "lucide-react";
 
-interface AdminTaskFiltersProps {
+interface AdminOrderFiltersProps {
   initialSearch?: string;
   initialStatus?: string;
   statusLabels: Record<OrderStatus, string>;
 }
 
-export function AdminTaskFilters({ initialSearch = "", initialStatus = "", statusLabels }: AdminTaskFiltersProps) {
+export function AdminOrderFilters({ initialSearch = "", initialStatus = "", statusLabels }: AdminOrderFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();

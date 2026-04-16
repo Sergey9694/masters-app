@@ -5,10 +5,10 @@ import { createPortal } from "react-dom";
 import { UseFormReturn } from "react-hook-form";
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/shared/ui/form";
 import { Input } from "@/shared/ui/input";
-import type { TaskFormValues } from "../model/order-schema";
+import type { OrderFormValues } from "../model/order-schema";
 
 interface AddressFieldProps {
-  form: UseFormReturn<TaskFormValues>;
+  form: UseFormReturn<OrderFormValues>;
 }
 
 export function AddressField({ form }: AddressFieldProps) {

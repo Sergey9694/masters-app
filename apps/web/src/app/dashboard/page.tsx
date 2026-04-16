@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   });
 
   // Load stats in parallel
-  const isMaster = !!user.providerProfile;
+  const isProvider = !!user.providerProfile;
 
   let unreadNotificationsCount = 0;
   try {
@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     // table may not exist yet before migration
   }
 
-  const [myTasksCount, openTasksCount, customerActiveTasksCount, openResponsesCount] =
+  const [myOrdersCount, openOrdersCount, customerActiveOrdersCount, openProposalsCount] =
     await Promise.all([
       db.order.count({ where: { clientId: user.id } }),
       db.order.count({ where: { clientId: user.id, status: "OPEN" } }),
@@ -46,18 +46,18 @@ export default async function DashboardPage() {
     ]);
 
   // Provider-specific stats
-  const masterStats = isMaster
+  const providerStats = isProvider
     ? {
-        responsesCount: await db.proposal.count({
+        proposalsCount: await db.proposal.count({
           where: { providerId: user.providerProfile!.id },
         }),
-        pendingResponsesCount: await db.proposal.count({
+        pendingProposalsCount: await db.proposal.count({
           where: { 
             providerId: user.providerProfile!.id,
             order: { status: "OPEN" }
           },
         }),
-        activeTasksCount: await db.order.count({
+        activeOrdersCount: await db.order.count({
           where: {
             assignedProviderId: user.providerProfile!.id,
             status: "IN_PROGRESS",
@@ -79,12 +79,12 @@ export default async function DashboardPage() {
         user={user}
         categories={categories}
         stats={{
-          myTasksCount,
-          openTasksCount,
-          activeTasksCount: customerActiveTasksCount,
-          openResponsesCount,
+          myOrdersCount,
+          openOrdersCount,
+          activeOrdersCount: customerActiveOrdersCount,
+          openProposalsCount,
           unreadNotificationsCount,
-          masterStats,
+          providerStats,
         }}
       />
     </div>

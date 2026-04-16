@@ -4,14 +4,14 @@ import { getSession } from "@/shared/lib/auth";
 import { db } from "@/shared/lib/db";
 import { revalidatePath } from "next/cache";
 
-export async function toggleTaskVisibility(referenceId: string) {
+export async function toggleOrderVisibility(referenceId: string) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
     throw new Error("Forbidden");
   }
 
   const order = await db.order.findUnique({
-    where: { id: orderId },
+    where: { id: referenceId },
     select: { status: true }
   });
 
@@ -21,23 +21,23 @@ export async function toggleTaskVisibility(referenceId: string) {
   const newStatus = order.status === "CANCELED" ? "OPEN" : "CANCELED";
 
   await db.order.update({
-    where: { id: orderId },
-    data: { status: newStatus },
+    where: { id: referenceId },
+    data: { status: newStatus as any },
   });
 
   revalidatePath("/admin/orders");
   return { success: true, status: newStatus };
 }
 
-export async function deleteTask(referenceId: string) {
+export async function deleteOrderAction(referenceId: string) {
   const session = await getSession();
   if (!session || session.role !== "ADMIN") {
     throw new Error("Forbidden");
   }
 
   // Delete proposals first (FK constraint)
-  await db.proposal.deleteMany({ where: { orderId } });
-  await db.order.delete({ where: { id: orderId } });
+  await db.proposal.deleteMany({ where: { orderId: referenceId } });
+  await db.order.delete({ where: { id: referenceId } });
 
   revalidatePath("/admin/orders");
   return { success: true };

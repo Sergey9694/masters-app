@@ -12,22 +12,22 @@ interface OrderFeedProps {
 
 export async function OrderFeed({ categoryId, search }: OrderFeedProps) {
   const user = await getCurrentUser();
-  const where: Record<string, any> = { status: "OPEN" as const };
+  const where: any = { status: "OPEN" as const };
   let isDefaultFilter = false;
 
   // 1. Если категория выбрана явно (и это не "все")
   if (categoryId && categoryId !== 'all') {
     where.categoryId = categoryId;
   } 
-  // 2. Если категория НЕ выбрана, но пользователь - мастер (ставим умный дефолт)
+  // 2. Если категория НЕ выбрана, но пользователь - провайдер (ставим умный дефолт)
   else if (!categoryId && user?.providerProfile) {
-    const masterCategories = await db.providerCategory.findMany({
+    const providerCategories = await db.providerCategory.findMany({
       where: { providerId: user.providerProfile.id },
       select: { categoryId: true },
     });
 
-    if (masterCategories.length > 0) {
-      where.categoryId = { in: masterCategories.map(mc => mc.categoryId) };
+    if (providerCategories.length > 0) {
+      where.categoryId = { in: providerCategories.map(mc => mc.categoryId) };
       isDefaultFilter = true;
     }
   }
@@ -40,7 +40,7 @@ export async function OrderFeed({ categoryId, search }: OrderFeedProps) {
     ];
   }
 
-  const [orders, total] = await Promise.all([
+  const [ordersRaw, total] = await Promise.all([
     db.order.findMany({
       where,
       select: {
@@ -62,8 +62,8 @@ export async function OrderFeed({ categoryId, search }: OrderFeedProps) {
     db.order.count({ where }),
   ]);
 
-  const hasMore = orders.length > PAGE_SIZE;
-  const page = (hasMore ? orders.slice(0, PAGE_SIZE) : orders) as OrderCardData[];
+  const hasMore = ordersRaw.length > PAGE_SIZE;
+  const page = (hasMore ? ordersRaw.slice(0, PAGE_SIZE) : ordersRaw) as OrderCardData[];
   const nextCursor = hasMore ? page[page.length - 1].id : null;
 
   return (

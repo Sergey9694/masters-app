@@ -7,7 +7,7 @@ import type { NearbyOrderCard } from "@/shared/types/domain";
  * Using PostGIS for spatial queries via Prisma.$queryRaw
  */
 
-interface RawNearbyTask {
+interface RawNearbyOrder {
   id: string;
   title: string;
   description: string;
@@ -25,7 +25,7 @@ interface RawNearbyTask {
  * Find open orders within a given radius (in meters) from a specified point.
  * Uses PostGIS ST_DWithin (indexed search) and ST_Distance.
  */
-export async function getTasksNearby(
+export async function getOrdersNearby(
   lng: number,
   lat: number,
   radiusMeters: number = 10000,
@@ -33,7 +33,7 @@ export async function getTasksNearby(
 ): Promise<NearbyOrderCard[]> {
   try {
     // W5 fix: Using $queryRaw with Prisma.sql for safe parameterized queries
-    const orders = await db.$queryRaw<RawNearbyTask[]>(
+    const orders = await db.$queryRaw<RawNearbyOrder[]>(
       Prisma.sql`
       SELECT 
         t.id, 
@@ -47,7 +47,7 @@ export async function getTasksNearby(
         u."firstName" as "customerName",
         u.avatar as "customerAvatar",
         ST_Distance(
-          t."taskLocation"::geography, 
+          t."orderLocation"::geography, 
           ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
         ) as distance
       FROM "Order" t
@@ -56,7 +56,7 @@ export async function getTasksNearby(
       WHERE 
         t.status = 'OPEN' 
         AND ST_DWithin(
-          t."taskLocation"::geography, 
+          t."orderLocation"::geography, 
           ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, 
           ${radiusMeters}
         )
@@ -65,7 +65,7 @@ export async function getTasksNearby(
       `
     );
 
-    return orders.map((t: RawNearbyTask) => ({
+    return orders.map((t: RawNearbyOrder) => ({
       id: t.id,
       title: t.title,
       description: t.description,

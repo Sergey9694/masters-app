@@ -18,11 +18,11 @@ export async function createReviewAction(
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "Неверные данные" };
   }
-  const { orderId, rating, text } = parsed.data;
+  const { referenceId, rating, text } = parsed.data;
 
   try {
     const order = await db.order.findUnique({
-      where: { id: orderId },
+      where: { id: referenceId },
       select: {
         id: true,
         title: true,
@@ -51,7 +51,7 @@ export async function createReviewAction(
     await db.$transaction(async (tx) => {
       await tx.review.create({
         data: {
-          orderId,
+          orderId: referenceId,
           providerId: order.assignedProviderId!,
           authorId: user.id,
           rating,
@@ -76,11 +76,11 @@ export async function createReviewAction(
         type: "NEW_REVIEW",
         title: "Новый отзыв",
         body: `Вам оставили отзыв (${rating}★) за «${order.title}»`,
-        orderId,
+        referenceId,
       });
     }
 
-    revalidatePath(`/dashboard/order/${orderId}`);
+    revalidatePath(`/dashboard/order/${referenceId}`);
     return { success: true };
   } catch (error) {
     console.error("[createReviewAction] error:", error);

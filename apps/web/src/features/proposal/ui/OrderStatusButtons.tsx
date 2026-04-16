@@ -7,7 +7,7 @@ import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 
 import { Button } from "@/shared/ui/button";
 import { MotionToast } from "@/shared/ui/motion-toast";
-import { completeOrderAction, cancelOrderAction, refuseTaskAction } from "../api/actions";
+import { completeOrderAction, cancelOrderAction, refuseOrderAction } from "../api/actions";
 
 interface Props {
   referenceId: string;
@@ -16,13 +16,13 @@ interface Props {
   isAssignedMaster: boolean;
 }
 
-export function OrderStatusButtons({ orderId, status, isOwner, isAssignedMaster }: Props) {
+export function OrderStatusButtons({ referenceId, status, isOwner, isAssignedMaster }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const onComplete = () => {
     startTransition(async () => {
-      const res = await completeOrderAction(orderId);
+      const res = await completeOrderAction(referenceId);
       if ("success" in res) {
         toast.custom(() => (
           <MotionToast type="success">Заявка завершена</MotionToast>
@@ -37,7 +37,7 @@ export function OrderStatusButtons({ orderId, status, isOwner, isAssignedMaster 
   const onCancel = () => {
     if (!confirm("Отменить заявку?")) return;
     startTransition(async () => {
-      const res = await cancelOrderAction(orderId);
+      const res = await cancelOrderAction(referenceId);
       if ("success" in res) {
         toast.custom(() => (
           <MotionToast type="success">Заявка отменена</MotionToast>
@@ -52,7 +52,7 @@ export function OrderStatusButtons({ orderId, status, isOwner, isAssignedMaster 
   const onRefuse = () => {
     if (!confirm("Вы действительно хотите отказаться от выполнения заказа?")) return;
     startTransition(async () => {
-      const res = await refuseTaskAction(orderId);
+      const res = await refuseOrderAction(referenceId);
       if ("success" in res) {
         toast.custom(() => (
           <MotionToast type="success">Вы отказались от заказа</MotionToast>

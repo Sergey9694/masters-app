@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { verifyMaster, rejectMaster } from "../api/verify-provider";
+import { verifyProvider, rejectProvider } from "../api/verify-provider";
 import { Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
@@ -9,18 +9,18 @@ import { ConfirmDialog } from "@/shared/ui/custom/confirm-dialog";
 
 interface Props {
   providerId: string;
-  masterName: string;
+  providerName: string;
 }
 
-export function MasterModerationActions({ providerId, masterName }: Props) {
+export function ProviderModerationActions({ providerId, providerName }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const handleVerify = () => {
     startTransition(async () => {
       try {
-        await verifyMaster(providerId);
-        toast.success(`Мастер ${masterName} верифицирован`, {
-          description: "Теперь он может откликаться на задачи.",
+        await verifyProvider(providerId);
+        toast.success(`Исполнитель ${providerName} верифицирован`, {
+          description: "Теперь он может откликаться на заказы.",
         });
       } catch (e) {
         toast.error("Ошибка верификации");
@@ -31,9 +31,9 @@ export function MasterModerationActions({ providerId, masterName }: Props) {
   const handleReject = () => {
     startTransition(async () => {
       try {
-        await rejectMaster(providerId);
-        toast.success(`Заявка ${masterName} отклонена`, {
-          description: "Профиль мастера удален.",
+        await rejectProvider(providerId);
+        toast.success(`Заявка ${providerName} отклонена`, {
+          description: "Профиль исполнителя удален.",
         });
       } catch (e) {
         toast.error("Ошибка при отклонении");
@@ -44,8 +44,8 @@ export function MasterModerationActions({ providerId, masterName }: Props) {
   return (
     <div className={`flex gap-2 pt-2 transition-opacity ${isPending ? "opacity-50 pointer-events-none" : ""}`}>
       <ConfirmDialog
-        title="Верифицировать мастера?"
-        description={`Вы подтверждаете статус мастера для ${masterName}.`}
+        title="Верифицировать исполнителя?"
+        description={`Вы подтверждаете статус исполнителя для ${providerName}.`}
         confirmText="Верифицировать"
         onConfirm={handleVerify}
         trigger={
@@ -61,7 +61,7 @@ export function MasterModerationActions({ providerId, masterName }: Props) {
 
       <ConfirmDialog
         title="Отклонить заявку?"
-        description={`Заявка от ${masterName} будет удалена без возможности восстановления.`}
+        description={`Заявка от ${providerName} будет удалена без возможности восстановления.`}
         variant="destructive"
         confirmText="Отклонить"
         onConfirm={handleReject}

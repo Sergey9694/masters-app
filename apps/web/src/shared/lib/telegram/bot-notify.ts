@@ -14,7 +14,7 @@ interface NotifyParams {
   type: NotificationType;
   title: string;
   body: string;
-  orderId?: string;
+  referenceId?: string;
 }
 
 /**
@@ -30,7 +30,7 @@ export async function notify(params: NotifyParams) {
         type: params.type,
         title: params.title,
         body: params.body,
-        referenceId: params.orderId ?? null,
+        referenceId: params.referenceId ?? null,
       },
     });
 
@@ -46,8 +46,8 @@ export async function notify(params: NotifyParams) {
 
     if (!user?.telegramId) return;
 
-    const taskUrl = params.orderId
-      ? `${webAppUrl}/dashboard/order/${params.orderId}`
+    const taskUrl = params.referenceId
+      ? `${webAppUrl}/dashboard/order/${params.referenceId}`
       : `${webAppUrl}/dashboard/notifications`;
 
     const text = `<b>${escapeHtml(params.title)}</b>\n${escapeHtml(params.body)}`;
@@ -94,7 +94,7 @@ export async function notifyProvidersInCategories(
   referenceId: string,
 ) {
   try {
-    const providers = await db.providerCategory.findMany({
+    const providerCategories = await db.providerCategory.findMany({
       where: { categoryId: { in: categoryIds } },
       select: {
         provider: {
@@ -106,7 +106,7 @@ export async function notifyProvidersInCategories(
       distinct: ["providerId"],
     });
 
-    const userIds = providers
+    const userIds = providerCategories
       .map((m) => m.provider.userId)
       .filter((id) => id !== excludeUserId);
 
@@ -118,7 +118,7 @@ export async function notifyProvidersInCategories(
           type: "NEW_ORDER" as const,
           title: "Новая заявка",
           body: taskTitle,
-          orderId,
+          referenceId,
         })),
       });
     }
@@ -134,7 +134,7 @@ export async function notifyProvidersInCategories(
     });
 
     const isHttps = webAppUrl2.startsWith("https://");
-    const taskUrl = `${webAppUrl2}/dashboard/order/${orderId}`;
+    const taskUrl = `${webAppUrl2}/dashboard/order/${referenceId}`;
 
     await Promise.allSettled(
       users.map(async (u) => {

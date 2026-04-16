@@ -11,9 +11,9 @@ import { Badge } from "@/shared/ui/badge";
 import { StaggerWrap } from "@/shared/ui/stagger-wrap";
 import { StaggerItem } from "@/shared/ui/stagger-item";
 import { TelegramBackButton } from "@/shared/ui/telegram-back-button";
-import { RespondForm } from "@/features/order-response/ui/RespondForm";
-import { AcceptResponseButton } from "@/features/order-response/ui/AcceptResponseButton";
-import { OrderStatusButtons } from "@/features/order-response/ui/OrderStatusButtons";
+import { RespondForm } from "@/features/proposal/ui/RespondForm";
+import { AcceptResponseButton } from "@/features/proposal/ui/AcceptResponseButton";
+import { OrderStatusButtons } from "@/features/proposal/ui/OrderStatusButtons";
 import { ReviewForm } from "@/features/review/ui/ReviewForm";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { OrderImageGallery } from "@/features/order-view/ui/OrderImageGallery";
@@ -26,7 +26,7 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function TaskDetailPage({ params }: PageProps) {
+export default async function OrderDetailPage({ params }: PageProps) {
   const { id } = await params;
   const user = await getCurrentUser();
   if (!user) redirect("/");
@@ -64,11 +64,11 @@ export default async function TaskDetailPage({ params }: PageProps) {
   if (!order) notFound();
 
   const isOwner = order.clientId === user.id;
-  const isMaster = Boolean(user.providerProfile);
+  const isProvider = Boolean(user.providerProfile);
   const alreadyResponded =
-    isMaster &&
+    isProvider &&
     order.proposals.some((r) => r.providerId === user.providerProfile!.id);
-  const canRespond = !isOwner && isMaster && order.status === "OPEN" && !alreadyResponded;
+  const canRespond = !isOwner && isProvider && order.status === "OPEN" && !alreadyResponded;
 
   return (
     <StaggerWrap className="min-h-screen pb-20 pt-6 px-4 max-w-2xl mx-auto">
@@ -151,7 +151,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
         (order.status === "OPEN" || order.status === "IN_PROGRESS") && (
           <StaggerItem className="mb-6">
             <OrderStatusButtons
-              orderId={order.id}
+              referenceId={order.id}
               status={order.status}
               isOwner={isOwner}
               isAssignedMaster={order.assignedProviderId === user.providerProfile?.id}
@@ -193,7 +193,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
       {/* Review form (owner, COMPLETED, no existing review) */}
       {isOwner && order.status === "COMPLETED" && !order.review && order.assignedProviderId && (
         <StaggerItem className="mb-6">
-          <ReviewForm orderId={order.id} />
+          <ReviewForm referenceId={order.id} />
         </StaggerItem>
       )}
 
@@ -223,7 +223,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
       {/* Respond Form (provider, not owner, OPEN, not already) */}
       {canRespond && (
         <StaggerItem className="mb-6">
-          <RespondForm orderId={order.id} />
+          <RespondForm referenceId={order.id} />
         </StaggerItem>
       )}
 
@@ -237,7 +237,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
         </StaggerItem>
       )}
 
-      {!isMaster && !isOwner && order.status === "OPEN" && (
+      {!isProvider && !isOwner && order.status === "OPEN" && (
         <StaggerItem className="mb-6">
           <Link href="/dashboard/become-provider">
             <div className="glass border border-white/10 p-4 rounded-[24px] text-center hover:bg-white/5 transition-colors">
@@ -301,7 +301,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
                       {formatSmartDate(r.createdAt)}
                     </span>
                     {isOwner && order.status === "OPEN" && (
-                      <AcceptResponseButton responseId={r.id} />
+                      <AcceptResponseButton proposalId={r.id} />
                     )}
                   </div>
                 </Card>
