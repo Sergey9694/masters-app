@@ -333,22 +333,30 @@ uslugi-ryadom/
 
 ---
 
-## Фаза 2 — Новая система авторизации (1 неделя)
+## Фаза 2 — Auth & Security System (Завершен этап 2.1)
 
-### Цель
-Заменить Telegram-only авторизацию на мульти-провайдерную систему. Telegram остаётся как **один из вариантов** входа.
+### 2.1 — Миграция на Auth.js (v5)
 
-### 2.1 — Выбор подхода
+[x] 2.1.1  Интеграция Auth.js и PrismaAdapter:
+       - Установка `next-auth@beta`, `@auth/prisma-adapter`
+       - Настройка `src/auth.ts` и `src/auth.config.ts`
+       - Поддержка Telegram Credentials Provider
 
-Используем **NextAuth.js v5 (Auth.js)** — он поддерживает:
-- Credentials (email + password)
-- OAuth (Google, GitHub, Yandex)
-- Telegram (кастомный провайдер)
-- JWT sessions (уже наш подход)
+[x] 2.1.2  Обновление модели данных:
+       - Добавление таблиц `Account`, `Session`, `VerificationToken`
+       - Расширение модели `User` под стандарты Auth.js
 
-**Альтернатива:** остаться на своей JWT-системе и расширить её. Это проще, т.к. у нас уже работает JWT + middleware.
+[x] 2.1.3  Безопасные сессии и Proxy:
+       - Обновление `src/proxy.ts` для проверки сессий Auth.js
+       - Переход на JWT-стратегию сессий для совместимости с Edge
 
-**Решение:** Расширяем свою систему (меньше зависимостей, полный контроль).
+[x] 2.1.4  Safe Actions (Security Layer):
+       - Внедрение `next-safe-action`
+       - Создание `authActionClient` и `adminActionClient`
+       - Рефакторинг `createOrderAction` под новый стандарт
+
+[ ] 2.1.5  Refactoring remaining actions:
+       - Перевести `proposal`, `moderate-order`, `review` на `safe-action`
 
 ### 2.2 — Схема БД для мульти-авторизации
 

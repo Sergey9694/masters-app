@@ -89,8 +89,7 @@ export function OrderCreateForm({ categories }: OrderCreateFormProps) {
         
         const res = await createOrderAction({ ...vals, images: urls });
 
-        // Since it's createSafeAction, the result is ActionState:
-        if (res.data?.redirect) {
+        if (res?.data?.redirect) {
           toast.custom(() => (
             <MotionToast type="success">Заказ успешно опубликован!</MotionToast>
           ));
@@ -100,8 +99,8 @@ export function OrderCreateForm({ categories }: OrderCreateFormProps) {
           return;
         }
 
-        if (res.error) {
-          toast.error(res.error);
+        if (res?.serverError) {
+          toast.error(res.serverError);
         }
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Ошибка публикации";
@@ -135,7 +134,7 @@ export function OrderCreateForm({ categories }: OrderCreateFormProps) {
               Создать заказ
               <ShieldCheck className="w-5 h-5 text-indigo-400" />
             </h1>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">District Provider • Precision Flow</p>
+            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em]">УслугиРядом • Precision Flow</p>
           </header>
 
           <div className="space-y-6 relative z-10">

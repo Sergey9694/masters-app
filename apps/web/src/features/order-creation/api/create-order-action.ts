@@ -2,57 +2,53 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/shared/lib/db";
-import { getCurrentUser } from "@/shared/lib/get-user";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { notifyProvidersInCategories } from "@/shared/lib/telegram/bot-notify";
-import { orderSchema, type OrderFormValues } from "../model/order-schema";
-import { createSafeAction } from "@/shared/lib/create-safe-action";
+import { orderSchema } from "../model/order-schema";
+import { authActionClient } from "@/shared/lib/safe-action";
 
 /**
  * Server Action: Create a new order request
- * All errors are caught and returned as safe messages (no DB internals leak)
+ * Wrapped with next-safe-action for validation and auth
  */
-export const createOrderAction = createSafeAction(orderSchema, async (validated: OrderFormValues) => {
-  const user = await getCurrentUser();
+export const createOrderAction = authActionClient
+  .schema(orderSchema)
+  .action(async ({ parsedInput: validated, ctx }) => {
+    const { userId } = ctx;
 
-  if (!user) {
-    throw new Error("Необходима авторизация");
-  }
+    const rl = checkRateLimit({ key: `createOrder:${userId}`, limit: 5, windowSec: 60 });
+    if (!rl.allowed) {
+      throw new Error(`Слишком часто. Подождите ${rl.retryAfterSec} сек.`);
+    }
 
-  const rl = checkRateLimit({ key: `createOrder:${user.id}`, limit: 5, windowSec: 60 });
-  if (!rl.allowed) {
-    throw new Error(`Слишком часто. Подождите ${rl.retryAfterSec} сек.`);
-  }
+    try {
+      const order = await db.order.create({
+        data: {
+          clientId: userId,
+          categoryId: validated.categoryId,
+          title: validated.title,
+          description: validated.description,
+          budget: validated.budget ? parseFloat(validated.budget) : null,
+          address: validated.address,
+          images: validated.images || [],
+          status: "OPEN",
+        },
+      });
 
-  try {
-    const order = await db.order.create({
-      data: {
-        clientId: user.id,
-        categoryId: validated.categoryId,
-        title: validated.title,
-        description: validated.description,
-        budget: validated.budget ? parseFloat(validated.budget) : null,
-        address: validated.address,
-        images: validated.images || [],
-        status: "OPEN",
-      },
-    });
+      // Notify providers in this category (fire-and-forget)
+      notifyProvidersInCategories(
+        [validated.categoryId],
+        userId,
+        validated.title,
+        order.id,
+      );
 
-    // Notify providers in this category (fire-and-forget)
-    notifyProvidersInCategories(
-      [validated.categoryId],
-      user.id,
-      validated.title,
-      order.id,
-    );
+      revalidatePath("/dashboard");
+      revalidatePath("/dashboard/feed");
 
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/feed");
-
-    return { redirect: "/dashboard/feed" };
-  } catch (error: unknown) {
-    console.error("FATAL: Database error in createOrderAction:", error);
-    // S2: Never expose DB error details to client
-    throw new Error("Не удалось создать заказ. Попробуйте позже.");
-  }
-});
+      return { success: true, redirect: "/dashboard/feed" };
+    } catch (error: unknown) {
+      console.error("FATAL: Database error in createOrderAction:", error);
+      throw new Error("Не удалось создать заказ. Попробуйте позже.");
+    }
+  });

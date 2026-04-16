@@ -1,4 +1,4 @@
-import { getSession } from "./auth";
+import { auth } from "@/auth";
 import { db } from "./db";
 
 /**
@@ -6,12 +6,12 @@ import { db } from "./db";
  * Rule: Never return full user objects with PII to the client
  */
 export async function getCurrentUser() {
-  const session = await getSession();
-  if (!session) return null;
+  const session = await auth();
+  if (!session?.user?.id) return null;
 
   try {
     const user = await db.user.findUnique({
-      where: { id: session.userId },
+      where: { id: session.user.id },
       select: {
         id: true,
         firstName: true,
