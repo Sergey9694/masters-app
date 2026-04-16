@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -10,78 +10,106 @@ datasource db {
 
 enum Role {
   USER
-  MASTER
+  PROVIDER
   ADMIN
 }
 
+enum AuthProvider {
+  TELEGRAM
+  EMAIL
+  GOOGLE
+  PHONE
+}
+
 model User {
-  id            String    @id @default(uuid())
-  telegramId    BigInt?   @unique
-  phone         String?   @unique
-  role          Role      @default(USER)
-  firstName     String
-  lastName      String?
-  avatar        String?
-  passwordHash  String?
-  
-  location      Unsupported("geometry(Point, 4326)")? 
+  id           String  @id @default(uuid())
+  telegramId   BigInt? @unique
+  phone        String? @unique
+  email        String? @unique
+  role         Role    @default(USER)
+  firstName    String
+  lastName     String?
+  displayName  String?
+  avatar       String?
+  passwordHash String?
+  isBanned     Boolean @default(false)
+  authProvider AuthProvider @default(TELEGRAM)
 
-  masterProfile MasterProfile?
-  tasksCreated  TaskRequest[]
-  reviewsLeft   Review[]      @relation("Author")
-  notifications Notification[]
+  location Unsupported("geometry(Point, 4326)")?
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  providerProfile ProviderProfile?
+  ordersCreated   Order[]
+  reviewsLeft     Review[]         @relation("Author")
+  notifications   Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-model MasterProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
-  bio         String?
+model ProviderProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  bio             String?
   experienceYears Int?
-  portfolio   String[]
-  minPrice    Float?
+  portfolio       String[]
+  minPrice        Float?
 
-  categories  MasterCategory[]
+  categories ProviderCategory[]
+  listings   ServiceListing[]
 
-  isVerified  Boolean  @default(false)
-  isLocal     Boolean  @default(false)
-  rating      Float    @default(5.0)
+  isVerified Boolean @default(false)
+  isLocal    Boolean @default(false)
+  rating     Float   @default(5.0)
 
-  responses     TaskResponse[]
-  reviews       Review[] @relation("MasterReviews")
-  assignedTasks TaskRequest[] @relation("AssignedMaster")
+  proposals      Proposal[]
+  reviews        Review[]   @relation("ProviderReviews")
+  assignedOrders Order[]    @relation("AssignedProvider")
 }
 
-model TaskRequest {
-  id          String   @id @default(cuid())
-  customerId  String
-  customer    User     @relation(fields: [customerId], references: [id])
+model ServiceListing {
+  id         String          @id @default(cuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  categoryId String
+  category   Category        @relation(fields: [categoryId], references: [id])
 
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  title       String
+  description String
+  price       Float?
+  images      String[]
 
-  assignedMasterId String?
-  assignedMaster   MasterProfile? @relation("AssignedMaster", fields: [assignedMasterId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Order {
+  id         String @id @default(cuid())
+  clientId   String
+  client     User   @relation(fields: [clientId], references: [id])
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  assignedProviderId String?
+  assignedProvider   ProviderProfile? @relation("AssignedProvider", fields: [assignedProviderId], references: [id])
 
   title       String
   description String
   images      String[]
   budget      Float?
   address     String?
-  status      TaskStatus @default(OPEN)
+  status      OrderStatus @default(OPEN)
 
-  taskLocation Unsupported("geometry(Point, 4326)")?
+  orderLocation Unsupported("geometry(Point, 4326)")?
 
-  responses   TaskResponse[]
-  review      Review?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  proposals Proposal[]
+  review    Review?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
-enum TaskStatus {
+enum OrderStatus {
   OPEN
   IN_PROGRESS
   COMPLETED
@@ -89,66 +117,68 @@ enum TaskStatus {
   EXPIRED
 }
 
-model TaskResponse {
-  id        String      @id @default(cuid())
-  taskId    String
-  task      TaskRequest @relation(fields: [taskId], references: [id])
-  masterId  String
-  master    MasterProfile @relation(fields: [masterId], references: [id])
-  
+model Proposal {
+  id         String          @id @default(cuid())
+  orderId    String
+  order      Order           @relation(fields: [orderId], references: [id])
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+
   price     Float?
   message   String?
-  createdAt DateTime    @default(now())
-}
-
-model Category {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  icon    String?  
-  tasks   TaskRequest[]
-  masters MasterCategory[]
-}
-
-model MasterCategory {
-  masterId   String
-  categoryId String
-  master     MasterProfile @relation(fields: [masterId], references: [id])
-  category   Category      @relation(fields: [categoryId], references: [id])
-  @@id([masterId, categoryId])
-}
-
-model Review {
-  id        String   @id @default(cuid())
-  taskId    String   @unique
-  task      TaskRequest @relation(fields: [taskId], references: [id])
-  masterId  String
-  master    MasterProfile @relation("MasterReviews", fields: [masterId], references: [id])
-  authorId  String
-  author    User     @relation("Author", fields: [authorId], references: [id])
-  rating    Int
-  text      String?
   createdAt DateTime @default(now())
 }
 
+model Category {
+  id        String             @id @default(cuid())
+  name      String             @unique
+  icon      String?
+  orders    Order[]
+  providers ProviderCategory[]
+  listings  ServiceListing[]
+}
+
+model ProviderCategory {
+  providerId String
+  categoryId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id])
+  category   Category        @relation(fields: [categoryId], references: [id])
+
+  @@id([providerId, categoryId])
+}
+
+model Review {
+  id         String          @id @default(cuid())
+  orderId    String          @unique
+  order      Order           @relation(fields: [orderId], references: [id])
+  providerId String
+  provider   ProviderProfile @relation("ProviderReviews", fields: [providerId], references: [id])
+  authorId   String
+  author     User            @relation("Author", fields: [authorId], references: [id])
+  rating     Int
+  text       String?
+  createdAt  DateTime        @default(now())
+}
+
 enum NotificationType {
-  NEW_RESPONSE
-  RESPONSE_ACCEPTED
-  TASK_COMPLETED
-  TASK_CANCELED
+  NEW_PROPOSAL
+  PROPOSAL_ACCEPTED
+  ORDER_COMPLETED
+  ORDER_CANCELED
   NEW_REVIEW
-  NEW_TASK
+  NEW_ORDER
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  user      User             @relation(fields: [userId], references: [id])
-  type      NotificationType
-  title     String
-  body      String
-  taskId    String?
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id          String           @id @default(cuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id])
+  type        NotificationType
+  title       String
+  body        String
+  referenceId String?
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
 
   @@index([userId, read])
   @@index([userId, createdAt])

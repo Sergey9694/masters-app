@@ -199,7 +199,7 @@ uslugi-ryadom/
 **Файлы, которые затрагиваются:**
 
 ```
-1.2.1  Prisma-схема (apps/web/prisma/schema.prisma)
+[x] 1.2.1  Prisma-схема (apps/web/prisma/schema.prisma)
        
        Переименования моделей:
        - MasterProfile    → ProviderProfile
@@ -233,7 +233,7 @@ uslugi-ryadom/
        !!! ВАЖНО: создать миграцию !!!
        npx prisma migrate dev --name rebrand_to_uslugi_ryadom
 
-1.2.2  Переименование в features/
+[x] 1.2.2  Переименование в features/
        
        Директории:
        - features/master-registration/ → features/provider-registration/
