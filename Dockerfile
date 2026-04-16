@@ -22,8 +22,11 @@ WORKDIR /app
 # 👇 libc6-compat и openssl необходимы для npx prisma generate в Alpine
 RUN apk add --no-cache libc6-compat openssl
 COPY --from=deps /app/node_modules ./node_modules
-COPY apps/web/prisma ./prisma
-RUN npx prisma@5.10.0 generate
+COPY package.json ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared-types/package.json ./packages/shared-types/package.json
+COPY apps/web/prisma ./apps/web/prisma
+RUN npx prisma@5.10.0 generate --schema=./apps/web/prisma/schema.prisma
 COPY . .
 
 # Применяем переменные окружения для билда (клиентские NEXT_PUBLIC)
@@ -54,7 +57,7 @@ RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
