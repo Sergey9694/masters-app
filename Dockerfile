@@ -6,6 +6,8 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat libheif-dev
 WORKDIR /app
 COPY package.json package-lock.json* ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY packages/shared-types/package.json ./packages/shared-types/package.json
 
 # 👇 Используем кэш для npm, чтобы ускорить повторную установку
 RUN --mount=type=cache,target=/root/.npm \
@@ -20,7 +22,7 @@ WORKDIR /app
 # 👇 libc6-compat и openssl необходимы для npx prisma generate в Alpine
 RUN apk add --no-cache libc6-compat openssl
 COPY --from=deps /app/node_modules ./node_modules
-COPY prisma ./prisma
+COPY apps/web/prisma ./prisma
 RUN npx prisma@5.10.0 generate
 COPY . .
 
@@ -55,7 +57,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/scripts/startup.js ./startup.js
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
 
 USER nextjs
 
