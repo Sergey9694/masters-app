@@ -14,10 +14,11 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Нативные бинарники для Alpine (musl):
 # sharp — обработка изображений
-# lightningcss — используется Tailwind CSS v4 через @tailwindcss/postcss
-# Ставим в корень и в workspace, т.к. npm workspaces может не хоистить
-RUN npm install --no-save --os=linux --libc=musl --cpu=x64 sharp && \
-    cd apps/web && npm install --no-save --os=linux --libc=musl --cpu=x64 lightningcss
+# @tailwindcss/oxide — нативный движок Tailwind CSS v4
+# lightningcss — CSS-минификатор, используемый Tailwind через @tailwindcss/postcss
+# Принудительно ставим musl-варианты, т.к. lock-файл сгенерирован на Windows
+RUN npm install --no-save --os=linux --libc=musl --cpu=x64 sharp @tailwindcss/oxide-linux-x64-musl && \
+    cd apps/web && npm install --no-save --os=linux --libc=musl --cpu=x64 lightningcss @tailwindcss/oxide-linux-x64-musl
 
 # Генерируем Prisma client
 RUN npx prisma@5.22.0 generate --schema=./apps/web/prisma/schema.prisma
