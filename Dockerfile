@@ -22,12 +22,8 @@ WORKDIR /app
 # 👇 libc6-compat и openssl необходимы для npx prisma generate в Alpine
 RUN apk add --no-cache libc6-compat openssl
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json ./
-COPY apps/web/package.json ./apps/web/package.json
-COPY packages/shared-types/package.json ./packages/shared-types/package.json
-COPY apps/web/prisma ./apps/web/prisma
-RUN npx prisma@5.10.0 generate --schema=./apps/web/prisma/schema.prisma
 COPY . .
+RUN npx prisma@5.22.0 generate --schema=./apps/web/prisma/schema.prisma
 
 # Применяем переменные окружения для билда (клиентские NEXT_PUBLIC)
 ARG NEXT_PUBLIC_BOT_NAME
@@ -46,7 +42,7 @@ ENV NODE_ENV="production"
 # Добавляем необходимые пакеты
 RUN apk add --no-cache openssl libc6-compat curl
 # 👇 Устанавливаем Prisma стабильной версии для миграций
-RUN npm install -g prisma@5.10.0
+RUN npm install -g prisma@5.22.0
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
