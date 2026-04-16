@@ -305,20 +305,20 @@ uslugi-ryadom/
 ### 1.3 — Обновление метаданных проекта
 
 ```
-1.3.1  Обновить package.json:
+[x] 1.3.1  Обновить package.json:
        - name: "uslugi-ryadom" (корневой)
        - name: "@uslugi/web" (apps/web/)
        
-1.3.2  Обновить app/layout.tsx metadata:
+[x] 1.3.2  Обновить app/layout.tsx metadata:
        - title: "УслугиРядом — услуги рядом с вами"
        - description: "Доска объявлений услуг в вашем городе"
        - og:title, og:description, og:siteName
        
-1.3.3  Обновить docker-compose.yml:
+[x] 1.3.3  Обновить docker-compose.yml:
        - Название сервисов: masters-app → uslugi-web
        - Название образа: masters-app → uslugi-ryadom
        
-1.3.4  Обновить .env.example:
+[x] 1.3.4  Обновить .env.example:
        - Добавить новые переменные (пока с комментариями):
          # Auth
          GOOGLE_CLIENT_ID=

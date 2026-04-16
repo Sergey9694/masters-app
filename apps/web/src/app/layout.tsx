@@ -14,8 +14,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "District Provider | Гиперлокальный Двигатель Тендеров",
-  description: "Экосистема для поиска мастеров в вашем районе (Академический). Быстро, надежно, рядом.",
+  title: "УслугиРядом — услуги рядом с вами",
+  description: "Доска объявлений услуг в вашем городе. Найдите исполнителя или предложите свои услуги.",
 };
 
 import Script from "next/script";
