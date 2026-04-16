@@ -5,6 +5,7 @@ import { db } from "@/shared/lib/db";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { logAudit } from "@/shared/lib/audit";
+import { createEmailToken, verifyEmailToken, sendEmail } from "@/shared/lib/email";
 
 const loginSchema = z.object({
   initData: z.string(),
@@ -106,17 +107,27 @@ export const registerWithEmail = actionClient
     const firstName = names[0];
     const lastName = names.slice(1).join(" ") || "";
 
-    await db.user.create({
+    const user = await db.user.create({
       data: {
         email,
         passwordHash,
         firstName,
         lastName,
         authProvider: "EMAIL",
+        emailVerified: null, // Изначально не верифицирован
       },
     });
 
-    return { success: true };
+    const token = await createEmailToken({ email, type: "verify" });
+    const verifyLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/verify?token=${token}`;
+
+    await sendEmail({
+      to: email,
+      subject: "Подтвердите ваш email — УслугиРядом",
+      html: `<p>Здравствуйте, ${firstName}!</p><p>Для завершения регистрации подтвердите ваш email, перейдя по ссылке:</p><a href="${verifyLink}">${verifyLink}</a>`,
+    });
+
+    return { success: true, message: "Проверьте почту для подтверждения" };
   });
 
 /**
@@ -131,8 +142,9 @@ export const requestPasswordReset = actionClient
     });
 
     if (user) {
-      // Здесь в будущем должна быть генерация токена и отправка Email
-      // Для MVP просто логируем в консоль / AuditLog
+      const token = await createEmailToken({ email, type: "reset" });
+      const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/reset-password?token=${token}`;
+
       await logAudit({
         userId: user.id,
         action: "UPDATE",
@@ -140,9 +152,55 @@ export const requestPasswordReset = actionClient
         entityId: user.id,
         metadata: { info: "Password reset requested" },
       });
-      console.log(`[PASSWORD_RESET_MOCK] Отправка ссылки на ${email}`);
+
+      await sendEmail({
+        to: email,
+        subject: "Восстановление пароля — УслугиРядом",
+        html: `<p>Вы запросили сброс пароля. Перейдите по ссылке для установки нового:</p><a href="${resetLink}">${resetLink}</a>`,
+      });
     }
 
-    // Возвращаем успех всегда (Security best practice: не выдаем наличие email)
+    return { success: true };
+  });
+
+/**
+ * Подтверждение Email (Phase 2.3.3)
+ */
+export const verifyEmailAction = actionClient
+  .schema(z.object({ token: z.string() }))
+  .action(async ({ parsedInput: { token } }) => {
+    const payload = await verifyEmailToken(token);
+    if (!payload || payload.type !== "verify") {
+      throw new Error("Неверный или просроченный токен");
+    }
+
+    await db.user.update({
+      where: { email: payload.email },
+      data: { emailVerified: new Date() },
+    });
+
+    return { success: true };
+  });
+
+/**
+ * Сброс пароля на новый (Phase 2.3.6)
+ */
+export const resetPasswordAction = actionClient
+  .schema(z.object({ token: z.string(), password: z.string().min(8) }))
+  .action(async ({ parsedInput: { token, password } }) => {
+    const payload = await verifyEmailToken(token);
+    if (!payload || payload.type !== "reset") {
+      throw new Error("Неверный или просроченный токен");
+    }
+
+    const bcrypt = await import("bcryptjs");
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    await db.user.update({
+      where: { email: payload.email },
+      data: { passwordHash },
+    });
+
     return { success: true };
   });
