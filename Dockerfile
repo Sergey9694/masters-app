@@ -1,7 +1,7 @@
 # 1. Base image
 FROM node:20-alpine AS base
 
-# 2. Builder (deps + build в одной стадии для корректной работы npm workspaces)
+# 2. Builder
 FROM base AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat libheif-dev openssl
@@ -9,16 +9,20 @@ RUN apk add --no-cache libc6-compat libheif-dev openssl
 # Копируем всё (node_modules исключены через .dockerignore)
 COPY . .
 
-# Устанавливаем зависимости (monorepo workspaces корректно резолвятся)
+# Устанавливаем зависимости
 RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Нативные бинарники для Linux Alpine (musl)
-RUN npm install --os=linux --libc=musl --cpu=x64 sharp lightningcss
+# Нативные бинарники для Alpine (musl):
+# sharp — обработка изображений
+# lightningcss — используется Tailwind CSS v4 через @tailwindcss/postcss
+# Ставим в корень и в workspace, т.к. npm workspaces может не хоистить
+RUN npm install --no-save --os=linux --libc=musl --cpu=x64 sharp && \
+    cd apps/web && npm install --no-save --os=linux --libc=musl --cpu=x64 lightningcss
 
 # Генерируем Prisma client
 RUN npx prisma@5.22.0 generate --schema=./apps/web/prisma/schema.prisma
 
-# Переменные окружения для билда (клиентские NEXT_PUBLIC)
+# Переменные окружения для билда
 ARG NEXT_PUBLIC_BOT_NAME
 ENV NEXT_PUBLIC_BOT_NAME="$NEXT_PUBLIC_BOT_NAME"
 
@@ -38,7 +42,6 @@ RUN npm install -g prisma@5.22.0
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Папка для загрузок
 RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./public
