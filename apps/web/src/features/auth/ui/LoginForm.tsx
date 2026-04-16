@@ -122,10 +122,13 @@ export function LoginForm() {
         return;
       }
 
-      toast.success(regRes.data.message || "Аккаунт создан! Входим...");
+      toast.success(regRes.data.message || "Аккаунт создан! Проверьте почту для подтверждения.");
+      setLoading(null);
+      setMode("email"); // Переключаем на вход, чтобы пользователь мог войти после подтверждения
+      return;
     }
 
-    const res = await signIn("email", {
+    const res = await signIn("credentials", {
       email,
       password,
       redirect: false,
@@ -133,7 +136,11 @@ export function LoginForm() {
     });
 
     if (res?.error) {
-      toast.error("Неверный email или пароль");
+      // Пытаемся показать конкретную ошибку (например, "Email не подтвержден")
+      const errorMsg = res.error === "CredentialsSignin" 
+        ? "Неверный email или пароль" 
+        : res.error;
+      toast.error(errorMsg);
       setLoading(null);
     } else if (res && !res.error) {
       toast.success("Вход выполнен!");

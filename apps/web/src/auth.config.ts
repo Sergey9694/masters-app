@@ -92,6 +92,11 @@ export default {
 
         if (!isValid) return null;
 
+        // Строгая проверка подтверждения email (Phase 2)
+        if (!user.emailVerified) {
+          throw new Error("Email не подтвержден. Пожалуйста, проверьте вашу почту.");
+        }
+
         return {
           id: user.id,
           name: user.firstName,
