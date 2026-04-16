@@ -19,15 +19,17 @@ export function AcceptResponseButton({ proposalId }: Props) {
 
   const onClick = () => {
     startTransition(async () => {
-      const res = await acceptProposalAction(proposalId);
-      if ("success" in res) {
+      const res = await acceptProposalAction({ proposalId });
+      
+      if (res?.data?.success) {
         toast.custom(() => (
           <MotionToast type="success">Исполнитель выбран</MotionToast>
         ));
         router.refresh();
         return;
       }
-      toast.error(res.error);
+
+      toast.error(res?.serverError || "Ошибка при выборе исполнителя");
     });
   };
 

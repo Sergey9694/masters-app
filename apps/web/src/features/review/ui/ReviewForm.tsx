@@ -42,14 +42,16 @@ export function ReviewForm({ referenceId }: Props) {
   const onSubmit = (vals: ReviewFormValues) => {
     startTransition(async () => {
       const res = await createReviewAction(vals);
-      if ("success" in res) {
+      
+      if (res?.data?.success) {
         toast.custom(() => (
           <MotionToast type="success">Спасибо за отзыв!</MotionToast>
         ));
         router.refresh();
         return;
       }
-      toast.error(res.error);
+
+      toast.error(res?.serverError || "Ошибка при отправке отзыва");
     });
   };
 

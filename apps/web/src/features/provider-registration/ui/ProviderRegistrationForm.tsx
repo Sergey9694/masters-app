@@ -71,12 +71,12 @@ export function ProviderRegistrationForm({ categories, initialData, isUpdate }: 
           const uploadRes = await uploadImagesAction(fd);
           setIsUploading(false);
 
-          if (uploadRes.error) {
-            toast.error(uploadRes.error);
+          if (uploadRes?.serverError || !uploadRes?.data) {
+            toast.error(uploadRes?.serverError || "Ошибка при загрузке фото");
             return;
           }
-          portfolioUrls = uploadRes.urls || [];
-          const uploadedAvatarUrl = uploadRes.avatarUrl;
+          portfolioUrls = uploadRes.data.urls || [];
+          const uploadedAvatarUrl = uploadRes.data.avatarUrl;
 
           if (uploadedAvatarUrl) {
             vals.avatarUrl = uploadedAvatarUrl;
@@ -89,16 +89,18 @@ export function ProviderRegistrationForm({ categories, initialData, isUpdate }: 
           avatarUrl: vals.avatarUrl
         });
 
-        if ("success" in res) {
+        if (res?.data?.success) {
           toast.custom(() => (
             <MotionToast type="success">
               {isUpdate ? "Профиль обновлен!" : "Вы теперь мастер!"}
             </MotionToast>
           ));
-          setTimeout(() => router.push(res.redirect), 800);
+          if (res.data.redirect) {
+            setTimeout(() => router.push(res.data.redirect), 800);
+          }
           return;
         }
-        toast.error(res.error);
+        toast.error(res?.serverError || "Ошибка при сохранении профиля");
       } catch (error) {
         toast.error("Ошибка при сохранении профиля");
         setIsUploading(false);

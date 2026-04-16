@@ -5,80 +5,76 @@ import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { masterProfileSchema, type MasterProfileFormValues } from "../model/schema";
 
-type Result =
-  | { success: true; redirect: string }
-  | { error: string };
+import { authActionClient } from "@/shared/lib/safe-action";
 
-export async function saveProviderProfileAction(
-  data: MasterProfileFormValues,
-): Promise<Result> {
-  const user = await getCurrentUser();
-  if (!user) return { error: "Необходима авторизация" };
+export const saveProviderProfileAction = authActionClient
+  .schema(masterProfileSchema)
+  .action(async ({ parsedInput: data, ctx: { userId } }) => {
+    const { bio, categoryIds, experienceYears, minPrice, portfolio, avatarUrl } = data;
 
-  const parsed = masterProfileSchema.safeParse(data);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message || "Неверные данные" };
-  }
-  const { bio, categoryIds, experienceYears, minPrice, portfolio, avatarUrl } = parsed.data;
-
-  try {
-    const existingCategories = await db.category.findMany({
-      where: { id: { in: categoryIds } },
-      select: { id: true },
-    });
-    if (existingCategories.length !== categoryIds.length) {
-      return { error: "Одна из категорий недоступна" };
-    }
-
-    const masterResult = await db.$transaction(async (tx) => {
-      // Если профиль уже есть, удаляем старые связи с категориями
-      if (user.providerProfile) {
-        await tx.providerCategory.deleteMany({
-          where: { providerId: user.providerProfile.id }
-        });
+    try {
+      const existingCategories = await db.category.findMany({
+        where: { id: { in: categoryIds } },
+        select: { id: true },
+      });
+      
+      if (existingCategories.length !== categoryIds.length) {
+        throw new Error("Одна из категорий недоступна");
       }
 
-      const result = await tx.providerProfile.upsert({
-        where: { userId: user.id },
-        update: {
-          bio,
-          experienceYears,
-          minPrice,
-          portfolio,
-          categories: {
-            create: categoryIds.map((categoryId) => ({ categoryId })),
+      const masterResult = await db.$transaction(async (tx) => {
+        const userProfile = await tx.providerProfile.findUnique({
+          where: { userId }
+        });
+
+        // Если профиль уже есть, удаляем старые связи с категориями
+        if (userProfile) {
+          await tx.providerCategory.deleteMany({
+            where: { providerId: userProfile.id }
+          });
+        }
+
+        const result = await tx.providerProfile.upsert({
+          where: { userId },
+          update: {
+            bio,
+            experienceYears,
+            minPrice,
+            portfolio,
+            categories: {
+              create: categoryIds.map((categoryId) => ({ categoryId })),
+            },
           },
-        },
-        create: {
-          userId: user.id,
-          bio,
-          experienceYears,
-          minPrice,
-          portfolio,
-          categories: {
-            create: categoryIds.map((categoryId) => ({ categoryId })),
+          create: {
+            userId,
+            bio,
+            experienceYears,
+            minPrice,
+            portfolio,
+            categories: {
+              create: categoryIds.map((categoryId) => ({ categoryId })),
+            },
           },
-        },
+        });
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { 
+            role: "PROVIDER",
+            ...(avatarUrl && { avatar: avatarUrl })
+          },
+        });
+
+        return result;
       });
 
-      await tx.user.update({
-        where: { id: user.id },
-        data: { 
-          role: "PROVIDER",
-          ...(avatarUrl && { avatar: avatarUrl })
-        },
-      });
-
-      return result;
-    });
-
-    revalidatePath("/dashboard");
-    revalidatePath("/dashboard/become-provider");
-    revalidatePath(`/dashboard/providers/${masterResult.id}`);
-    
-    return { success: true, redirect: "/dashboard" };
-  } catch (error) {
-    console.error("[saveProviderProfileAction] error:", error);
-    return { error: "Не удалось сохранить профиль. Попробуйте позже." };
-  }
-}
+      revalidatePath("/dashboard");
+      revalidatePath("/dashboard/become-provider");
+      revalidatePath(`/dashboard/providers/${masterResult.id}`);
+      
+      return { success: true, redirect: "/dashboard" };
+    } catch (error) {
+      console.error("[saveProviderProfileAction] error:", error);
+      throw error instanceof Error ? error : new Error("Не удалось сохранить профиль");
+    }
+  });
