@@ -114,6 +114,31 @@ async function main() {
     // ─── Next.js standalone server ───
     // В монорепо `COPY .next/standalone ./` копирует структуру воркспейса:
     //   apps/web/.next/standalone/apps/web/server.js → /app/apps/web/server.js
+    // Но статика и публичные файлы должны быть рядом с server.js или в корне.
+    // Автоматически создаем симлинки, если их нет, чтобы Next.js нашел ассеты.
+    const appDir = path.join(__dirname, "apps", "web");
+    const nextDir = path.join(appDir, ".next");
+    
+    try {
+        if (!fs.existsSync(nextDir)) fs.mkdirSync(nextDir, { recursive: true });
+        
+        const targetStatic = path.join(nextDir, "static");
+        const sourceStatic = path.join(__dirname, ".next", "static");
+        if (!fs.existsSync(targetStatic) && fs.existsSync(sourceStatic)) {
+            fs.symlinkSync(sourceStatic, targetStatic);
+            console.log("[STARTUP] Created symlink for .next/static");
+        }
+
+        const targetPublic = path.join(appDir, "public");
+        const sourcePublic = path.join(__dirname, "public");
+        if (!fs.existsSync(targetPublic) && fs.existsSync(sourcePublic)) {
+            fs.symlinkSync(sourcePublic, targetPublic);
+            console.log("[STARTUP] Created symlink for public assets");
+        }
+    } catch (e) {
+        console.log(`[STARTUP] Warning during asset linking: ${e.message}`);
+    }
+
     const serverPath = path.join(__dirname, "apps", "web", "server.js");
     console.log(`[STARTUP] Запускаем сервер Next.js... (${serverPath})`);
 

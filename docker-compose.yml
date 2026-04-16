@@ -28,7 +28,9 @@ services:
     # --- ПРИЛОЖЕНИЕ (Next.js) ---
     app:
         container_name: ${APP_CONTAINER_NAME:-uslugi_web}
-        image: ${DOCKERHUB_IMAGE:-drobilenkos94/uslugi-ryadom}:${APP_VERSION:-latest}
+        # Используем masters-app, так как это точное название репозитория на Docker Hub.
+        # Старое название (uslugi-ryadom) приводило к ошибке "Manifest not found".
+        image: ${DOCKERHUB_IMAGE:-drobilenkos94/masters-app}:${APP_VERSION:-latest}
         # build:
         #     context: .
         #     dockerfile: Dockerfile
