@@ -1,4 +1,8 @@
-const { execSync } = require("child_process");
+const { execSync, spawnSync } = require("child_process");
+const fs = require("fs");
+const path = require("path");
+
+const PRISMA_CLI = "prisma";
 
 function runSafe(cmd) {
     console.log(`[STARTUP] Running: ${cmd}`);
@@ -9,14 +13,47 @@ function runSafe(cmd) {
     }
 }
 
+/**
+ * Запускает `prisma migrate deploy`.
+ * Возвращает { ok: true } или { ok: false, output: string } с текстом ошибки.
+ * Используем spawnSync с piped stdio, чтобы всегда иметь доступ к stdout/stderr
+ * даже при ненулевом exit-code (execSync бросает исключение и теряет вывод).
+ */
+function runMigrateDeploy() {
+    const result = spawnSync(PRISMA_CLI, ["migrate", "deploy"], {
+        env: { ...process.env },
+        encoding: "utf8",
+    });
+
+    const output = (result.stdout || "") + (result.stderr || "");
+
+    // Всегда показываем вывод в логах контейнера
+    if (output.trim()) process.stdout.write(output);
+
+    if (result.status === 0) {
+        return { ok: true };
+    }
+    return { ok: false, output };
+}
+
+/**
+ * Парсит имена зафейленных миграций из вывода Prisma P3009.
+ * Prisma пишет: The `20260409101815_migration_name` migration started at ... failed
+ */
+function parseFailedMigrations(output) {
+    const regex = /The `(\d{14}_\S+)` migration started at .+ failed/g;
+    const names = [];
+    let match;
+    while ((match = regex.exec(output)) !== null) {
+        names.push(match[1]);
+    }
+    return names;
+}
+
 async function main() {
     console.log("[STARTUP] Инициализация базы данных...");
 
-    const PRISMA_CLI = "prisma";
-
-    // Фикс прав на uploads (EACCES fix для Docker bind mount)
-    const fs = require("fs");
-    const path = require("path");
+    // ─── Фикс прав на uploads (EACCES fix для Docker bind mount) ───
     const uploadsDir = path.join(__dirname, "uploads");
     try {
         if (!fs.existsSync(uploadsDir)) {
@@ -28,59 +65,99 @@ async function main() {
         console.log(`[STARTUP] Warning: could not fix uploads/ permissions: ${e.message}`);
     }
 
+    // ─── Миграции ───
     console.log("[STARTUP] Накатываем актуальные миграции...");
-    
-    // Проверка наличия URL базы данных для Prisma
+
     if (!process.env.DATABASE_URL) {
         console.error("[STARTUP] ОШИБКА: DATABASE_URL не задана! Миграции невозможны.");
     } else {
-        console.log(`[STARTUP] База данных найдена: ${process.env.DATABASE_URL.split('@')[1]}`);
+        console.log(`[STARTUP] База данных найдена: ${process.env.DATABASE_URL.split("@")[1]}`);
     }
 
-    // Сначала резолвим зафейленные миграции (P3009), чтобы не застревать в crash-loop.
-    // Это идемпотентная операция — если failed-миграций нет, команда просто проигнорируется.
-    try {
-        const { execSync: exec } = require("child_process");
-        // Получаем список миграций и ищем failed
-        const result = exec(`${PRISMA_CLI} migrate status`, {
-            env: { ...process.env },
-            encoding: "utf8",
-            stdio: ["pipe", "pipe", "pipe"],
-        });
-        const failedMatches = result.match(/(\d{14}_\S+)\s+\(failed\)/g) || [];
-        for (const match of failedMatches) {
-            const migrationName = match.replace(/\s+\(failed\)/, "").trim();
-            console.log(`[STARTUP] Resolving failed migration: ${migrationName}`);
-            exec(`${PRISMA_CLI} migrate resolve --rolled-back ${migrationName}`, {
-                stdio: "inherit",
-                env: { ...process.env },
-            });
+    // Попытка 1: deploy
+    let deployResult = runMigrateDeploy();
+
+    if (!deployResult.ok) {
+        // Проверяем на P3009 (зафейленные миграции блокируют деплой)
+        const failedMigrations = parseFailedMigrations(deployResult.output);
+
+        if (failedMigrations.length > 0) {
+            console.log(`[STARTUP] Обнаружены зафейленные миграции P3009: ${failedMigrations.join(", ")}`);
+
+            for (const name of failedMigrations) {
+                console.log(`[STARTUP] Resolving: prisma migrate resolve --rolled-back ${name}`);
+                const resolveResult = spawnSync(
+                    PRISMA_CLI,
+                    ["migrate", "resolve", "--rolled-back", name],
+                    { env: { ...process.env }, encoding: "utf8", stdio: "inherit" }
+                );
+                if (resolveResult.status !== 0) {
+                    console.log(`[STARTUP] Не удалось резолвить ${name}, пропускаем.`);
+                }
+            }
+
+            // Попытка 2: повторный deploy после resolve
+            console.log("[STARTUP] Повторный запуск migrate deploy после resolve...");
+            deployResult = runMigrateDeploy();
+            if (!deployResult.ok) {
+                console.log("[STARTUP] Миграции всё ещё падают — продолжаем запуск сервера.");
+            }
+        } else {
+            console.log("[STARTUP] Ошибка миграций без P3009 — возможно, БД ещё не готова.");
         }
-    } catch (e) {
-        // migrate status может упасть если БД недоступна — просто пропускаем
-        console.log(`[STARTUP] Could not check migration status: ${e.message}`);
     }
 
-    // В продакшене используем deploy
-    try {
-        execSync(`${PRISMA_CLI} migrate deploy`, {
-            stdio: "inherit",
-            env: { ...process.env } // Явный проброс всех переменных
-        });
-    } catch (e) {
-        console.log("[STARTUP] Ошибка миграций, возможно БД еще не готова или миграций нет.");
-    }
-
-    // Засеиваем справочники (идемпотентно через upsert)
+    // ─── Seed справочников (идемпотентно через upsert) ───
     console.log("[STARTUP] Запускаем seed справочников...");
     runSafe("node prisma/seed.mjs");
 
-    // Запускаем сервер Next.js (standalone mode)
-    // Next.js standalone output кладёт server.js в корень директории (./),
-    // которая копируется в /app. Путь apps/web/server.js — НЕВЕРЕН.
-    const serverPath = path.join(__dirname, "server.js");
+    // ─── Next.js standalone server ───
+    // В монорепо `COPY .next/standalone ./` копирует структуру воркспейса:
+    //   apps/web/.next/standalone/apps/web/server.js → /app/apps/web/server.js
+    const serverPath = path.join(__dirname, "apps", "web", "server.js");
     console.log(`[STARTUP] Запускаем сервер Next.js... (${serverPath})`);
-    require(serverPath);
+
+    if (!fs.existsSync(serverPath)) {
+        // Fallback: если структура отличается — ищем server.js рядом
+        const fallbackPath = path.join(__dirname, "server.js");
+        console.log(`[STARTUP] server.js не найден по основному пути, пробуем fallback: ${fallbackPath}`);
+        if (fs.existsSync(fallbackPath)) {
+            require(fallbackPath);
+        } else {
+            // Последний шанс — найти автоматически
+            const found = findFile(__dirname, "server.js", 4);
+            if (found) {
+                console.log(`[STARTUP] server.js найден автоматически: ${found}`);
+                require(found);
+            } else {
+                throw new Error(`server.js не найден ни по одному из путей. Содержимое /app:\n${fs.readdirSync(__dirname).join(", ")}`);
+            }
+        }
+    } else {
+        require(serverPath);
+    }
+}
+
+/**
+ * Рекурсивный поиск файла в директории (ограничен глубиной).
+ */
+function findFile(dir, filename, maxDepth) {
+    if (maxDepth <= 0) return null;
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name === filename && entry.isFile()) {
+                return path.join(dir, entry.name);
+            }
+        }
+        for (const entry of entries) {
+            if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".next") {
+                const found = findFile(path.join(dir, entry.name), filename, maxDepth - 1);
+                if (found) return found;
+            }
+        }
+    } catch (_) {}
+    return null;
 }
 
 main().catch((e) => {
