@@ -12,8 +12,8 @@ COPY . .
 # Устанавливаем зависимости (monorepo workspaces корректно резолвятся)
 RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Sharp для Linux Alpine (musl)
-RUN npm install --os=linux --libc=musl --cpu=x64 sharp
+# Нативные бинарники для Linux Alpine (musl)
+RUN npm install --os=linux --libc=musl --cpu=x64 sharp lightningcss
 
 # Генерируем Prisma client
 RUN npx prisma@5.22.0 generate --schema=./apps/web/prisma/schema.prisma
