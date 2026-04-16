@@ -8,7 +8,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Card, CardContent } from "@/shared/ui/card";
 import { toast } from "sonner";
-import { registerWithEmail } from "../model/actions";
+import { registerWithEmail, requestPasswordReset } from "../model/actions";
 
 export function LoginForm() {
   const [mode, setMode] = useState<"social" | "email" | "register">("social");
@@ -18,6 +18,7 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [resetSent, setResetSent] = useState(false);
 
   const handleSocialLogin = async (provider: string) => {
     setLoading(provider);
@@ -35,12 +36,27 @@ export function LoginForm() {
     
     if (mode === "register") {
       const regRes = await registerWithEmail({ email, password, name });
+      
+      if (regRes?.validationErrors) {
+        toast.error("Ошибка валидации: Проверьте правильность введенных данных (пароль от 8 симв.)");
+        console.log("Validation Errors:", regRes.validationErrors);
+        setLoading(null);
+        return;
+      }
+      
       if (regRes?.serverError) {
         toast.error(regRes.serverError);
         setLoading(null);
         return;
       }
-      toast.success("Аккаунт создан! Входим...");
+
+      if (!regRes?.data?.success) {
+        toast.error("Не удалось создать аккаунт");
+        setLoading(null);
+        return;
+      }
+
+      toast.success(regRes.data.message || "Аккаунт создан! Входим...");
     }
 
     const res = await signIn("email", {
@@ -53,8 +69,26 @@ export function LoginForm() {
     if (res?.error) {
       toast.error("Неверный email или пароль");
       setLoading(null);
-    } else {
+    } else if (res && !res.error) {
+      toast.success("Вход выполнен!");
       window.location.href = "/dashboard";
+    } else {
+      toast.error("Произошла неизвестная ошибка при входе");
+      setLoading(null);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Сначала введите email");
+      return;
+    }
+    setLoading("reset");
+    const result = await requestPasswordReset({ email });
+    setLoading(null);
+    if (result?.data?.success) {
+      setResetSent(true);
+      toast.success("Ссылка для сброса отправлена (проверьте логи)");
     }
   };
 
@@ -170,6 +204,19 @@ export function LoginForm() {
                     required
                   />
                 </div>
+                
+                {mode === 'email' && (
+                  <div className="flex justify-end">
+                    <button 
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-xs text-indigo-400 hover:text-white transition-colors"
+                      disabled={!!loading}
+                    >
+                      {loading === 'reset' ? 'Отправка...' : 'Забыли пароль?'}
+                    </button>
+                  </div>
+                )}
 
                 <Button 
                   type="submit" 

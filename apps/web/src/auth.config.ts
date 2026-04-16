@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { validateTelegramWebAppData } from "@/shared/lib/auth";
 import { db } from "@/shared/lib/db";
+import bcrypt from "bcryptjs";
 
 export default {
   providers: [
@@ -13,33 +14,27 @@ export default {
     Credentials({
       id: "telegram",
       name: "Telegram",
-      credentials: {
-        initData: { label: "Init Data", type: "text" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.initData) return null;
+      credentials: {},
+      async authorize(_, request) {
+        const data = await request.json();
+        const initData = data?.initData;
+        
+        if (!initData || !validateTelegramWebAppData(initData)) return null;
 
-        const validation = validateTelegramWebAppData(credentials.initData as string);
-        if (!validation.ok) return null;
+        const urlParams = new URLSearchParams(initData);
+        const userRaw = JSON.parse(urlParams.get("user") || "{}");
+        const telegramId = userRaw.id?.toString();
 
-        const urlParams = new URLSearchParams(credentials.initData as string);
-        const userDataStr = urlParams.get("user");
-        if (!userDataStr) return null;
+        if (!telegramId) return null;
 
-        const telegramUser = JSON.parse(userDataStr);
-        const telegramId = BigInt(telegramUser.id);
-
-        let user = await db.user.findFirst({
-          where: { telegramId }
-        });
+        let user = await db.user.findUnique({ where: { telegramId } });
 
         if (!user) {
           user = await db.user.create({
             data: {
-              telegramId: telegramId,
-              firstName: telegramUser.first_name,
-              lastName: telegramUser.last_name || "",
-              avatar: telegramUser.photo_url || null,
+              telegramId,
+              firstName: userRaw.first_name || "User",
+              lastName: userRaw.last_name || "",
               authProvider: "TELEGRAM",
             },
           });
@@ -47,9 +42,9 @@ export default {
 
         return {
           id: user.id,
-          name: `${user.firstName} ${user.lastName || ""}`.trim(),
+          name: user.firstName,
           email: user.email,
-          image: user.avatar,
+          role: user.role,
         };
       },
     }),
@@ -68,9 +63,9 @@ export default {
 
         return {
           id: user.id,
-          name: user.firstName,
+          name: "Admin",
           email: user.email,
-          role: user.role,
+          role: "ADMIN",
         };
       }
     }),
@@ -90,7 +85,6 @@ export default {
 
         if (!user || !user.passwordHash) return null;
 
-        const bcrypt = await import("bcryptjs");
         const isValid = await bcrypt.compare(
           credentials.password as string,
           user.passwordHash

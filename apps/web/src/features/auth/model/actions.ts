@@ -96,8 +96,11 @@ export const registerWithEmail = actionClient
     });
 
     if (existing) {
+      console.log(`[AUTH_DEBUG] User ${email} already exists, skipping registration.`);
       throw new Error("Пользователь с таким email уже существует");
     }
+
+    console.log(`[AUTH_DEBUG] Creating user: ${email}`);
 
     const bcrypt = await import("bcryptjs");
     const salt = await bcrypt.genSalt(10);
@@ -114,6 +117,7 @@ export const registerWithEmail = actionClient
         firstName,
         lastName,
         authProvider: "EMAIL",
+        // @ts-ignore
         emailVerified: null, // Изначально не верифицирован
       },
     });
@@ -121,12 +125,14 @@ export const registerWithEmail = actionClient
     const token = await createEmailToken({ email, type: "verify" });
     const verifyLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/verify?token=${token}`;
 
+    console.log(`[AUTH_DEBUG] User created, sending verification email...`);
     await sendEmail({
       to: email,
       subject: "Подтвердите ваш email — УслугиРядом",
       html: `<p>Здравствуйте, ${firstName}!</p><p>Для завершения регистрации подтвердите ваш email, перейдя по ссылке:</p><a href="${verifyLink}">${verifyLink}</a>`,
     });
 
+    console.log(`[AUTH_DEBUG] Registration successful for ${email}`);
     return { success: true, message: "Проверьте почту для подтверждения" };
   });
 
@@ -176,6 +182,7 @@ export const verifyEmailAction = actionClient
 
     await db.user.update({
       where: { email: payload.email },
+      // @ts-ignore
       data: { emailVerified: new Date() },
     });
 

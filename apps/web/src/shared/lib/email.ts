@@ -1,4 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
+import fs from "fs";
+import path from "path";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_token_secret_2026";
 
@@ -29,12 +31,23 @@ export async function verifyEmailToken(token: string) {
  * В режиме разработки просто выводит ссылку в консоль.
  */
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  console.log("------------------- EMAIL SENT -------------------");
-  console.log(`To: ${to}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`Content: ${html}`);
-  console.log("--------------------------------------------------");
+  const logContent = `
+------------------- EMAIL SENT (${new Date().toISOString()}) -------------------
+To: ${to}
+Subject: ${subject}
+Content: ${html}
+--------------------------------------------------
+`;
   
-  // Здесь в будущем будет nodemailer или Resend/Postmark
+  console.log(logContent);
+
+  try {
+    // Пишем в файл с абсолютным путем
+    const logPath = "c:\\Users\\drobi\\Desktop\\projects\\antigraviti\\masters-app\\apps\\web\\email-debug.log";
+    fs.appendFileSync(logPath, logContent);
+  } catch (err) {
+    console.error("Failed to write email debug log:", err);
+  }
+  
   return { success: true };
 }

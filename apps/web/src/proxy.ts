@@ -10,21 +10,23 @@ export async function proxy(request: NextRequest) {
   // 1. Получаем сессию через Auth.js
   const session = await auth();
 
-  // 2. Если сессии нет
+  // 2. Если сессии нет — проверяем публичные роуты
   if (!session) {
-    if (request.nextUrl.pathname.startsWith("/api")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Публичные страницы (лендинг, логин) пускаем
-    if (
+    const isPublic = 
       request.nextUrl.pathname === "/" ||
       request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname.startsWith("/auth") || // Новые страницы Auth.js
+      request.nextUrl.pathname.startsWith("/auth") || 
+      request.nextUrl.pathname.startsWith("/api/auth") ||
       request.nextUrl.pathname.startsWith("/_next") ||
-      request.nextUrl.pathname === "/favicon.ico"
-    ) {
+      request.nextUrl.pathname === "/favicon.ico";
+
+    if (isPublic) {
       return NextResponse.next();
+    }
+
+    // Если это API, но не Auth — блокируем
+    if (request.nextUrl.pathname.startsWith("/api")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Иначе редирект на главную
@@ -41,7 +43,6 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-// НАСТРОЙКИ (Matcher)
 export const config = {
   matcher: [
     "/dashboard",
