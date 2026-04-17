@@ -34,7 +34,6 @@ export async function proxy(request: NextRequest) {
   }
 
   // 3. Админ-роуты — только для ADMIN
-  // @ts-ignore
   if (request.nextUrl.pathname.startsWith("/admin") && session.user?.role !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard?error=forbidden", request.url));
   }

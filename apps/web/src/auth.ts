@@ -17,9 +17,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token?.sub && session.user) {
         session.user.id = token.sub;
       }
-      // @ts-ignore
       if (token?.role && session.user) {
-        // @ts-ignore
         session.user.role = token.role;
       }
       return session;
@@ -33,7 +31,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       if (user) {
-        // @ts-ignore
         token.role = user.role;
       }
       return token;

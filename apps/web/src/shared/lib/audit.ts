@@ -1,12 +1,13 @@
 import { db } from "./db";
+import type { Prisma } from "@prisma/client";
 
-type AuditAction = 
-  | "CREATE" 
-  | "UPDATE" 
-  | "DELETE" 
-  | "APPROVE" 
-  | "REJECT" 
-  | "BAN" 
+type AuditAction =
+  | "CREATE"
+  | "UPDATE"
+  | "DELETE"
+  | "APPROVE"
+  | "REJECT"
+  | "BAN"
   | "LOGIN";
 
 interface LogParams {
@@ -14,32 +15,27 @@ interface LogParams {
   action: AuditAction;
   entity: string;
   entityId: string;
-  metadata?: any;
+  metadata?: Prisma.InputJsonValue;
 }
 
-/**
- * Записывает системное действие в лог аудита.
- */
-export async function logAudit({ 
-  userId, 
-  action, 
-  entity, 
-  entityId, 
-  metadata 
+export async function logAudit({
+  userId,
+  action,
+  entity,
+  entityId,
+  metadata,
 }: LogParams) {
   try {
-    // @ts-ignore
     await db.auditLog.create({
       data: {
         userId,
         action,
         entity,
         entityId,
-        metadata: metadata ? JSON.parse(JSON.stringify(metadata)) : undefined,
+        metadata,
       },
     });
   } catch (error) {
     console.error("[logAudit] FAILED:", error);
-    // Не падаем, если логгирование не сработало (чтобы не блокировать основное действие)
   }
 }
