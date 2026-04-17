@@ -21,21 +21,65 @@ enum AuthProvider {
   PHONE
 }
 
+enum ListingStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+  MODERATION
+  REJECTED
+}
+
+enum PriceUnit {
+  PER_HOUR
+  PER_SERVICE
+  PER_METER
+  NEGOTIABLE
+}
+
+model City {
+  id     String  @id @default(cuid())
+  name   String  @unique // "Москва"
+  slug   String  @unique // "moscow"
+  region String? // "Московская область"
+
+  location Unsupported("geometry(Point, 4326)")?
+
+  users      User[]
+  orders     Order[]
+  listings   ServiceListing[]
+  categories CityCategory[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model CityCategory {
+  cityId     String
+  city       City     @relation(fields: [cityId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  sortOrder  Int      @default(0)
+
+  @@id([cityId, categoryId])
+}
+
 model User {
-  id           String  @id @default(uuid())
-  telegramId   BigInt? @unique
-  phone        String? @unique
-  email        String? @unique
-  role         Role    @default(USER)
+  id           String       @id @default(uuid())
+  telegramId   BigInt?      @unique
+  phone        String?      @unique
+  email        String?      @unique
+  role         Role         @default(USER)
   firstName    String
   lastName     String?
   displayName  String?
   avatar       String?
   passwordHash String?
-  isBanned     Boolean @default(false)
+  isBanned     Boolean      @default(false)
   authProvider AuthProvider @default(TELEGRAM)
 
   location Unsupported("geometry(Point, 4326)")?
+  cityId   String?
+  city     City?                                 @relation(fields: [cityId], references: [id])
 
   providerProfile ProviderProfile?
   ordersCreated   Order[]
@@ -53,18 +97,18 @@ model User {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -115,22 +159,40 @@ model ServiceListing {
   categoryId String
   category   Category        @relation(fields: [categoryId], references: [id])
 
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
+
   title       String
   description String
-  price       Float?
-  images      String[]
+
+  status    ListingStatus @default(ACTIVE)
+  priceFrom Float?
+  priceTo   Float?
+  priceUnit PriceUnit?
+
+  location Unsupported("geometry(Point, 4326)")?
+  address  String?
+  views    Int                                   @default(0)
+
+  images String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([cityId, categoryId, status])
+  @@index([providerId])
 }
 
 model Order {
-  id         String @id @default(cuid())
-  clientId   String
-  client     User   @relation(fields: [clientId], references: [id])
+  id       String @id @default(cuid())
+  clientId String
+  client   User   @relation(fields: [clientId], references: [id])
 
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
+
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id])
 
   assignedProviderId String?
   assignedProvider   ProviderProfile? @relation("AssignedProvider", fields: [assignedProviderId], references: [id])
@@ -171,12 +233,23 @@ model Proposal {
 }
 
 model Category {
-  id        String             @id @default(cuid())
-  name      String             @unique
-  icon      String?
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  icon        String?
+  description String?
+
+  parentId String?
+  parent   Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  children Category[] @relation("SubCategories")
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
   orders    Order[]
   providers ProviderCategory[]
   listings  ServiceListing[]
+  cities    CityCategory[]
 }
 
 model ProviderCategory {
@@ -230,9 +303,9 @@ model AuditLog {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id])
   action    String
-  entity    String   // e.g., "Order", "Proposal"
+  entity    String // e.g., "Order", "Proposal"
   entityId  String
-  metadata  Json?    // old/new values
+  metadata  Json? // old/new values
   ipAddress String?
   createdAt DateTime @default(now())
 
