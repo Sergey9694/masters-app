@@ -60,10 +60,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
 # Prisma - копируем схему и сгенерированный клиент
+# Клиент генерируется в apps/web/node_modules (prisma-client установлен там)
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./prisma
-# Копируем клиент из возможных мест генерации
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/.prisma ./apps/web/node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/@prisma ./apps/web/node_modules/@prisma
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
 
