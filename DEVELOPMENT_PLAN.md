@@ -9,18 +9,23 @@
 ## Содержание
 
 1. [Обзор проекта](#1-обзор-проекта)
-2. [Фаза 1 — Фундамент и ребрендинг](#фаза-1--фундамент-и-ребрендинг-2-недели)
-3. [Фаза 2 — Новая система авторизации](#фаза-2--новая-система-авторизации-1-неделя)
-4. [Фаза 3 — Эволюция модели данных](#фаза-3--эволюция-модели-данных-1-неделя)
-5. [Фаза 4 — REST API слой](#фаза-4--rest-api-слой-15-недели)
-6. [Фаза 5 — Desktop Web UI](#фаза-5--desktop-web-ui-3-недели)
-7. [Фаза 6 — Объявления от исполнителей](#фаза-6--объявления-от-исполнителей-15-недели)
-8. [Фаза 7 — Чат и уведомления](#фаза-7--чат-и-уведомления-2-недели)
-9. [Фаза 8 — Тесты и CI/CD](#фаза-8--тесты-и-cicd-1-неделя)
-10. [Фаза 9 — React Native (Expo)](#фаза-9--react-native-expo-3-4-недели)
-11. [Фаза 10 — Geo-поиск и мульти-город](#фаза-10--geo-поиск-и-мульти-город-15-недели)
-12. [Фаза 11 — Полировка и запуск](#фаза-11--полировка-и-запуск-1-неделя)
-13. [Сводная карта зависимостей](#сводная-карта-зависимостей)
+2. [Текущий статус (снимок на 2026-04-17)](#текущий-статус-снимок-на-2026-04-17)
+3. [Фаза 1 — Фундамент и ребрендинг](#фаза-1--фундамент-и-ребрендинг-2-недели)
+4. [Фаза 2 — Новая система авторизации](#фаза-2--auth--security-system-завершена-x)
+5. [Фаза 3 — Эволюция модели данных](#фаза-3--эволюция-модели-данных-1-неделя--частично)
+6. [Фаза 4 — REST API слой](#фаза-4--rest-api-слой-15-недели)
+7. [Фаза 5 — Desktop Web UI](#фаза-5--desktop-web-ui-3-недели)
+8. [Фаза 6 — Объявления от исполнителей](#фаза-6--объявления-от-исполнителей-15-недели)
+9. [Фаза 7 — Чат и уведомления](#фаза-7--чат-и-уведомления-2-недели)
+10. [Фаза 8 — Тесты и CI/CD](#фаза-8--тесты-и-cicd-1-неделя)
+11. [Фаза 9 — React Native (Expo)](#фаза-9--react-native-expo-3-4-недели)
+12. [Фаза 10 — Geo-поиск и мульти-город](#фаза-10--geo-поиск-и-мульти-город-15-недели)
+13. [Фаза 11 — Полировка и запуск](#фаза-11--полировка-и-запуск-1-неделя)
+14. [Фаза 11.5 — Расширенная функциональность (YouDo-scope)](#фаза-115--расширенная-функциональность-youdo-scope-2-3-недели)
+15. [Фаза 12 — Монетизация MVP](#фаза-12--монетизация-mvp-15-недели)
+16. [KPI и метрики запуска](#kpi-и-метрики-запуска)
+17. [Прод-инфраструктура (cross-cutting)](#прод-инфраструктура-cross-cutting-по-ходу-фаз-8-11)
+18. [Сводная карта зависимостей](#сводная-карта-зависимостей)
 
 ---
 
@@ -94,6 +99,47 @@
    - Обязательная поддержка переключения тем (Светлая / Темная) с сохранением выбора пользователя (с использованием, например, `next-themes`).
    - Библиотеки: **Shadcn UI** (SSOT стилей без хардкода за пределами компонентов), **Tailwind CSS** + `cn()`, **Lucide React**.
    - Анимации: плавные, естественные, не отвлекающие внимание макро- и микро-анимации. Простые — Tailwind (`transition-all`, `animate-in`), сложные — **Motion**. Оповещения — **Sonner**.
+
+---
+
+## Текущий статус (снимок на 2026-04-17)
+
+### Что реально сделано
+- **Монорепо:** Turborepo, `apps/web`, `apps/mobile` (пустой), `packages/{shared-types, validation, api-client}` — созданы.
+- **Ребрендинг:** Prisma-схема переведена (Master→Provider, TaskRequest→Order, TaskResponse→Proposal, Role.PROVIDER, Notification.NEW_ORDER). Роуты в `app/dashboard/*`, features, entities, widgets — переименованы.
+- **Авторизация:** Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter`. Модели `Account`, `Session`, `VerificationToken` — добавлены. Email+пароль (регистрация → верификация → логин), сброс пароля, Telegram Login, Google OAuth — интегрированы через Auth.js. Блокировка входа без `emailVerified` — активна (коммит `3216cef`).
+- **Безопасность:** `next-safe-action` внедрён (`authActionClient`, `adminActionClient`). Все основные мутации (`order`, `proposal`, `moderate-order`, `review`) переведены.
+- **Audit log:** модель `AuditLog` добавлена (не было в исходном плане — зафиксировано как архитектурное решение).
+- **Инфраструктура:** Docker multi-stage (Alpine), `@tailwindcss/oxide-linux-x64-musl`, авто-резолв `P3009` зафейленных миграций в startup (`ea1e345`, `3216cef`).
+
+### Что запланировано, но НЕ сделано (или сделано частично)
+
+| Фаза | Статус | Что осталось |
+|---|---|---|
+| 3. Модель данных | ⚠️ частично | Нет моделей `City`, `CityCategory`. Нет расширения `Category` (slug, parent, sortOrder, isActive, description). Модель `ServiceListing` есть, но **обрезана**: нет `cityId`, `status`/`ListingStatus`, `priceFrom`/`priceTo`/`priceUnit`, `location`, `address`, `views`, индексов. Shared-типы/валидации в пакетах — требуют наполнения. |
+| 4. REST API | ❌ | Нет `src/services/`, нет `app/api/v1/*`. В `packages/api-client/src/*` есть заготовки (auth/orders/listings/proposals), но backend под них ещё не написан. |
+| 5. Desktop UI | ❌ | Маршрутизация всё ещё `/dashboard/*` (наследие TWA). Нет groups `(main)`/`(auth)`. Widgets только `CategoryGrid`, `OrderFeed`. Нет Header/Sidebar/Footer/BottomNav, темы-переключения, Inter-шрифта. |
+| 6. Объявления | ❌ | Feature `listing/` не создан, страниц каталога нет. Admin-модерация listings — нет. |
+| 7. Чат | ❌ | Моделей `Conversation`, `ConversationParticipant`, `Message` нет. |
+| 8. Тесты/CI | ❌ | Vitest/Playwright не установлены. `.github/workflows/*` — требуют проверки. |
+| 9. React Native | ❌ | `apps/mobile/src` — пустой. Expo не инициализирован. |
+| 10. Geo/мульти-город | ❌ | Зависит от Фазы 3 (`City`). PostGIS запросы не реализованы. |
+| 11. Полировка | ❌ | SEO, sitemap, Sentry, PWA-manifest — не сделано. |
+
+### Критичный следующий шаг
+**Фаза 3.** Без `City` и полноценной `ServiceListing` — Фазы 5, 6, 9 блокируются. Начинаем с миграции, расширяющей схему (см. Фазу 3 ниже).
+
+### Принятые архитектурные решения (фиксация)
+- **Auth.js v5 (next-auth@beta)** вместо кастомного JWT-слоя. Session-стратегия: JWT (для Edge-совместимости). Схема БД — расширенная стандартная (`Account`, `Session`, `VerificationToken`).
+- **`next-safe-action`** вместо самописного `createSafeAction` — паттерн из `buhgalter-box` заменён библиотекой.
+- **AuditLog** — отдельная модель для логирования критических действий (смены ролей, банов, модерации). Не было в оригинальном плане.
+- **Alpine-образ + `@tailwindcss/oxide-linux-x64-musl`** — фикс нативного бинарника Tailwind 4 в проде (`48d796f`).
+- **Авто-резолв `P3009`** зафейленных миграций при старте контейнера (`ea1e345`) — решает прод-инцидент с битыми миграциями.
+- **Email-сервис сейчас mock** (логирует в `email-debug.log`) — в Фазе 8/11 заменить на прод SMTP.
+
+### Консолидация документов
+- `DEVELOPMENT_PLAN.md` (этот документ) — **единый источник правды** для пивота на УслугиРядом.
+- `ROADMAP.md` и `docs/04_Status_and_Roadmap.md` — **устарели** (описывают «Районный Мастер»), помечены баннерами deprecated. Не использовать для принятия решений.
 
 ---
 
@@ -602,7 +648,10 @@ uslugi-ryadom/
 
 ---
 
-## Фаза 3 — Эволюция модели данных (1 неделя)
+## Фаза 3 — Эволюция модели данных (1 неделя) [⚠️ частично]
+
+> **Статус:** модель `ServiceListing` добавлена в обрезанном виде (только `providerId`, `categoryId`, `title`, `description`, `price`, `images`). Мульти-город (`City`) и расширение `Category` не начаты. Shared-типы/валидации в пакетах — не наполнены.
+> **Стратегия:** одна большая миграция `expand_domain_model` (City + CityCategory + расширение Category) + отдельная миграция `expand_service_listing` (нормализация существующей модели). Seed — отдельно.
 
 ### 3.1 — Мульти-город
 
@@ -735,7 +784,15 @@ uslugi-ryadom/
        npx prisma migrate dev --name expand_categories
 ```
 
-### 3.3 — Модель объявления (ServiceListing)
+### 3.3 — Модель объявления (ServiceListing) [⚠️ частично — требует нормализации]
+
+> **Фактически в schema.prisma:** минимальная модель `ServiceListing { id, providerId, categoryId, title, description, price, images, createdAt, updatedAt }`. Отсутствуют: `cityId`, `status`, `priceFrom/priceTo/priceUnit`, `location`, `address`, `views`, индексы, enums `ListingStatus`/`PriceUnit`.
+>
+> **План миграции `expand_service_listing`:**
+> - Добавить enums `ListingStatus { ACTIVE, PAUSED, ARCHIVED, MODERATION, REJECTED }`, `PriceUnit { PER_HOUR, PER_SERVICE, PER_METER, NEGOTIABLE }`.
+> - Добавить поля: `cityId String` (FK → City), `status ListingStatus @default(ACTIVE)`, `priceFrom Float?`, `priceTo Float?`, `priceUnit PriceUnit?`, `location Unsupported("geometry(Point, 4326)")?`, `address String?`, `views Int @default(0)`.
+> - Удалить поле `price` (единое) — вместо него `priceFrom/priceTo/priceUnit`. Если есть данные — скопировать в `priceFrom`.
+> - Индексы: `@@index([cityId, categoryId, status])`, `@@index([providerId])`.
 
 ```
 3.3.1  Добавить в prisma/schema.prisma:
@@ -1881,6 +1938,310 @@ Web-приложение продолжает использовать Server Ac
 
 ---
 
+## Фаза 11.5 — Расширенная функциональность (YouDo-scope) (2-3 недели)
+
+> Концепт YouDo подразумевает больше, чем просто «доска объявлений». Эта фаза декомпозирует те фичи, что отличают зрелый сервис от MVP. Делается **после** Фазы 11 (первый запуск), по мере роста.
+
+### 11.5.1 — Верифицированные отзывы
+
+```
+[ ] 11.5.1.1  Review может быть оставлен ТОЛЬКО после Order.status === 'COMPLETED'
+              - Проверка на уровне service + enforcement в БД (CHECK constraint или trigger)
+[ ] 11.5.1.2  Бейдж «Проверенный отзыв» в UI — отображать рядом с рейтингом
+[ ] 11.5.1.3  Запрет удаления отзывов пользователем — только через апелляцию в админку
+[ ] 11.5.1.4  Поле Review.isVerified (для ручной модерации спорных случаев)
+```
+
+### 11.5.2 — Ранги исполнителей
+
+```
+[ ] 11.5.2.1  Добавить ProviderProfile.level: ProviderLevel (NEW, PRO, ELITE)
+              - NEW: < 10 выполненных заказов
+              - PRO: 10-100, рейтинг ≥ 4.5
+              - ELITE: > 100, рейтинг ≥ 4.8, жалоб < 1%
+              
+[ ] 11.5.2.2  Cron-задача раз в сутки пересчитывает level:
+              apps/web/src/shared/lib/jobs/recalc-provider-levels.ts
+              
+[ ] 11.5.2.3  UI: бейдж уровня на карточке исполнителя и в профиле
+              
+[ ] 11.5.2.4  Сортировка в поиске: ELITE → PRO → NEW (при равном рейтинге)
+```
+
+### 11.5.3 — Избранное (Favorites)
+
+```
+[ ] 11.5.3.1  Prisma: модель Favorite { userId, targetType (ORDER|LISTING|PROVIDER), targetId, createdAt }
+              - @@unique([userId, targetType, targetId])
+              
+[ ] 11.5.3.2  Server actions: toggleFavoriteAction, getFavoritesAction
+              
+[ ] 11.5.3.3  UI: иконка сердечка на карточках (ORDER/LISTING/PROVIDER)
+              
+[ ] 11.5.3.4  Страница /dashboard/favorites — список избранного с табами
+```
+
+### 11.5.4 — Жалобы и модерация чата
+
+```
+[ ] 11.5.4.1  Prisma: модель Report { id, reporterId, targetType, targetId, reason, description, status, createdAt, resolvedAt, resolvedBy }
+              - enum ReportStatus { PENDING, REVIEWED, ACTIONED, DISMISSED }
+              - enum ReportReason { SPAM, FRAUD, INAPPROPRIATE, CONTACT_EXCHANGE, OTHER }
+              
+[ ] 11.5.4.2  Кнопка «Пожаловаться» на каждой карточке/сообщении чата
+              
+[ ] 11.5.4.3  Admin-страница /admin/reports — очередь жалоб с фильтрами
+              
+[ ] 11.5.4.4  Автомодерация чата (MVP): regex-фильтр на телефоны/email/telegram-ссылки
+              - Детект попытки увода заказа «за периметр» платформы
+              - Блюр или [скрыто модерацией] вместо контакта
+```
+
+### 11.5.5 — Диспут-центр
+
+```
+[ ] 11.5.5.1  Prisma: Dispute { orderId, initiatorId, reason, status, messages, resolution, createdAt }
+              - enum DisputeStatus { OPEN, UNDER_REVIEW, RESOLVED_CLIENT, RESOLVED_PROVIDER, CLOSED }
+              
+[ ] 11.5.5.2  Открытие диспута — только пока Order.status === 'IN_PROGRESS' или COMPLETED (в течение 7 дней)
+              
+[ ] 11.5.5.3  В диспуте — чат с админом + обе стороны + вложения (скриншоты, чеки)
+              
+[ ] 11.5.5.4  Admin выносит решение → меняет OrderStatus, AuditLog.
+              Если включён эскроу (см. 12.1) — возврат средств на нужную сторону.
+```
+
+### 11.5.6 — SEO-страницы «услуга × город»
+
+```
+[ ] 11.5.6.1  Динамический роут app/(main)/[citySlug]/[categorySlug]/page.tsx
+              Пример: /moscow/plumbing, /spb/nannies
+              
+[ ] 11.5.6.2  Заголовок H1: «Сантехники в Москве — услуги рядом»
+              
+[ ] 11.5.6.3  Контент:
+              - Топ-10 исполнителей категории в городе
+              - 20 последних объявлений
+              - Средняя цена
+              - FAQ-блок (2026-04-17: наполнение текстами — отдельная задача для копирайтера)
+              
+[ ] 11.5.6.4  Dynamic sitemap: все пары city × category → в sitemap.xml
+              
+[ ] 11.5.6.5  Structured Data (JSON-LD): LocalBusiness, AggregateRating
+              
+[ ] 11.5.6.6  Мета-теги: OG/Twitter — автогенерация по шаблону
+```
+
+### 11.5.7 — Полнотекстовый поиск
+
+```
+[ ] 11.5.7.1  PostgreSQL FTS с русской морфологией:
+              CREATE INDEX idx_order_search ON "Order"
+                USING gin (to_tsvector('russian', title || ' ' || coalesce(description, '')));
+              Аналогично для ServiceListing.
+              
+[ ] 11.5.7.2  orderService.list() / listingService.list() — принимают ?q= и добавляют WHERE
+              to_tsvector('russian', title || ' ' || description) @@ plainto_tsquery('russian', :q)
+              
+[ ] 11.5.7.3  Опционально: pg_trgm для fuzzy-поиска при опечатках
+              
+[ ] 11.5.7.4  Подсветка совпадений в UI (ts_headline или клиентский highlight)
+```
+
+---
+
+## Фаза 12 — Монетизация MVP (1.5 недели)
+
+> Включается **после** стабильного запуска Фазы 11. Первая цель — не выручка, а проверка готовности аудитории платить. Эта фаза заменяет Sprint 8 из устаревшего `ROADMAP.md`.
+
+### 12.1 — Платёжный провайдер
+
+```
+[ ] 12.1.1  Выбор провайдера (решение до начала):
+            - Вариант A: Telegram Stars — простой, сразу доступен, но ограничен TG-аудиторией
+            - Вариант B: ЮKassa / CloudPayments — фискальные чеки, поддержка карт РФ
+            - Вариант C: оба одновременно (Stars для TG-пользователей, ЮKassa для веба)
+            
+[ ] 12.1.2  Prisma: модель Payment { id, userId, amount, currency, provider, providerTxId, status, purpose, referenceId, createdAt }
+            - enum PaymentStatus { PENDING, SUCCEEDED, FAILED, REFUNDED }
+            - enum PaymentPurpose { BUMP_ORDER, BUMP_LISTING, PRO_SUBSCRIPTION, ESCROW, VERIFIED_BADGE }
+            
+[ ] 12.1.3  Webhook-роуты для успешных платежей (app/api/webhooks/*):
+            - /api/webhooks/telegram-stars
+            - /api/webhooks/yookassa
+            Верификация подписи — обязательно.
+            
+[ ] 12.1.4  Идемпотентность: по providerTxId не обрабатывать повторно.
+```
+
+### 12.2 — Платное поднятие (bump)
+
+```
+[ ] 12.2.1  Добавить Order.bumpedUntil DateTime? и ServiceListing.bumpedUntil.
+            
+[ ] 12.2.2  UI: кнопка «Поднять в топ» на карточке моего заказа/объявления → чекаут.
+            
+[ ] 12.2.3  Сортировка в feed: сначала bumpedUntil > now() (DESC), потом по createdAt.
+            
+[ ] 12.2.4  Тарифы: 24 часа / 3 дня / 7 дней — разные цены.
+```
+
+### 12.3 — PRO-подписка для исполнителей
+
+```
+[ ] 12.3.1  Prisma: Subscription { userId, plan, status, startedAt, endsAt, autoRenew, providerTxId }
+            - enum SubscriptionPlan { PRO_MONTHLY, PRO_YEARLY }
+            
+[ ] 12.3.2  Привилегии PRO:
+            - Безлимитные отклики (у FREE — N в день)
+            - Приоритет в поиске исполнителей (после bump, выше обычных)
+            - Расширенная статистика профиля (views, conversion)
+            - Бейдж «PRO» на карточке
+            
+[ ] 12.3.3  Cron: раз в сутки проверка истёкших подписок → статус EXPIRED.
+            
+[ ] 12.3.4  Grace-период 3 дня: подписка показывается активной, но без доступа к PRO-фичам.
+```
+
+### 12.4 — Безопасная сделка (эскроу) — опционально
+
+```
+[ ] 12.4.1  Prisma: EscrowDeal { orderId, amount, holderAccount, status, releasedAt, refundedAt }
+            - enum EscrowStatus { HELD, RELEASED, REFUNDED, DISPUTED }
+            
+[ ] 12.4.2  Клиент оплачивает заказ → деньги удерживаются.
+            При завершении (Client подтверждает) → release на счёт провайдера (минус комиссия).
+            При диспуте (11.5.5) → решение админа.
+            
+[ ] 12.4.3  Комиссия: 5-7% (финальная — по договорённости с провайдером).
+            
+[ ] 12.4.4  Это серьёзная фича — **не раньше** 10k активных заказов/мес. Пока — в бэклог.
+```
+
+### 12.5 — Реферальная программа
+
+```
+[ ] 12.5.1  Prisma: ReferralCode { userId, code, createdAt }; User.referredBy String?
+            
+[ ] 12.5.2  Генерация уникального кода при регистрации провайдера.
+            
+[ ] 12.5.3  Бонусы:
+            - Реферер получает 5% от первого платежа приглашённого (bump/PRO).
+            - Приглашённый получает скидку 10% на первую оплату.
+            
+[ ] 12.5.4  Страница /dashboard/referral — код, ссылка, статистика.
+```
+
+---
+
+## KPI и метрики запуска
+
+> Раздел добавлен 2026-04-17. Цель: до начала Фазы 10 определить, что считаем успехом, и подключить трекинг на старте Фазы 11.
+
+### Acquisition (привлечение)
+- Уникальные регистрации в день / неделю.
+- Конверсия воронки: лендинг → регистрация → подтверждение email → первый заход в dashboard.
+- Источники трафика (Яндекс.Метрика: прямые, поиск, реферальные, соцсети).
+
+### Activation (первое успешное действие)
+- **Клиент:** время от регистрации до первого созданного заказа (P50, P90).
+- **Исполнитель:** время от регистрации до первого отклика.
+- % пользователей, сделавших первое действие за 24 часа.
+
+### Engagement
+- Заказов на активного клиента в месяц.
+- Откликов на активного исполнителя в месяц.
+- Среднее число предложений на заказ (цель: ≥ 3 за 24 часа — маркер живой платформы).
+- DAU / MAU ratio (цель: ≥ 15% для маркетплейса).
+
+### Conversion (ключевая воронка)
+- Order OPEN → получил ≥ 1 proposal (цель: ≥ 80%).
+- Proposal → принят клиентом (цель: ≥ 25%).
+- Order ACCEPTED → COMPLETED (цель: ≥ 70%).
+- Время от создания Order до принятия Proposal (P50, цель: < 24 ч).
+
+### Retention
+- D1 / D7 / D30 retention по когортам.
+- Churn активных исполнителей (неактивен 30 дней после первого отклика).
+
+### Monetization (с Фазы 12)
+- % платящих пользователей.
+- ARPU / ARPPU.
+- Выручка по источникам (bump / PRO / эскроу / рефералы).
+- LTV провайдера (среднее кол-во месяцев подписки × цена).
+
+### Инструменты
+- **Яндекс.Метрика** — web-аналитика, цели, воронки, вебвизор. Основная.
+- **Plausible** (self-hosted) — приватная альтернатива для GDPR, в бэклог.
+- **Кастомные метрики** в БД через `prisma.$queryRaw` — для воронки и KPI (агрегация в `app/admin/metrics`).
+- **PostHog** (self-hosted) — в бэклог, если понадобится продуктовая аналитика (funnels, session recordings).
+
+---
+
+## Прод-инфраструктура (cross-cutting, по ходу Фаз 8-11)
+
+> Вынесено отдельно, т.к. эти задачи размазаны по нескольким фазам, но должны быть выполнены до публичного запуска.
+
+### Redis (обязательно до запуска)
+```
+[ ] Заменить in-memory rate-limit в apps/web/src/shared/lib/rate-limit.ts на Redis (ioredis).
+[ ] Переключить сессии Auth.js с JWT-only на hybrid JWT + Redis (чтобы логаут инвалидировал все устройства).
+[ ] Добавить Redis как сервис в docker-compose.yml. Переменная REDIS_URL.
+[ ] Использовать Redis для кэширования категорий/городов (TTL 1 час).
+```
+
+### Email (обязательно до запуска)
+```
+[ ] Заменить mock apps/web/src/shared/lib/email.ts на прод SMTP.
+[ ] Варианты: Mailgun, Amazon SES, Yandex 360 for Business, Resend.
+[ ] Настроить SPF / DKIM / DMARC для домена.
+[ ] Шаблоны: react-email или MJML — отдельные компоненты, ревью дизайнером.
+[ ] Webhook для bounces/complaints → помечать User.emailVerified = false.
+```
+
+### Observability
+```
+[ ] Sentry: @sentry/nextjs, client + server + edge.
+    - Sample rate transactions: 0.1. Errors: 1.0.
+    - Scrubbing PII (email, phone) в beforeSend.
+[ ] Яндекс.Метрика: счётчик в layout.tsx, события на ключевые действия.
+[ ] Uptime-monitoring: Uptime Kuma (self-hosted) или statuspage.io — /api/health endpoint есть.
+[ ] Логирование: pino + loki/grafana — в бэклог для масштаба.
+```
+
+### Бэкапы и восстановление
+```
+[ ] PostgreSQL: pg_dump cron каждые 6 часов в S3-совместимое хранилище (Selectel/Yandex Object Storage).
+[ ] Хранить 30 ежедневных + 12 месячных.
+[ ] **Тест restore** на staging-инстанс — раз в квартал (записать в календарь).
+[ ] Uploads (apps/web/uploads/): rsync/rclone в то же S3, или сразу мигрировать на S3 (см. shared/lib/storage).
+```
+
+### CI/CD дополнительно (к Фазе 8)
+```
+[ ] Secret scanning: gitleaks / truffleHog в pre-commit + в CI.
+[ ] Dependabot / Renovate — автообновления npm-пакетов.
+[ ] Docker image sign (cosign) — опционально, для прода.
+[ ] Canary-деплой: новая версия → 10% трафика на 15 мин → мониторинг Sentry → full rollout.
+```
+
+### Безопасность прод
+```
+[ ] Secure headers (PART VI глобальных правил): HSTS, CSP, X-Frame-Options, nosniff.
+[ ] Rate-limit на proxy.ts уровне (публичные /api/*): по IP + userId.
+[ ] WAF перед Nginx (Cloudflare или selectel-shield) для защиты от ботов/DDoS.
+[ ] Загрузка файлов — антивирус (ClamAV) на nginx-proxy уровне или после загрузки.
+[ ] Регулярный security audit npm: npm audit + GitHub security alerts.
+```
+
+### Feature flags (опционально)
+```
+[ ] GrowthBook (self-hosted) или флаги через env + Redis.
+[ ] Нужны для A/B экспериментов (UI вариант поиска, размер комиссии, и т.д.) и для безопасных деплоев спорных фич.
+```
+
+---
+
 ## Сводная карта зависимостей
 
 ```
@@ -1920,20 +2281,24 @@ Web-приложение продолжает использовать Server Ac
 
 ## Оценка по фазам
 
-| Фаза | Описание | Ориентировочно |
-|---|---|---|
-| 1 | Фундамент и ребрендинг | 2 нед |
-| 2 | Авторизация | 1 нед |
-| 3 | Модель данных | 1 нед |
-| 4 | REST API | 1.5 нед |
-| 5 | Desktop UI | 3 нед |
-| 6 | Объявления | 1.5 нед |
-| 7 | Чат | 2 нед |
-| 8 | Тесты/CI | 1 нед |
-| 9 | React Native | 3-4 нед |
-| 10 | Geo-поиск | 1.5 нед |
-| 11 | Полировка | 1 нед |
-| **Итого** | | **~18-20 нед** |
+| Фаза | Описание | Ориентировочно | Статус |
+|---|---|---|---|
+| 1 | Фундамент и ребрендинг | 2 нед | ✅ |
+| 2 | Авторизация (Auth.js v5) | 1 нед | ✅ |
+| 3 | Модель данных (City, Category, ServiceListing) | 1 нед | ⚠️ частично |
+| 4 | REST API + сервисный слой | 1.5 нед | ❌ |
+| 5 | Desktop UI | 3 нед | ❌ |
+| 6 | Объявления | 1.5 нед | ❌ |
+| 7 | Чат | 2 нед | ❌ |
+| 8 | Тесты/CI | 1 нед | ❌ |
+| 9 | React Native | 3-4 нед | ❌ |
+| 10 | Geo-поиск | 1.5 нед | ❌ |
+| 11 | Полировка и запуск | 1 нед | ❌ |
+| 11.5 | YouDo-scope (отзывы, ранги, избранное, жалобы, диспуты, SEO, FTS) | 2-3 нед | ⏳ после запуска |
+| 12 | Монетизация MVP (платежи, bump, PRO, эскроу, рефералы) | 1.5 нед | ⏳ после запуска |
+| — | Прод-инфраструктура (Redis, SMTP, Sentry, backups) | cross-cutting | ❌ |
+| **Итого до запуска (1-11)** | | **~18-20 нед** | |
+| **С расширениями (11.5, 12)** | | **~22-24 нед** | |
 
 ---
 

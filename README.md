@@ -1,36 +1,97 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# УслугиРядом
 
-## Getting Started
+Доска объявлений услуг для города. Desktop-first веб + React Native (в разработке).
 
-First, run the development server:
+> **Ветка активной разработки:** `refactor/uslugi-ryadom`
+> **Полный план:** [`DEVELOPMENT_PLAN.md`](./DEVELOPMENT_PLAN.md) — единый источник правды (статус, фазы, архитектурные решения).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Стек
+
+- **Web:** Next.js 16 (App Router, RSC, Server Actions), TypeScript, Tailwind 4, Shadcn UI
+- **Mobile:** React Native (Expo) — apps/mobile, заготовка
+- **БД:** PostgreSQL 16 + PostGIS, Prisma 7
+- **Auth:** Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter` — email/пароль, Telegram, Google OAuth
+- **Security:** `next-safe-action`, Zod (валидация), JWT httpOnly cookies
+- **Инфра:** Docker multi-stage (Alpine), Nginx
+- **Монорепо:** Turborepo
+
+## Структура
+
+```
+.
+├── apps/
+│   ├── web/        # Next.js приложение (основное)
+│   └── mobile/     # React Native (Expo) — в разработке
+├── packages/
+│   ├── shared-types/   # Общие TS-типы
+│   ├── validation/     # Zod-схемы
+│   └── api-client/     # Типизированный API-клиент для mobile
+├── DEVELOPMENT_PLAN.md # План разработки
+└── docker-compose.yml
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Быстрый старт (dev)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Требования: Node.js 22+, Docker, npm.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# 1. Установить зависимости (корень монорепо)
+npm install
 
-## Learn More
+# 2. Поднять БД (Postgres + PostGIS)
+docker-compose up -d postgres
 
-To learn more about Next.js, take a look at the following resources:
+# 3. Настроить env (в apps/web/)
+cp apps/web/.env.example apps/web/.env
+# Заполнить: DATABASE_URL, NEXTAUTH_SECRET, TELEGRAM_BOT_TOKEN, GOOGLE_CLIENT_ID/SECRET, SMTP_*
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 4. Применить миграции и сид
+npx prisma migrate deploy --schema apps/web/prisma/schema.prisma
+node apps/web/prisma/seed.mjs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 5. Запустить dev-сервер
+npm run dev
+# или только web: turbo run dev --filter=@uslugi/web
+```
 
-## Deploy on Vercel
+Открыть [http://localhost:3000](http://localhost:3000).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Полный Docker-стек
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+docker-compose up --build
+```
+
+Поднимает Postgres/PostGIS + web (production build). Nginx/reverse-proxy — в рабочих конфигах прода.
+
+## Команды
+
+```bash
+turbo run build        # Сборка всех пакетов и приложений
+turbo run lint         # Линт
+turbo run typecheck    # Проверка типов
+npm run dev            # Dev-сервер web
+```
+
+## Архитектура
+
+Feature-Sliced Design (FSD) в `apps/web/src/`:
+
+```
+app/        # Next.js App Router (тонкие обёртки)
+widgets/    # Композиционные UI-блоки
+features/   # Изолированные бизнес-модули (auth, order-creation, ...)
+entities/   # Доменные сущности
+shared/     # Переиспользуемые примитивы (ui, lib, api)
+proxy.ts    # Защита роутов (вместо middleware.ts)
+```
+
+Правила импортов: `app` → `widgets` → `features` → `entities` → `shared` (строго сверху вниз).
+
+Все мутации — через Server Actions, обёрнутые в `next-safe-action`. REST API (`app/api/v1/*`) — запланирован для мобильного клиента.
+
+## Статус проекта
+
+См. раздел **«Текущий статус»** в [`DEVELOPMENT_PLAN.md`](./DEVELOPMENT_PLAN.md) — там актуальная таблица что сделано / что осталось по фазам.
