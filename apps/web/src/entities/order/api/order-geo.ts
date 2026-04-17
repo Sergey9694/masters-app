@@ -15,9 +15,12 @@ interface RawNearbyOrder {
   address: string | null;
   status: string;
   createdAt: Date;
+  images: string[];
   categoryName: string;
   customerName: string;
   customerAvatar: string | null;
+  cityName: string;
+  proposalCount: number;
   distance: number;
 }
 
@@ -43,9 +46,12 @@ export async function getOrdersNearby(
         t.address, 
         t.status,
         t."createdAt",
+        t.images,
         c.name as "categoryName",
         u."firstName" as "customerName",
         u.avatar as "customerAvatar",
+        city.name as "cityName",
+        (SELECT COUNT(*)::int FROM "Proposal" p WHERE p."orderId" = t.id) as "proposalCount",
         ST_Distance(
           t."orderLocation"::geography, 
           ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
@@ -53,6 +59,7 @@ export async function getOrdersNearby(
       FROM "Order" t
       JOIN "Category" c ON t."categoryId" = c.id
       JOIN "User" u ON t."clientId" = u.id
+      JOIN "City" city ON t."cityId" = city.id
       WHERE 
         t.status = 'OPEN' 
         AND ST_DWithin(
@@ -74,6 +81,11 @@ export async function getOrdersNearby(
       status: t.status,
       distance: Math.round(Number(t.distance)),
       createdAt: new Date(t.createdAt),
+      images: t.images || [],
+      proposalCount: t.proposalCount || 0,
+      city: {
+        name: t.cityName,
+      },
       category: {
         name: t.categoryName,
       },

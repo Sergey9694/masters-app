@@ -223,7 +223,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       {/* Respond Form (provider, not owner, OPEN, not already) */}
       {canRespond && (
         <StaggerItem className="mb-6">
-          <RespondForm referenceId={order.id} />
+          <RespondForm orderId={order.id} />
         </StaggerItem>
       )}
 

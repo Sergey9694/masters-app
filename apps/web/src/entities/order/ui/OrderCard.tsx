@@ -13,38 +13,18 @@ import { getMapUrl } from "@/shared/lib/maps";
 import { OrderCardBase } from "./OrderCardBase";
 import { useRouter } from "next/navigation";
 
+import type { OrderCardData } from "@/shared/types/domain";
+
 interface OrderCardProps {
-  order: {
-    id: string;
-    title: string;
-    description: string;
-    budget: number | null;
-    address: string | null;
-    createdAt: Date;
-    status: string;
-    category: {
-      name: string;
-    };
-    client: {
-      firstName: string;
-      avatar: string | null;
-    };
-    images?: string[];
-    distance?: number;
-    _count?: {
-      proposals: number;
-    };
-  };
+  order: OrderCardData;
 }
 
 export function OrderCard({ order }: OrderCardProps) {
-  const { title, description, budget, address, createdAt, category, client, images, distance, status, _count } = order;
+  const { title, description, budget, address, createdAt, category, client, images, distance, status, proposalCount, city } = order;
   const router = useRouter();
 
   const truncatedTitle = title.length > 35 ? title.substring(0, 32) + "..." : title;
   const truncatedDesc = description.length > 50 ? description.substring(0, 47) + "..." : description;
-
-  const responsesCount = _count?.proposals ?? 0;
 
   return (
     <OrderCardBase
@@ -63,15 +43,25 @@ export function OrderCard({ order }: OrderCardProps) {
             </p>
             <div className="flex items-center gap-1.5 opacity-60">
               <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-[8px] font-bold text-slate-500 uppercase">В районе</p>
+              <p className="text-[8px] font-bold text-slate-500 uppercase">
+                {city.name}
+              </p>
             </div>
           </div>
         </div>
       }
       category={
-        <Badge variant="category">
-          {category.name}
-        </Badge>
+        <div className="flex items-center gap-2">
+           <Badge variant="category">
+             {category.name}
+           </Badge>
+           {proposalCount > 0 && (
+             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-[8px] font-black text-blue-400 uppercase tracking-widest">
+                <MessageSquare className="w-2.5 h-2.5" />
+                {proposalCount}
+             </div>
+           )}
+        </div>
       }
       image={images && images.length > 0 ? (
         <img
@@ -112,7 +102,7 @@ export function OrderCard({ order }: OrderCardProps) {
             <MapPin className="w-4 h-4" />
           </div>
           <span className="text-xs font-bold truncate underline decoration-blue-500/30 underline-offset-4">
-            {address || "В районе"}
+            {address || city.name}
           </span>
         </div>
       }

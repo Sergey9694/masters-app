@@ -1,5 +1,6 @@
 const nextConfig = {
   output: "standalone",
+  transpilePackages: ["@uslugi/shared-types", "@uslugi/validation"],
   allowedDevOrigins: ["*.ngrok-free.app", "*.ngrok-free.dev", "*.ngrok.io", "*.loca.lt"],
 
   experimental: {

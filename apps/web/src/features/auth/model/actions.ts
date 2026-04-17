@@ -4,8 +4,8 @@ import { signIn, signOut } from "@/auth";
 import { db } from "@/shared/lib/db";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { logAudit } from "@/shared/lib/audit";
-import { createEmailToken, verifyEmailToken, sendEmail } from "@/shared/lib/email";
+import { authService } from "@/services/auth.service";
+import { actionClient } from "@/shared/lib/safe-action";
 
 const loginSchema = z.object({
   initData: z.string(),
@@ -60,14 +60,6 @@ export async function mockLogin() {
       select: { id: true, role: true },
     });
   }
-
-  // Auth.js doesn't have a direct "login as user ID" without a provider
-  // For mock login, we might need a special "mock" provider or just use current session logic
-  // But for now, let's keep it simple and redirect - though session won't be created this way.
-  // TODO: Implement mock provider in auth.config.ts if needed
-  
-  // Alternative: manual session creation if using JWT strategy
-  // But let's stay within Auth.js boundaries.
   
   redirect("/dashboard");
 }
@@ -79,8 +71,6 @@ export async function logoutAction() {
   await signOut({ redirectTo: "/" });
 }
 
-import { actionClient } from "@/shared/lib/safe-action";
-
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -90,124 +80,67 @@ const registerSchema = z.object({
 export const registerWithEmail = actionClient
   .schema(registerSchema)
   .action(async ({ parsedInput: { email, password, name } }) => {
-    const existing = await db.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
+    try {
+      const names = name.split(" ");
+      const firstName = names[0];
+      const lastName = names.slice(1).join(" ") || "";
 
-    if (existing) {
-      console.log(`[AUTH_DEBUG] User ${email} already exists, skipping registration.`);
-      throw new Error("Пользователь с таким email уже существует");
-    }
-
-    console.log(`[AUTH_DEBUG] Creating user: ${email}`);
-
-    const bcrypt = await import("bcryptjs");
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    const names = name.split(" ");
-    const firstName = names[0];
-    const lastName = names.slice(1).join(" ") || "";
-
-    const user = await db.user.create({
-      data: {
+      await authService.register({
         email,
-        passwordHash,
+        password,
         firstName,
         lastName,
-        authProvider: "EMAIL",
-        // @ts-ignore
-        emailVerified: null, // Изначально не верифицирован
-      },
-    });
+        authProvider: "EMAIL"
+      });
 
-    const token = await createEmailToken({ email, type: "verify" });
-    const verifyLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/verify?token=${token}`;
-
-    console.log(`[AUTH_DEBUG] User created, sending verification email...`);
-    await sendEmail({
-      to: email,
-      subject: "Подтвердите ваш email — УслугиРядом",
-      html: `<p>Здравствуйте, ${firstName}!</p><p>Для завершения регистрации подтвердите ваш email, перейдя по ссылке:</p><a href="${verifyLink}">${verifyLink}</a>`,
-    });
-
-    console.log(`[AUTH_DEBUG] Registration successful for ${email}`);
-    return { success: true, message: "Проверьте почту для подтверждения" };
+      return { success: true, message: "Проверьте почту для подтверждения" };
+    } catch (error: any) {
+      console.error("[registerWithEmail] error:", error);
+      throw error instanceof Error ? error : new Error("Ошибка при регистрации");
+    }
   });
 
 /**
- * Запрос на сброс пароля (Phase 2.2.3)
+ * Запрос на сброс пароля
  */
 export const requestPasswordReset = actionClient
   .schema(z.object({ email: z.string().email() }))
   .action(async ({ parsedInput: { email } }) => {
-    const user = await db.user.findUnique({
-      where: { email },
-      select: { id: true }
-    });
-
-    if (user) {
-      const token = await createEmailToken({ email, type: "reset" });
-      const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/reset-password?token=${token}`;
-
-      await logAudit({
-        userId: user.id,
-        action: "UPDATE",
-        entity: "User",
-        entityId: user.id,
-        metadata: { info: "Password reset requested" },
-      });
-
-      await sendEmail({
-        to: email,
-        subject: "Восстановление пароля — УслугиРядом",
-        html: `<p>Вы запросили сброс пароля. Перейдите по ссылке для установки нового:</p><a href="${resetLink}">${resetLink}</a>`,
-      });
+    try {
+      await authService.requestPasswordReset(email);
+      return { success: true };
+    } catch (error: any) {
+      console.error("[requestPasswordReset] error:", error);
+      throw error;
     }
-
-    return { success: true };
   });
 
 /**
- * Подтверждение Email (Phase 2.3.3)
+ * Подтверждение Email
  */
 export const verifyEmailAction = actionClient
   .schema(z.object({ token: z.string() }))
   .action(async ({ parsedInput: { token } }) => {
-    const payload = await verifyEmailToken(token);
-    if (!payload || payload.type !== "verify") {
-      throw new Error("Неверный или просроченный токен");
+    try {
+      await authService.verifyEmail(token);
+      return { success: true };
+    } catch (error: any) {
+      console.error("[verifyEmailAction] error:", error);
+      throw error;
     }
-
-    await db.user.update({
-      where: { email: payload.email },
-      // @ts-ignore
-      data: { emailVerified: new Date() },
-    });
-
-    return { success: true };
   });
 
 /**
- * Сброс пароля на новый (Phase 2.3.6)
+ * Сброс пароля на новый
  */
 export const resetPasswordAction = actionClient
   .schema(z.object({ token: z.string(), password: z.string().min(8) }))
   .action(async ({ parsedInput: { token, password } }) => {
-    const payload = await verifyEmailToken(token);
-    if (!payload || payload.type !== "reset") {
-      throw new Error("Неверный или просроченный токен");
+    try {
+      await authService.resetPassword(token, password);
+      return { success: true };
+    } catch (error: any) {
+      console.error("[resetPasswordAction] error:", error);
+      throw error;
     }
-
-    const bcrypt = await import("bcryptjs");
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
-    await db.user.update({
-      where: { email: payload.email },
-      data: { passwordHash },
-    });
-
-    return { success: true };
   });

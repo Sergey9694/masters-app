@@ -116,8 +116,8 @@
 
 | Фаза | Статус | Что осталось |
 |---|---|---|
-| 3. Модель данных | ⚠️ частично | Нет моделей `City`, `CityCategory`. Нет расширения `Category` (slug, parent, sortOrder, isActive, description). Модель `ServiceListing` есть, но **обрезана**: нет `cityId`, `status`/`ListingStatus`, `priceFrom`/`priceTo`/`priceUnit`, `location`, `address`, `views`, индексов. Shared-типы/валидации в пакетах — требуют наполнения. |
-| 4. REST API | ❌ | Нет `src/services/`, нет `app/api/v1/*`. В `packages/api-client/src/*` есть заготовки (auth/orders/listings/proposals), но backend под них ещё не написан. |
+| 3. Модель данных | ✅ завершена | Все модели (City, Category tree, ServiceListing, Order, Proposal) полностью синхронизированы, PostGIS настроен, сиды исправлены. |
+| 4. REST API | ⚠️ в процессе | Сервисный слой (`src/services/`) полностью реализован. Осталось создать HTTP эндпоинты `app/api/v1/*`. |
 | 5. Desktop UI | ❌ | Маршрутизация всё ещё `/dashboard/*` (наследие TWA). Нет groups `(main)`/`(auth)`. Widgets только `CategoryGrid`, `OrderFeed`. Нет Header/Sidebar/Footer/BottomNav, темы-переключения, Inter-шрифта. |
 | 6. Объявления | ❌ | Feature `listing/` не создан, страниц каталога нет. Admin-модерация listings — нет. |
 | 7. Чат | ❌ | Моделей `Conversation`, `ConversationParticipant`, `Message` нет. |
@@ -127,7 +127,7 @@
 | 11. Полировка | ❌ | SEO, sitemap, Sentry, PWA-manifest — не сделано. |
 
 ### Критичный следующий шаг
-**Фаза 3.** Без `City` и полноценной `ServiceListing` — Фазы 5, 6, 9 блокируются. Начинаем с миграции, расширяющей схему (см. Фазу 3 ниже).
+**Фаза 4.2.** Создание REST API эндпоинтов на базе готовых сервисов для мобильного приложения.
 
 ### Принятые архитектурные решения (фиксация)
 - **Auth.js v5 (next-auth@beta)** вместо кастомного JWT-слоя. Session-стратегия: JWT (для Edge-совместимости). Схема БД — расширенная стандартная (`Account`, `Session`, `VerificationToken`).

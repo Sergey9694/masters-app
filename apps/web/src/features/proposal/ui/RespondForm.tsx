@@ -27,16 +27,16 @@ import {
 import { submitProposalAction } from "../api/actions";
 
 interface Props {
-  referenceId: string;
+  orderId: string;
 }
 
-export function RespondForm({ referenceId }: Props) {
+export function RespondForm({ orderId }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const form = useForm<TaskResponseFormValues>({
     resolver: zodResolver(taskResponseSchema),
-    defaultValues: { referenceId, price: "", message: "" },
+    defaultValues: { orderId, price: "", message: "" },
   });
 
   const onSubmit = (vals: TaskResponseFormValues) => {
@@ -46,7 +46,7 @@ export function RespondForm({ referenceId }: Props) {
         toast.custom(() => (
           <MotionToast type="success">Отклик отправлен!</MotionToast>
         ));
-        form.reset({ referenceId, price: "", message: "" });
+        form.reset({ orderId, price: "", message: "" });
         router.refresh();
         return;
       }

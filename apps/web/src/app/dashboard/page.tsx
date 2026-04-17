@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/shared/lib/get-user";
 import { redirect } from "next/navigation";
 import { db } from "@/shared/lib/db";
 import { DashboardContent } from "./DashboardContent";
+import type { OrderCardData } from "@/shared/types/domain";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
     // table may not exist yet before migration
   }
 
-  const [myOrdersCount, openOrdersCount, customerActiveOrdersCount, openProposalsCount] =
+  const [myOrdersCount, openOrdersCount, customerActiveOrdersCount, openProposalsCount, recentOrdersRaw] =
     await Promise.all([
       db.order.count({ where: { clientId: user.id } }),
       db.order.count({ where: { clientId: user.id, status: "OPEN" } }),
@@ -43,7 +44,32 @@ export default async function DashboardPage() {
           proposals: { some: {} },
         },
       }),
+      db.order.findMany({
+        where: { status: "OPEN" },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          images: true,
+          budget: true,
+          address: true,
+          createdAt: true,
+          category: { select: { name: true } },
+          client: { select: { firstName: true, avatar: true } },
+          status: true,
+          city: { select: { name: true } },
+          _count: { select: { proposals: true } },
+        },
+      }),
     ]);
+
+  const recentOrders: OrderCardData[] = recentOrdersRaw.map(o => ({
+    ...o,
+    proposalCount: o._count.proposals,
+    city: o.city || { name: 'Неизвестно' }
+  }));
 
   // Provider-specific stats
   const providerStats = isProvider
@@ -80,12 +106,12 @@ export default async function DashboardPage() {
         categories={categories}
         stats={{
           myOrdersCount,
-          openOrdersCount,
           activeOrdersCount: customerActiveOrdersCount,
           openProposalsCount,
           unreadNotificationsCount,
           providerStats,
         }}
+        recentOrders={recentOrders}
       />
     </div>
   );

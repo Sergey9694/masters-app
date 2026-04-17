@@ -7,6 +7,8 @@ import { notifyProvidersInCategories } from "@/shared/lib/telegram/bot-notify";
 import { orderSchema } from "../model/order-schema";
 import { authActionClient } from "@/shared/lib/safe-action";
 
+import { orderService } from "@/services/order.service";
+
 /**
  * Server Action: Create a new order request
  * Wrapped with next-safe-action for validation and auth
@@ -22,33 +24,14 @@ export const createOrderAction = authActionClient
     }
 
     try {
-      const order = await db.order.create({
-        data: {
-          clientId: userId,
-          categoryId: validated.categoryId,
-          title: validated.title,
-          description: validated.description,
-          budget: validated.budget ? parseFloat(validated.budget) : null,
-          address: validated.address,
-          images: validated.images || [],
-          status: "OPEN",
-        },
-      });
-
-      // Notify providers in this category (fire-and-forget)
-      notifyProvidersInCategories(
-        [validated.categoryId],
-        userId,
-        validated.title,
-        order.id,
-      );
+      const order = await orderService.create(validated, userId);
 
       revalidatePath("/dashboard");
       revalidatePath("/dashboard/feed");
 
-      return { success: true, redirect: "/dashboard/feed" };
+      return { success: true, redirect: "/dashboard/feed", orderId: order.id };
     } catch (error: unknown) {
-      console.error("FATAL: Database error in createOrderAction:", error);
-      throw new Error("Не удалось создать заказ. Попробуйте позже.");
+      console.error("FATAL: Error in createOrderAction:", error);
+      throw new Error(error instanceof Error ? error.message : "Не удалось создать заказ. Попробуйте позже.");
     }
   });
