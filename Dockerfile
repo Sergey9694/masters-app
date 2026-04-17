@@ -25,8 +25,10 @@ COPY . .
 RUN npm install --no-save --os=linux --libc=musl --cpu=x64 sharp @tailwindcss/oxide-linux-x64-musl && \
     cd apps/web && npm install --no-save --os=linux --libc=musl --cpu=x64 lightningcss @tailwindcss/oxide-linux-x64-musl
 
-# Генерируем Prisma client
-RUN npx prisma generate --schema=./apps/web/prisma/schema.prisma
+# Генерируем Prisma client (ставим prisma глобально — в npm workspaces
+# бинарник из apps/web не всегда попадает в /app/node_modules/.bin)
+RUN npm install -g prisma@5.22.0
+RUN prisma generate --schema=./apps/web/prisma/schema.prisma
 
 # Переменные окружения для билда
 ARG NEXT_PUBLIC_BOT_NAME
