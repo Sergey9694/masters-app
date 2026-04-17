@@ -6,54 +6,63 @@ FROM base AS builder
 WORKDIR /app
 RUN apk add --no-cache libc6-compat libheif-dev openssl
 
-# Копируем всё (node_modules исключены через .dockerignore)
-COPY . .
+# Копируем файлы конфигурации монорепозитория для установки зависимостей
+COPY package*.json ./
+COPY turbo.json ./
+# Копируем package.json всех приложений и пакетов
+COPY apps/web/package*.json ./apps/web/
+COPY packages/api-client/package*.json ./packages/api-client/
+COPY packages/shared-types/package*.json ./packages/shared-types/
+COPY packages/validation/package*.json ./packages/validation/
 
-# Устанавливаем зависимости
+# Устанавливаем зависимости (используем кеш npm)
 RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Нативные бинарники для Alpine (musl):
-# sharp — обработка изображений
-# @tailwindcss/oxide — нативный движок Tailwind CSS v4
-# lightningcss — CSS-минификатор, используемый Tailwind через @tailwindcss/postcss
-# Принудительно ставим musl-варианты, т.к. lock-файл сгенерирован на Windows
+# Копируем исходный код
+COPY . .
+
+# Нативные бинарники для Alpine (musl)
 RUN npm install --no-save --os=linux --libc=musl --cpu=x64 sharp @tailwindcss/oxide-linux-x64-musl && \
     cd apps/web && npm install --no-save --os=linux --libc=musl --cpu=x64 lightningcss @tailwindcss/oxide-linux-x64-musl
 
-# Устанавливаем Prisma CLI глобально для надежности в Alpine
-RUN npm install -g prisma@5.22.0
-
 # Генерируем Prisma client
-RUN prisma generate --schema=./apps/web/prisma/schema.prisma
+RUN npx prisma generate --schema=./apps/web/prisma/schema.prisma
 
 # Переменные окружения для билда
 ARG NEXT_PUBLIC_BOT_NAME
 ENV NEXT_PUBLIC_BOT_NAME="$NEXT_PUBLIC_BOT_NAME"
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Собираем Next.js
-RUN --mount=type=cache,target=/app/apps/web/.next/cache \
-    npm run build
+# Собираем только веб-приложение
+RUN npx turbo run build --filter=@uslugi/web
 
 # 3. Production Runner
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV="production"
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache openssl libc6-compat curl
-RUN npm install -g prisma@5.22.0
+# Устанавливаем необходимые системные зависимости и Prisma CLI для startup.js
+RUN apk add --no-cache openssl libc6-compat curl && \
+    npm install -g prisma@5.22.0
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 
+# Копируем standalone сборку
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+
+# Prisma - копируем схему и сгенерированный клиент
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./prisma
+# Копируем клиент из возможных мест генерации
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
 
 USER nextjs
