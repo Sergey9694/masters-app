@@ -20,8 +20,11 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 RUN npm install --no-save --os=linux --libc=musl --cpu=x64 sharp @tailwindcss/oxide-linux-x64-musl && \
     cd apps/web && npm install --no-save --os=linux --libc=musl --cpu=x64 lightningcss @tailwindcss/oxide-linux-x64-musl
 
+# Устанавливаем Prisma CLI глобально для надежности в Alpine
+RUN npm install -g prisma@5.22.0
+
 # Генерируем Prisma client
-RUN npx prisma@5.22.0 generate --schema=./apps/web/prisma/schema.prisma
+RUN prisma generate --schema=./apps/web/prisma/schema.prisma
 
 # Переменные окружения для билда
 ARG NEXT_PUBLIC_BOT_NAME
