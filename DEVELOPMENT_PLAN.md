@@ -107,7 +107,7 @@
 ### Что реально сделано
 - **Монорепо:** Turborepo, `apps/web`, `apps/mobile` (пустой), `packages/{shared-types, validation, api-client}` — созданы.
 - **Ребрендинг:** Prisma-схема переведена (Master→Provider, TaskRequest→Order, TaskResponse→Proposal, Role.PROVIDER, Notification.NEW_ORDER). Роуты в `app/dashboard/*`, features, entities, widgets — переименованы.
-- **Авторизация:** Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter`. Модели `Account`, `Session`, `VerificationToken` — добавлены. Email+пароль (регистрация → верификация → логин), сброс пароля, Telegram Login, Google OAuth — интегрированы через Auth.js. Блокировка входа без `emailVerified` — активна (коммит `3216cef`).
+- **Авторизация:** Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter`. Модели `Account`, `Session`, `VerificationToken` — добавлены. Email+пароль (регистрация → верификация → логин), сброс пароля, Telegram Login — интегрированы через Auth.js. Блокировка входа без `emailVerified` — активна (коммит `3216cef`). **Google OAuth отменён (2026-04-17)** — решение продукта в пользу упрощения.
 - **Безопасность:** `next-safe-action` внедрён (`authActionClient`, `adminActionClient`). Все основные мутации (`order`, `proposal`, `moderate-order`, `review`) переведены.
 - **Audit log:** модель `AuditLog` добавлена (не было в исходном плане — зафиксировано как архитектурное решение).
 - **Инфраструктура:** Docker multi-stage (Alpine), `@tailwindcss/oxide-linux-x64-musl`, авто-резолв `P3009` зафейленных миграций в startup (`ea1e345`, `3216cef`).
@@ -545,22 +545,9 @@ uslugi-ryadom/
        - Redirect на /dashboard
 ```
 
-### 2.5 — Google OAuth [x] (Интегрировано через Auth.js)
+### 2.5 — Google OAuth [skip] (отменён 2026-04-17)
 
-```
-2.5.1  Создать app/api/auth/google/route.ts:
-       - Redirect на Google OAuth consent screen
-       - Scopes: openid, email, profile
-       
-2.5.2  Создать app/api/auth/google/callback/route.ts:
-       - Обменять code на tokens
-       - Получить profile (email, name, avatar)
-       - Upsert User + Account (provider: GOOGLE)
-       - Создать сессию
-       - Redirect на /dashboard
-
-2.5.3  Зависимости: НЕ нужны — используем fetch к Google OAuth API
-```
+Отказались от Google OAuth в пользу упрощения auth-flow: остаются Email (пароль + верификация) и Telegram Login. Причина: Google требовал поддержки домена + OAuth consent screen и давал минимум пользы при наличии Telegram/Email. Решение продуктовое, обратимо (можно включить обратно за час).
 
 ### 2.6 — UI авторизации (Desktop) [x]
 
@@ -583,7 +570,6 @@ uslugi-ryadom/
        │  │  ── или ──                  │    │
        │  │                             │    │
        │  │  [🔵 Войти через Telegram]  │    │
-       │  │  [🔴 Войти через Google]    │    │
        │  │                             │    │
        │  │  Нет аккаунта? Регистрация  │    │
        │  └─────────────────────────────┘    │

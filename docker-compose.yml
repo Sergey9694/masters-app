@@ -40,6 +40,9 @@ services:
             DATABASE_URL: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin_pass}@${DB_CONTAINER_NAME:-uslugi_db}:5432/${POSTGRES_DB:-uslugi_db}?schema=public"
             NODE_ENV: production
             JWT_SECRET: ${JWT_SECRET}
+            AUTH_SECRET: ${AUTH_SECRET}
+            AUTH_URL: ${AUTH_URL}
+            AUTH_TRUST_HOST: "true"
         volumes:
             - ./uploads:/app/uploads
         networks:

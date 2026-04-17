@@ -12,7 +12,7 @@
 - **Web:** Next.js 16 (App Router, RSC, Server Actions), TypeScript, Tailwind 4, Shadcn UI
 - **Mobile:** React Native (Expo) — apps/mobile, заготовка
 - **БД:** PostgreSQL 16 + PostGIS, Prisma 7
-- **Auth:** Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter` — email/пароль, Telegram, Google OAuth
+- **Auth:** Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter` — email/пароль, Telegram
 - **Security:** `next-safe-action`, Zod (валидация), JWT httpOnly cookies
 - **Инфра:** Docker multi-stage (Alpine), Nginx
 - **Монорепо:** Turborepo

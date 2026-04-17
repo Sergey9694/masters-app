@@ -3,7 +3,7 @@ import { LoginForm } from "../../../features/auth/ui/LoginForm";
 
 export const metadata: Metadata = {
   title: "Вход — УслугиРядом",
-  description: "Войдите в свой аккаунт УслугиРядом через Telegram, Google или Email",
+  description: "Войдите в свой аккаунт УслугиРядом через Email или Telegram",
 };
 
 export default function LoginPage() {

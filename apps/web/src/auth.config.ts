@@ -1,16 +1,11 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import { validateTelegramWebAppData } from "@/shared/lib/auth";
 import { db } from "@/shared/lib/db";
 import { authService } from "@/services/auth.service";
 
 export default {
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
     Credentials({
       id: "telegram",
       name: "Telegram",
