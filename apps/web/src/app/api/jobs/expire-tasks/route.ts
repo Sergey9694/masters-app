@@ -4,8 +4,13 @@ import { expireOldTasks } from "@/shared/lib/jobs/expire-orders";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || cronSecret.length < 16) {
+    return new Response("CRON_SECRET is not configured", { status: 503 });
+  }
+
   const authHeader = request.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
