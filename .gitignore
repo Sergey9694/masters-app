@@ -11,6 +11,10 @@ node_modules
 # next.js
 .next/
 out/
+
+# Dev credentials
+DOSTUPI_TEST.md
+
 .turbo
 
 # production

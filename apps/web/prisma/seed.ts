@@ -97,17 +97,42 @@ async function main() {
     }
   }
 
-  // 4. Create Dummy Provider
-  console.log("🌱 Creating dummy provider...");
-  const providerUser = await prisma.user.upsert({
-    where: { phone: '79001112233' },
+  // 4. Create Admin and Users
+  console.log("🌱 Creating test users...");
+  const bcrypt = await import("bcryptjs");
+  const passwordHash = await bcrypt.hash("password123", 10);
+
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@test.com' },
     update: {},
     create: {
+      email: 'admin@test.com',
+      passwordHash,
+      firstName: 'Админ',
+      lastName: 'Разраб',
+      role: Role.ADMIN,
+      emailVerified: new Date(),
+    }
+  });
+
+  const providerUser = await prisma.user.upsert({
+    where: { phone: '79001112233' },
+    update: { 
+      email: 'provider@test.com', 
+      passwordHash, 
+      emailVerified: new Date(),
+      firstName: 'Иван',
+      lastName: 'Мастеров',
+    },
+    create: {
       phone: '79001112233',
+      email: 'provider@test.com',
+      passwordHash,
       firstName: 'Иван',
       lastName: 'Мастеров',
       role: Role.PROVIDER,
       cityId: moscow?.id,
+      emailVerified: new Date(),
     }
   });
 
@@ -146,13 +171,22 @@ async function main() {
   console.log("🌱 Creating dummy order...");
   const clientUser = await prisma.user.upsert({
     where: { phone: '79112223344' },
-    update: {},
+    update: { 
+      email: 'client@test.com', 
+      passwordHash, 
+      emailVerified: new Date(),
+      firstName: 'Алексей',
+      lastName: 'Заказчиков',
+    },
     create: {
       phone: '79112223344',
+      email: 'client@test.com',
+      passwordHash,
       firstName: 'Алексей',
       lastName: 'Заказчиков',
       role: Role.USER,
       cityId: moscow?.id,
+      emailVerified: new Date(),
     }
   });
 
@@ -172,6 +206,7 @@ async function main() {
   }
 
   console.log("🌿 Seeding finished.");
+  console.log("Credentials for dev: admin@test.com / password123");
 }
 
 main()

@@ -128,7 +128,7 @@ export function LoginForm() {
       return;
     }
 
-    const res = await signIn("credentials", {
+    const res = await signIn("email", {
       email,
       password,
       redirect: false,

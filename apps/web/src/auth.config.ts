@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { validateTelegramWebAppData } from "@/shared/lib/auth";
 import { db } from "@/shared/lib/db";
-import bcrypt from "bcryptjs";
+import { authService } from "@/services/auth.service";
 
 export default {
   providers: [
@@ -77,32 +77,10 @@ export default {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        const user = await db.user.findUnique({
-          where: { email: credentials.email as string },
-        });
-
-        if (!user || !user.passwordHash) return null;
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
+        return authService.validateCredentials(
+          credentials?.email as string,
+          credentials?.password as string
         );
-
-        if (!isValid) return null;
-
-        // Строгая проверка подтверждения email (Phase 2)
-        if (!user.emailVerified) {
-          throw new Error("Email не подтвержден. Пожалуйста, проверьте вашу почту.");
-        }
-
-        return {
-          id: user.id,
-          name: user.firstName,
-          email: user.email,
-          role: user.role,
-        };
       },
     }),
   ],

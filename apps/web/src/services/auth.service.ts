@@ -118,5 +118,35 @@ export const authService = {
       where: { email: payload.email },
       data: { passwordHash },
     });
+  },
+
+  /**
+   * Validate user credentials (Email/Password)
+   */
+  async validateCredentials(email: string, password?: string) {
+    if (!email || !password) return null;
+
+    const user = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (!user || !user.passwordHash) return null;
+
+    const bcrypt = await import("bcryptjs");
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+
+    if (!isValid) return null;
+
+    // Check email verification (Phase 2)
+    if (!user.emailVerified) {
+      throw new Error("Email не подтвержден. Пожалуйста, проверьте вашу почту.");
+    }
+
+    return {
+      id: user.id,
+      name: user.firstName,
+      email: user.email,
+      role: user.role,
+    };
   }
 };
