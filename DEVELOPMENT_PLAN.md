@@ -104,13 +104,19 @@
 
 ## Текущий статус (снимок на 2026-04-17)
 
-### Что реально сделано
+### Что реально сделано (Обновлено 2026-04-18)
 - **Монорепо:** Turborepo, `apps/web`, `apps/mobile` (пустой), `packages/{shared-types, validation, api-client}` — созданы.
-- **Ребрендинг:** Prisma-схема переведена (Master→Provider, TaskRequest→Order, TaskResponse→Proposal, Role.PROVIDER, Notification.NEW_ORDER). Роуты в `app/dashboard/*`, features, entities, widgets — переименованы.
-- **Авторизация:** Auth.js v5 (`next-auth@beta`) + `@auth/prisma-adapter`. Модели `Account`, `Session`, `VerificationToken` — добавлены. Email+пароль (регистрация → верификация → логин), сброс пароля, Telegram Login — интегрированы через Auth.js. Блокировка входа без `emailVerified` — активна (коммит `3216cef`). **Google OAuth отменён (2026-04-17)** — решение продукта в пользу упрощения.
-- **Безопасность:** `next-safe-action` внедрён (`authActionClient`, `adminActionClient`). Все основные мутации (`order`, `proposal`, `moderate-order`, `review`) переведены.
-- **Audit log:** модель `AuditLog` добавлена (не было в исходном плане — зафиксировано как архитектурное решение).
-- **Инфраструктура:** Docker multi-stage (Alpine), `@tailwindcss/oxide-linux-x64-musl`, авто-резолв `P3009` зафейленных миграций в startup (`ea1e345`, `3216cef`).
+- **Ребрендинг:** Prisma-схема переведена (Master→Provider, TaskRequest→Order, TaskResponse→Proposal).
+- **Авторизация (Auth.js v5):**
+  - Email + Password (регистрация, верификация, логин, сброс пароля) — **OK**.
+  - Telegram Login (Desktop Widget + TWA) — **OK**.
+  - **Исправлено:** Логика объединения аккаунтов (Telegram + Email) теперь обходит `Unique constraint` через транзакционный сброс ID.
+  - **Исправлено:** Runtime-конфигурация `BOT_ID` (теперь передается как проп, а не берется из build-time env).
+- **Безопасность:** `next-safe-action` внедрён. Мутации защищены.
+- **Инфраструктура (Локальная):**
+  - Скрипт `npm run dev:full` полностью автоматизирован: чистит порты (3000, 4040), ждет готовности Postgres, активирует PostGIS.
+  - База данных синхронизирована под именем `uslugi_db`.
+- **Инфраструктура (Прод):** Docker multi-stage, авто-резолв `P3009`.
 
 ### Что запланировано, но НЕ сделано (или сделано частично)
 
@@ -519,27 +525,23 @@ uslugi-ryadom/
 ### 2.4 — Рефакторинг Telegram авторизации [х]
 
 ```
-2.4.1  Обновить features/auth/model/actions.ts — loginWithTelegram:
-       
-       Текущая логика остаётся, но добавить:
+[x] 2.4.1  Обновить features/auth/model/actions.ts — loginWithTelegram:
        - При первом входе: создать Account { provider: TELEGRAM, providerAccountId: telegramId }
        - При повторном входе: найти Account → получить userId → создать сессию
-       - Если у пользователя уже есть аккаунт с таким email (от email-регистрации):
-         → Привязать Telegram к существующему User (merge accounts)
+       - **OK:** Исправлен баг `Unique constraint failed (telegramId)` при объединении.
 
-2.4.2  Обновить features/auth/ui/TelegramAuth.tsx:
+[x] 2.4.2  Обновить features/auth/ui/TelegramAuth.tsx:
        - Вынести в отдельную кнопку "Войти через Telegram"
        - Работает только внутри Telegram WebApp (проверка window.Telegram)
-       - На десктопе показывать Telegram Login Widget (JavaScript widget)
-       
-2.4.3  Создать features/auth/ui/TelegramLoginWidget.tsx:
+       - На десктопе показывать Telegram Login Widget
+
+[x] 2.4.3  Создать features/auth/ui/TelegramLoginWidget.tsx:
        - Для десктопа: Telegram Login Widget (кнопка на сайте)
-       - Callback: /api/auth/telegram/callback
-       - Документация: https://core.telegram.org/widgets/login
-       
-2.4.4  Создать app/api/auth/telegram/callback/route.ts:
+       - **OK:** Исправлен баг с `undefined` BOT_ID через runtime пропсы.
+
+[x] 2.4.4  Создать app/api/auth/telegram/callback/route.ts:
        - GET handler — принимает данные от Telegram Login Widget
-       - Валидация hash (аналогично initData, но формат другой)
+       - Валидация hash
        - Upsert User + Account
        - Создать сессию
        - Redirect на /dashboard
