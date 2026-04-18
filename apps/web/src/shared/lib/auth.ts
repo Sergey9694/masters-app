@@ -133,8 +133,10 @@ export function validateTelegramWidgetData(
 
   const dataCheckString = Object.keys(fields)
     .sort()
+    .filter((k) => fields[k as keyof typeof fields] !== undefined && fields[k as keyof typeof fields] !== null)
     .map((k) => `${k}=${fields[k as keyof typeof fields]}`)
     .join("\n");
+
 
   const secretKey = crypto.createHash("sha256").update(botToken).digest();
   const hmac = crypto
@@ -142,8 +144,17 @@ export function validateTelegramWidgetData(
     .update(dataCheckString)
     .digest("hex");
 
-  if (hmac !== hash) return { ok: false, reason: "bad_signature" };
+  if (hmac !== hash) {
+    console.error("[AUTH] Telegram signature mismatch!", {
+      calculated: hmac.substring(0, 5) + "...",
+      expected: hash.substring(0, 5) + "...",
+      botTokenSet: !!botToken,
+      botTokenLength: botToken?.length
+    });
+    return { ok: false, reason: "bad_signature" };
+  }
   return { ok: true };
+
 }
 
 /**

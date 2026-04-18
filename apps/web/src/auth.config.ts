@@ -57,15 +57,18 @@ export default {
           return upsertTelegramUser("99999999", "Dev", "Telegram");
         }
 
-        const widgetUser = body as TelegramWidgetUser;
+        const { hash, id, first_name, last_name, username, photo_url, auth_date } = body;
+        const widgetUser = { hash, id, first_name, last_name, username, photo_url, auth_date } as TelegramWidgetUser;
+        
         const result = validateTelegramWidgetData(widgetUser);
         if (!result.ok) return null;
 
         return upsertTelegramUser(
-          String(widgetUser.id),
-          widgetUser.first_name,
-          widgetUser.last_name,
+          String(id),
+          first_name,
+          last_name,
         );
+
       },
     }),
     Credentials({
