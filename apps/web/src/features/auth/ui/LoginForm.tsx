@@ -78,7 +78,7 @@ function AuthSubmitButton({
   );
 }
 
-export function LoginForm() {
+export function LoginForm({ botId }: { botId?: string }) {
   const [mode, setMode] = useState<"social" | "email" | "register" | "forgot-password">("social");
   const [loading, setLoading] = useState<string | null>(null);
   
@@ -191,7 +191,7 @@ export function LoginForm() {
                   <p className="text-sm text-slate-400">Выберите способ входа в систему</p>
                 </div>
 
-                <TelegramLoginButton disabled={!!loading} />
+                <TelegramLoginButton disabled={!!loading} botId={botId} />
 
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>

@@ -8,15 +8,14 @@ import { Button } from "@/shared/ui/button";
 
 interface Props {
   disabled?: boolean;
+  botId?: string;
 }
 
 const isDev = process.env.NODE_ENV === "development";
 
-export function TelegramLoginButton({ disabled }: Props) {
+export function TelegramLoginButton({ disabled, botId }: Props) {
   const [loading, setLoading] = useState(false);
   const scriptLoaded = useRef(false);
-
-  const botId = process.env.NEXT_PUBLIC_BOT_ID;
 
   useEffect(() => {
     if (isDev || scriptLoaded.current) return;

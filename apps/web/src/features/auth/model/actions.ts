@@ -167,13 +167,22 @@ export const linkEmailToAccountAction = authActionClient
     if (!emailUser) throw new Error("Неверный email или пароль");
 
     // Переносим telegramId на email-аккаунт и удаляем Telegram-only аккаунт
-    await db.$transaction([
-      db.user.update({
+    await db.$transaction(async (tx) => {
+      // 1. Освобождаем telegramId у временного аккаунта, чтобы не было конфликта Unique Constraint
+      await tx.user.update({
+        where: { id: userId },
+        data: { telegramId: null },
+      });
+
+      // 2. Переносим telegramId на основной аккаунт
+      await tx.user.update({
         where: { id: emailUser.id },
         data: { telegramId: telegramUser.telegramId },
-      }),
-      db.user.delete({ where: { id: userId } }),
-    ]);
+      });
+
+      // 3. Удаляем временный аккаунт
+      await tx.user.delete({ where: { id: userId } });
+    });
 
     return { success: true, linkedUserId: emailUser.id };
   });

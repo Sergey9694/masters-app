@@ -9,6 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
+  const botId = process.env.NEXT_PUBLIC_BOT_ID;
+
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
       {/* Background Orbs */}
@@ -25,7 +27,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <LoginForm />
+        <LoginForm botId={botId} />
 
         <p className="mt-8 text-center text-sm text-slate-500">
           Продолжая, вы соглашаетесь с{" "}
