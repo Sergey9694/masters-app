@@ -5,7 +5,7 @@ import { db } from "@/shared/lib/db";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { authService } from "@/services/auth.service";
-import { actionClient } from "@/shared/lib/safe-action";
+import { actionClient, authActionClient } from "@/shared/lib/safe-action";
 
 const loginSchema = z.object({
   initData: z.string(),
@@ -143,4 +143,37 @@ export const resetPasswordAction = actionClient
       console.error("[resetPasswordAction] error:", error);
       throw error;
     }
+  });
+
+/**
+ * Привязка email-аккаунта к Telegram-аккаунту.
+ * Текущий пользователь (залогинен через Telegram, email отсутствует)
+ * вводит email + пароль. Находим email-аккаунт, переносим telegramId
+ * на него, удаляем Telegram-only аккаунт.
+ */
+export const linkEmailToAccountAction = authActionClient
+  .schema(z.object({ email: z.string().email(), password: z.string().min(1) }))
+  .action(async ({ parsedInput: { email, password }, ctx: { userId } }) => {
+    const telegramUser = await db.user.findUnique({
+      where: { id: userId },
+      select: { telegramId: true, email: true },
+    });
+
+    if (!telegramUser) throw new Error("Пользователь не найден");
+    if (telegramUser.email) return { success: true, message: "Email уже привязан" };
+    if (!telegramUser.telegramId) throw new Error("У текущего аккаунта нет telegramId");
+
+    const emailUser = await authService.validateCredentials(email, password);
+    if (!emailUser) throw new Error("Неверный email или пароль");
+
+    // Переносим telegramId на email-аккаунт и удаляем Telegram-only аккаунт
+    await db.$transaction([
+      db.user.update({
+        where: { id: emailUser.id },
+        data: { telegramId: telegramUser.telegramId },
+      }),
+      db.user.delete({ where: { id: userId } }),
+    ]);
+
+    return { success: true, linkedUserId: emailUser.id };
   });

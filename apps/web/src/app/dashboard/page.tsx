@@ -105,6 +105,7 @@ export default async function DashboardPage() {
 
       <DashboardContent
         user={user}
+        hasEmail={!!user.email}
         categories={categories}
         stats={{
           myOrdersCount,

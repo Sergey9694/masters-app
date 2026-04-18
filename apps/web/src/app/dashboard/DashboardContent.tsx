@@ -25,8 +25,9 @@ import { SearchInput } from "@/widgets/OrderFeed/ui/SearchInput";
 import type { DashboardPageData } from "@/shared/types/domain";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { SectionHeader } from "@/shared/ui/section-header";
+import { LinkEmailBanner } from "@/features/auth/ui/LinkEmailBanner";
 
-export function DashboardContent({ user, categories, stats }: DashboardPageData) {
+export function DashboardContent({ user, hasEmail, categories, stats }: DashboardPageData) {
   const isProvider = !!user.providerProfile;
 
   return (
@@ -36,6 +37,7 @@ export function DashboardContent({ user, categories, stats }: DashboardPageData)
       initial="initial"
       animate="animate"
     >
+      {!hasEmail && <LinkEmailBanner />}
       {/* Header */}
       <motion.header className="flex items-center justify-between mb-8" variants={STAGGER_ITEM}>
         <Link href={`/dashboard/providers/${user.providerProfile?.id || ""}`} className="block group/profile">

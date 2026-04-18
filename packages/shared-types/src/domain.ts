@@ -75,6 +75,7 @@ export interface DashboardPageData {
     avatar: string | null;
     providerProfile?: { id: string } | null;
   };
+  hasEmail: boolean;
   categories: Category[];
   stats: DashboardStats;
   recentOrders: OrderCard[];

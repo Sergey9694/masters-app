@@ -13,7 +13,7 @@ export function TelegramLoginButton({ disabled }: Props) {
   const [loading, setLoading] = useState(false);
   const scriptLoaded = useRef(false);
 
-  const botName = process.env.NEXT_PUBLIC_BOT_NAME;
+  const botId = process.env.NEXT_PUBLIC_BOT_ID;
 
   useEffect(() => {
     if (scriptLoaded.current) return;
@@ -25,7 +25,7 @@ export function TelegramLoginButton({ disabled }: Props) {
   }, []);
 
   const handleClick = async () => {
-    if (!botName || loading || disabled) return;
+    if (!botId || loading || disabled) return;
     setLoading(true);
 
     window.onTelegramWidgetAuth = async (user) => {
@@ -44,7 +44,7 @@ export function TelegramLoginButton({ disabled }: Props) {
     };
 
     window.Telegram?.Login?.auth(
-      { bot_id: botName, request_access: true, lang: "ru" },
+      { bot_id: botId, request_access: true, lang: "ru" },
       (user: Record<string, unknown> | false) => {
         if (!user) {
           setLoading(false);
@@ -55,7 +55,7 @@ export function TelegramLoginButton({ disabled }: Props) {
     );
   };
 
-  if (!botName) return null;
+  if (!botId) return null;
 
   return (
     <Button
