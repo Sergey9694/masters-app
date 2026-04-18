@@ -32,7 +32,9 @@ RUN prisma generate --schema=./apps/web/prisma/schema.prisma
 
 # Переменные окружения для билда
 ARG NEXT_PUBLIC_BOT_NAME
+ARG NEXT_PUBLIC_BOT_ID
 ENV NEXT_PUBLIC_BOT_NAME="$NEXT_PUBLIC_BOT_NAME"
+ENV NEXT_PUBLIC_BOT_ID="$NEXT_PUBLIC_BOT_ID"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Собираем только веб-приложение

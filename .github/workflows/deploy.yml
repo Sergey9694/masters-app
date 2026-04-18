@@ -35,6 +35,7 @@ jobs:
           build-args: |
             APP_VERSION=${{ github.sha }}
             NEXT_PUBLIC_BOT_NAME=${{ secrets.NEXT_PUBLIC_BOT_NAME }}
+            NEXT_PUBLIC_BOT_ID=${{ secrets.NEXT_PUBLIC_BOT_ID }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
