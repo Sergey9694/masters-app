@@ -1,25 +1,26 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getCurrentUser } from "@/shared/lib/get-user";
-
-// Серверный прокси к DaData. Токен хранится в DADATA_API_KEY (server-only).
-// Клиент дёргает /api/suggest/address?q=..., CORS и утечки токена исключены.
 
 const DADATA_URL =
   "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
 
+const querySchema = z.object({
+  q: z.string().trim().min(3).max(200),
+});
+
 export async function GET(req: Request) {
-  // Только для авторизованных — чтобы не расходовать квоту DaData анонимами
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ suggestions: [] }, { status: 401 });
   }
 
   const { searchParams } = new URL(req.url);
-  const query = (searchParams.get("q") || "").trim();
-
-  if (query.length < 3) {
+  const parsed = querySchema.safeParse({ q: searchParams.get("q") ?? "" });
+  if (!parsed.success) {
     return NextResponse.json({ suggestions: [] });
   }
+  const query = parsed.data.q;
 
   const token = process.env.DADATA_API_KEY;
   if (!token) {
