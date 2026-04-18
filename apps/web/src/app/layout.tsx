@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Roboto_Condensed, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import Script from "next/script";
 
 const robotoCondensed = Roboto_Condensed({
   subsets: ["latin", "cyrillic"],
@@ -29,9 +30,9 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark">
       <body className={`${robotoCondensed.variable} ${jetbrainsMono.variable} font-sans`}>
-        <script 
-          src="https://telegram.org/js/telegram-web-app.js" 
-          defer
+        <Script
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
         />
         <ProfileSync />
         <GlobalHaptics />
