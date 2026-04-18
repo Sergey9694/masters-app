@@ -18,11 +18,20 @@ interface TelegramWebApp {
   };
 }
 
+interface TelegramLogin {
+  auth: (
+    options: { bot_id: string; request_access?: boolean; lang?: string },
+    callback: (user: Record<string, unknown> | false) => void
+  ) => void;
+}
+
 declare global {
   interface Window {
     Telegram?: {
       WebApp: TelegramWebApp;
+      Login?: TelegramLogin;
     };
+    onTelegramWidgetAuth?: (user: Record<string, unknown>) => void;
   }
 }
 
