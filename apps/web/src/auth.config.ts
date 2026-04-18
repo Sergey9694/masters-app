@@ -1,11 +1,27 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { validateTelegramWebAppData } from "@/shared/lib/auth";
+import {
+  validateTelegramWebAppData,
+  validateTelegramWidgetData,
+  type TelegramWidgetUser,
+} from "@/shared/lib/auth";
 import { db } from "@/shared/lib/db";
 import { authService } from "@/services/auth.service";
 
+async function upsertTelegramUser(telegramIdStr: string, firstName: string, lastName?: string) {
+  const telegramId = BigInt(telegramIdStr);
+  let user = await db.user.findUnique({ where: { telegramId } });
+  if (!user) {
+    user = await db.user.create({
+      data: { telegramId, firstName, lastName: lastName ?? "", authProvider: "TELEGRAM" },
+    });
+  }
+  return { id: user.id, name: user.firstName, email: user.email, role: user.role };
+}
+
 export default {
   providers: [
+    // Telegram Web App (Mini App — initData из window.Telegram.WebApp)
     Credentials({
       id: "telegram",
       name: "Telegram",
@@ -13,34 +29,36 @@ export default {
       async authorize(_, request) {
         const data = await request.json();
         const initData = data?.initData;
-        
-        if (!initData || !validateTelegramWebAppData(initData)) return null;
+        if (!initData) return null;
+
+        const result = validateTelegramWebAppData(initData);
+        if (!result.ok) return null;
 
         const urlParams = new URLSearchParams(initData);
-        const userRaw = JSON.parse(urlParams.get("user") || "{}");
-        const telegramId = userRaw.id?.toString();
+        let userRaw: { id?: number; first_name?: string; last_name?: string } = {};
+        try { userRaw = JSON.parse(urlParams.get("user") || "{}"); } catch { return null; }
 
+        const telegramId = userRaw.id?.toString();
         if (!telegramId) return null;
 
-        let user = await db.user.findUnique({ where: { telegramId } });
+        return upsertTelegramUser(telegramId, userRaw.first_name ?? "User", userRaw.last_name);
+      },
+    }),
+    // Telegram Login Widget (веб-браузер)
+    Credentials({
+      id: "telegram-widget",
+      name: "Telegram Widget",
+      credentials: {},
+      async authorize(_, request) {
+        const widgetUser = (await request.json()) as TelegramWidgetUser;
+        const result = validateTelegramWidgetData(widgetUser);
+        if (!result.ok) return null;
 
-        if (!user) {
-          user = await db.user.create({
-            data: {
-              telegramId,
-              firstName: userRaw.first_name || "User",
-              lastName: userRaw.last_name || "",
-              authProvider: "TELEGRAM",
-            },
-          });
-        }
-
-        return {
-          id: user.id,
-          name: user.firstName,
-          email: user.email,
-          role: user.role,
-        };
+        return upsertTelegramUser(
+          String(widgetUser.id),
+          widgetUser.first_name,
+          widgetUser.last_name,
+        );
       },
     }),
     Credentials({

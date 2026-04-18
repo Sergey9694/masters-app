@@ -104,6 +104,49 @@ export async function updateSession(request: NextRequest) {
 }
 
 /**
+ * Валидация данных от Telegram Login Widget (веб-браузер).
+ * Отличается от TWA: секрет = sha256(botToken), строка = key=value через \n.
+ */
+export interface TelegramWidgetUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
+export function validateTelegramWidgetData(
+  data: TelegramWidgetUser,
+): TelegramValidationResult {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return { ok: false, reason: "no_token" };
+
+  const { hash, ...fields } = data;
+  if (!hash) return { ok: false, reason: "no_hash" };
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (nowSec - data.auth_date > INIT_DATA_MAX_AGE_SEC) {
+    return { ok: false, reason: "expired" };
+  }
+
+  const dataCheckString = Object.keys(fields)
+    .sort()
+    .map((k) => `${k}=${fields[k as keyof typeof fields]}`)
+    .join("\n");
+
+  const secretKey = crypto.createHash("sha256").update(botToken).digest();
+  const hmac = crypto
+    .createHmac("sha256", secretKey)
+    .update(dataCheckString)
+    .digest("hex");
+
+  if (hmac !== hash) return { ok: false, reason: "bad_signature" };
+  return { ok: true };
+}
+
+/**
  * Валидация данных из Telegram Web App.
  * Возвращает конкретную причину отказа для логирования (вместо простого boolean).
  */
