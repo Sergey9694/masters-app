@@ -28,7 +28,7 @@ export function LinkEmailBanner() {
         toast.error(res.serverError);
         return;
       }
-      toast.success("Email успешно привязан");
+      toast.success("Аккаунт успешно связан");
       // Re-login as the email account
       await signIn("email", { email, password, redirect: false, callbackUrl: "/dashboard" });
       router.refresh();
