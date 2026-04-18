@@ -148,5 +148,42 @@ export const authService = {
       email: user.email,
       role: user.role,
     };
+  },
+
+  /**
+   * Link existing email account to Telegram account
+   */
+  async linkEmailToAccount(currentUserId: string, email: string, password?: string) {
+    const telegramUser = await db.user.findUnique({
+      where: { id: currentUserId },
+      select: { telegramId: true, email: true },
+    });
+
+    if (!telegramUser) throw new Error("Пользователь не найден");
+    if (telegramUser.email) throw new Error("Email уже привязан");
+    if (!telegramUser.telegramId) throw new Error("У текущего аккаунта нет telegramId");
+
+    const emailUser = await this.validateCredentials(email, password);
+    if (!emailUser) throw new Error("Неверный email или пароль");
+
+    // Transfer telegramId to email account and delete temporary Telegram-only account
+    await db.$transaction(async (tx) => {
+      // 1. Clear telegramId from temp account to avoid conflict
+      await tx.user.update({
+        where: { id: currentUserId },
+        data: { telegramId: null },
+      });
+
+      // 2. Transfer telegramId to main account
+      await tx.user.update({
+        where: { id: emailUser.id },
+        data: { telegramId: telegramUser.telegramId },
+      });
+
+      // 3. Delete temp account
+      await tx.user.delete({ where: { id: currentUserId } });
+    });
+
+    return emailUser.id;
   }
 };

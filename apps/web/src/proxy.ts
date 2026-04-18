@@ -7,11 +7,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 1. Получаем сессию через Auth.js
+  // 1. Получаем сессию через Auth.js (для Web)
   const session = await auth();
 
-  // 2. Если сессии нет — проверяем публичные роуты
-  if (!session) {
+  // 1.1. Если сессии нет, проверяем Bearer токен (для Mobile/API)
+  let apiSession = null;
+  if (!session && request.nextUrl.pathname.startsWith("/api/v1")) {
+    const { getSessionFromRequest } = await import("@/shared/lib/auth");
+    apiSession = await getSessionFromRequest(request);
+  }
+
+  // 2. Если сессии нет (ни Web, ни API) — проверяем публичные роуты
+  if (!session && !apiSession) {
     const isPublic = 
       request.nextUrl.pathname === "/" ||
       request.nextUrl.pathname === "/login" ||
@@ -33,8 +40,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
+  const userRole = session?.user?.role || apiSession?.role;
+
   // 3. Админ-роуты — только для ADMIN
-  if (request.nextUrl.pathname.startsWith("/admin") && session.user?.role !== "ADMIN") {
+  if (request.nextUrl.pathname.startsWith("/admin") && userRole !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard?error=forbidden", request.url));
   }
 

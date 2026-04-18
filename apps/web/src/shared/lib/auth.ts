@@ -205,3 +205,33 @@ export function validateTelegramWebAppData(
 
   return { ok: true };
 }
+
+/**
+ * Получение сессии из запроса (Cookie или Authorization: Bearer <jwt>)
+ */
+export async function getSessionFromRequest(request: NextRequest): Promise<SessionPayload | null> {
+  // 1. Проверяем заголовок Authorization
+  const authHeader = request.headers.get("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    try {
+      return await decrypt(token);
+    } catch (e) {
+      console.error("[AUTH] Failed to decrypt Bearer token", e);
+      return null;
+    }
+  }
+
+  // 2. Проверяем куки (для Web)
+  const sessionCookie = request.cookies.get("session")?.value;
+  if (sessionCookie) {
+    try {
+      return await decrypt(sessionCookie);
+    } catch (e) {
+      console.error("[AUTH] Failed to decrypt session cookie", e);
+      return null;
+    }
+  }
+
+  return null;
+}

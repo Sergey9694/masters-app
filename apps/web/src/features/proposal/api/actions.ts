@@ -6,6 +6,7 @@ import { taskResponseSchema } from "../model/schema";
 import { authActionClient } from "@/shared/lib/safe-action";
 import { z } from "zod";
 import { proposalService } from "@/services/proposal.service";
+import { orderService } from "@/services/order.service";
 
 /**
  * Откликнуться на заявку
@@ -46,15 +47,8 @@ export const acceptProposalAction = authActionClient
     const { userId } = ctx;
 
     try {
-      // We need to know orderId for revalidation
-      // The service could return it, but for now we revalidate common paths
-      const result = await proposalService.accept(proposalId, userId);
-
+      const result = await orderService.acceptProposal(proposalId, userId);
       revalidatePath(`/dashboard/feed`);
-      // Note: Ideal would be to revalidate specific order path, 
-      // but service currently hides DB details. 
-      // We can return more info from service if needed.
-      
       return result;
     } catch (error: any) {
       console.error("[acceptProposalAction] error:", error);
@@ -71,7 +65,7 @@ export const completeOrderAction = authActionClient
     const { userId } = ctx;
 
     try {
-      const result = await proposalService.complete(referenceId, userId);
+      const result = await orderService.complete(referenceId, userId);
       revalidatePath(`/dashboard/order/${referenceId}`);
       return result;
     } catch (error: any) {
@@ -89,7 +83,7 @@ export const cancelOrderAction = authActionClient
     const { userId } = ctx;
 
     try {
-      const result = await proposalService.cancel(referenceId, userId);
+      const result = await orderService.cancel(referenceId, userId);
       revalidatePath(`/dashboard/order/${referenceId}`);
       revalidatePath("/dashboard/feed");
       return result;
@@ -108,7 +102,7 @@ export const refuseOrderAction = authActionClient
     const { userId } = ctx;
 
     try {
-      const result = await proposalService.refuse(referenceId, userId);
+      const result = await orderService.refuse(referenceId, userId);
       revalidatePath(`/dashboard/order/${referenceId}`);
       revalidatePath("/dashboard/feed");
       return result;

@@ -154,35 +154,11 @@ export const resetPasswordAction = actionClient
 export const linkEmailToAccountAction = authActionClient
   .schema(z.object({ email: z.string().email(), password: z.string().min(1) }))
   .action(async ({ parsedInput: { email, password }, ctx: { userId } }) => {
-    const telegramUser = await db.user.findUnique({
-      where: { id: userId },
-      select: { telegramId: true, email: true },
-    });
-
-    if (!telegramUser) throw new Error("Пользователь не найден");
-    if (telegramUser.email) return { success: true, message: "Email уже привязан" };
-    if (!telegramUser.telegramId) throw new Error("У текущего аккаунта нет telegramId");
-
-    const emailUser = await authService.validateCredentials(email, password);
-    if (!emailUser) throw new Error("Неверный email или пароль");
-
-    // Переносим telegramId на email-аккаунт и удаляем Telegram-only аккаунт
-    await db.$transaction(async (tx) => {
-      // 1. Освобождаем telegramId у временного аккаунта, чтобы не было конфликта Unique Constraint
-      await tx.user.update({
-        where: { id: userId },
-        data: { telegramId: null },
-      });
-
-      // 2. Переносим telegramId на основной аккаунт
-      await tx.user.update({
-        where: { id: emailUser.id },
-        data: { telegramId: telegramUser.telegramId },
-      });
-
-      // 3. Удаляем временный аккаунт
-      await tx.user.delete({ where: { id: userId } });
-    });
-
-    return { success: true, linkedUserId: emailUser.id };
+    try {
+      const linkedUserId = await authService.linkEmailToAccount(userId, email, password);
+      return { success: true, linkedUserId };
+    } catch (error: any) {
+      console.error("[linkEmailToAccountAction] error:", error);
+      throw error instanceof Error ? error : new Error("Не удалось привязать email");
+    }
   });
