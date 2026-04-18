@@ -9,6 +9,8 @@ interface Props {
   disabled?: boolean;
 }
 
+const isDev = process.env.NODE_ENV === "development";
+
 export function TelegramLoginButton({ disabled }: Props) {
   const [loading, setLoading] = useState(false);
   const scriptLoaded = useRef(false);
@@ -16,7 +18,7 @@ export function TelegramLoginButton({ disabled }: Props) {
   const botId = process.env.NEXT_PUBLIC_BOT_ID;
 
   useEffect(() => {
-    if (scriptLoaded.current) return;
+    if (isDev || scriptLoaded.current) return;
     scriptLoaded.current = true;
     const script = document.createElement("script");
     script.src = "https://telegram.org/js/telegram-widget.js?22";
@@ -25,37 +27,49 @@ export function TelegramLoginButton({ disabled }: Props) {
   }, []);
 
   const handleClick = async () => {
-    if (!botId || loading || disabled) return;
+    if (loading || disabled) return;
     setLoading(true);
 
-    window.onTelegramWidgetAuth = async (user) => {
-      try {
+    try {
+      if (isDev) {
+        // В dev-режиме: bypass виджета, sign in с тестовым Telegram-пользователем
         const result = await signIn("telegram-widget", {
-          ...user,
+          __dev__: "true",
           redirect: false,
           callbackUrl: "/dashboard",
         });
-        if (result?.ok) {
-          window.location.href = "/dashboard";
-        }
-      } finally {
-        setLoading(false);
+        if (result?.ok) window.location.href = "/dashboard";
+        return;
       }
-    };
 
-    window.Telegram?.Login?.auth(
-      { bot_id: botId, request_access: true, lang: "ru" },
-      (user: Record<string, unknown> | false) => {
-        if (!user) {
+      if (!botId) return;
+
+      window.onTelegramWidgetAuth = async (user) => {
+        try {
+          const result = await signIn("telegram-widget", {
+            ...user,
+            redirect: false,
+            callbackUrl: "/dashboard",
+          });
+          if (result?.ok) window.location.href = "/dashboard";
+        } finally {
           setLoading(false);
-          return;
         }
-        window.onTelegramWidgetAuth?.(user);
-      }
-    );
+      };
+
+      window.Telegram?.Login?.auth(
+        { bot_id: botId, request_access: true, lang: "ru" },
+        (user: Record<string, unknown> | false) => {
+          if (!user) { setLoading(false); return; }
+          window.onTelegramWidgetAuth?.(user);
+        }
+      );
+    } catch {
+      setLoading(false);
+    }
   };
 
-  if (!botId) return null;
+  if (!isDev && !botId) return null;
 
   return (
     <Button

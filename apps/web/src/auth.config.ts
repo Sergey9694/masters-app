@@ -50,7 +50,14 @@ export default {
       name: "Telegram Widget",
       credentials: {},
       async authorize(_, request) {
-        const widgetUser = (await request.json()) as TelegramWidgetUser;
+        const body = await request.json();
+
+        // Dev-bypass: localhost не поддерживается виджетом Telegram
+        if (body.__dev__ === "true" && process.env.NODE_ENV === "development") {
+          return upsertTelegramUser("99999999", "Dev", "Telegram");
+        }
+
+        const widgetUser = body as TelegramWidgetUser;
         const result = validateTelegramWidgetData(widgetUser);
         if (!result.ok) return null;
 
