@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 
 interface Props {
@@ -42,7 +43,11 @@ export function TelegramLoginButton({ disabled }: Props) {
         return;
       }
 
-      if (!botId) return;
+      if (!botId) {
+        toast.error("NEXT_PUBLIC_BOT_ID не задан");
+        setLoading(false);
+        return;
+      }
 
       window.onTelegramWidgetAuth = async (user) => {
         try {
@@ -68,8 +73,6 @@ export function TelegramLoginButton({ disabled }: Props) {
       setLoading(false);
     }
   };
-
-  if (!isDev && !botId) return null;
 
   return (
     <Button

@@ -32,7 +32,7 @@ export default function RootLayout({
       <body className={`${robotoCondensed.variable} ${jetbrainsMono.variable} font-sans`}>
         <Script
           src="https://telegram.org/js/telegram-web-app.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
         />
         <ProfileSync />
         <GlobalHaptics />
