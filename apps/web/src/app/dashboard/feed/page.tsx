@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { OrderFeed } from "@/widgets/OrderFeed/ui/OrderFeed";
 import { SearchInput } from "@/widgets/OrderFeed/ui/SearchInput";

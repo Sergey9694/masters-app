@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { Star, MessageSquare, Briefcase, Calendar } from "lucide-react";
 import { formatSmartDate } from "@/shared/lib/date";

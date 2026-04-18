@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getMetrics } from "@/features/admin/api/get-metrics";
 import { TrendingUp, CheckCircle, XCircle, MessageSquare, Clock } from "lucide-react";
 

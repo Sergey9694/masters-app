@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getDashboardStats } from "@/features/admin/api/get-dashboard-stats";
 import { Users, ClipboardList, Award, MessageSquare, Star, TrendingUp } from "lucide-react";
 

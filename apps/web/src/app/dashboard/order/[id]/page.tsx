@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Banknote, MapPin, Clock, User as UserIcon, Star, ShieldCheck, MessageSquare } from "lucide-react";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { notFound, redirect } from "next/navigation";
 import { Star, ShieldCheck, Briefcase, Banknote, Calendar, MessageSquare, User as UserIcon, Tag } from "lucide-react";
 import { db } from "@/shared/lib/db";

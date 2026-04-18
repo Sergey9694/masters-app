@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { redirect } from "next/navigation";
 import { db } from "@/shared/lib/db";

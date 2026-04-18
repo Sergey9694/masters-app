@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { redirect } from "next/navigation";
 import { Bell } from "lucide-react";
 import { db } from "@/shared/lib/db";

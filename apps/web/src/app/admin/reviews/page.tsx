@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getAllReviews } from "@/features/admin/api/get-all-reviews";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { Star } from "lucide-react";

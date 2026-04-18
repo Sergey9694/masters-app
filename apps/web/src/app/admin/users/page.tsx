@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getUsers } from "@/features/admin/api/get-users";
 import { Role } from "@/shared/types/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getPendingProviders } from "@/features/admin/api/get-pending-providers";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { Star, Briefcase, MessageSquare } from "lucide-react";

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getAllOrders } from "@/features/admin/api/get-all-orders";
 import { OrderStatus } from "@prisma/client";
 import { OrderModerationActions } from "@/features/admin/ui/OrderModerationActions";
