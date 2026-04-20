@@ -160,6 +160,33 @@ export const orderService = {
   },
 
   /**
+   * Update order (partial)
+   */
+  async update(id: string, data: Partial<CreateOrderInput>, userId: string) {
+    const order = await db.order.findUnique({
+      where: { id },
+      select: { clientId: true, status: true },
+    });
+
+    if (!order) throw new Error("Заявка не найдена");
+    if (order.clientId !== userId) throw new Error("Вы не являетесь автором заявки");
+    if (order.status !== "OPEN") throw new Error("Заявку можно изменить только в статусе OPEN");
+
+    return db.order.update({
+      where: { id },
+      data: {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
+        ...(data.cityId !== undefined && { cityId: data.cityId }),
+        ...(data.budget !== undefined && { budget: data.budget ? parseFloat(data.budget) : null }),
+        ...(data.address !== undefined && { address: data.address }),
+        ...(data.images !== undefined && { images: data.images }),
+      },
+    });
+  },
+
+  /**
    * Client accepts a proposal
    */
   async acceptProposal(proposalId: string, userId: string) {

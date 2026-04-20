@@ -93,6 +93,58 @@ export const providerService = {
   },
 
   /**
+   * List providers with optional city/category filters
+   */
+  async list(params: {
+    cityId?: string;
+    categoryId?: string;
+    pageSize?: number;
+    cursor?: string;
+  }) {
+    const pageSize = params.pageSize ?? 20;
+
+    const where: any = {};
+    if (params.cityId) {
+      where.user = { cityId: params.cityId };
+    }
+    if (params.categoryId) {
+      where.categories = { some: { categoryId: params.categoryId } };
+    }
+
+    const providers = await db.providerProfile.findMany({
+      where,
+      select: {
+        id: true,
+        bio: true,
+        rating: true,
+        isVerified: true,
+        experienceYears: true,
+        minPrice: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            displayName: true,
+            avatar: true,
+            cityId: true,
+          },
+        },
+        categories: { select: { category: { select: { id: true, name: true } } } },
+      },
+      orderBy: { rating: "desc" },
+      take: pageSize + 1,
+      ...(params.cursor ? { skip: 1, cursor: { id: params.cursor } } : {}),
+    });
+
+    const hasMore = providers.length > pageSize;
+    const page = hasMore ? providers.slice(0, pageSize) : providers;
+    const nextCursor = hasMore ? page[page.length - 1].id : null;
+
+    return { providers: page, nextCursor };
+  },
+
+  /**
    * Get provider profile by User ID
    */
   async getByUserId(userId: string) {

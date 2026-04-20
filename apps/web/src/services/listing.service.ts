@@ -53,6 +53,37 @@ export const listingService = {
   },
 
   /**
+   * List listings owned by a user (via ProviderProfile)
+   */
+  async getByUser(userId: string, pageSize = 20, cursor?: string) {
+    const provider = await db.providerProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!provider) {
+      return { listings: [], nextCursor: null };
+    }
+
+    const listings = await db.serviceListing.findMany({
+      where: { providerId: provider.id },
+      include: {
+        category: true,
+        city: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: pageSize + 1,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+
+    const hasMore = listings.length > pageSize;
+    const page = hasMore ? listings.slice(0, pageSize) : listings;
+    const nextCursor = hasMore ? page[page.length - 1].id : null;
+
+    return { listings: page, nextCursor };
+  },
+
+  /**
    * Get listing by ID
    */
   async getById(id: string) {

@@ -123,7 +123,7 @@
 | Фаза | Статус | Что осталось |
 |---|---|---|
 | 3. Модель данных | ✅ завершена | Все модели (City, Category tree, ServiceListing, Order, Proposal) полностью синхронизированы, PostGIS настроен, сиды исправлены. |
-| 4. REST API | ⚠️ в процессе | Сервисный слой (`src/services/`) реализован. Текущая задача: создание эндпоинтов `app/api/v1/*`. |
+| 4. REST API | ✅ завершена | Сервисный слой (`src/services/`) реализован. Все эндпоинты `app/api/v1/*` (auth, orders, listings, proposals, providers, categories, cities, notifications, reviews, upload) покрывают план 4.2.1. |
 | 5. Desktop UI | ❌ | Маршрутизация всё ещё `/dashboard/*` (наследие TWA). Нет groups `(main)`/`(auth)`. Widgets только `CategoryGrid`, `OrderFeed`. Нет Header/Sidebar/Footer/BottomNav, темы-переключения, Inter-шрифта. |
 | 6. Объявления | ❌ | Feature `listing/` не создан, страниц каталога нет. Admin-модерация listings — нет. |
 | 7. Чат | ❌ | Моделей `Conversation`, `ConversationParticipant`, `Message` нет. |
@@ -133,7 +133,7 @@
 | 11. Полировка | ❌ | SEO, sitemap, Sentry, PWA-manifest — не сделано. |
 
 ### Критичный следующий шаг
-**Фаза 4.2.** Создание REST API эндпоинтов (Auth, Orders, Listings) на базе готовых сервисов для мобильного приложения.
+**Фаза 5.** Переделка Desktop Web UI: маршрутизация `(main)`/`(auth)`, Header/Sidebar/Footer/BottomNav, переключение темы, шрифт Inter.
 
 ### Принятые архитектурные решения (фиксация)
 - **Auth.js v5 (next-auth@beta)** вместо кастомного JWT-слоя. Session-стратегия: JWT (для Edge-совместимости). Схема БД — расширенная стандартная (`Account`, `Session`, `VerificationToken`).
@@ -910,7 +910,7 @@ uslugi-ryadom/
 ---
 
 ## Фаза 4. REST API слой
-**Статус: В процессе [⚠️]**
+**Статус: Завершена [x]**
 
 ### Цель
 Создать REST API, который будут использовать:
@@ -993,7 +993,7 @@ Web-приложение продолжает использовать Server Ac
        - auth.service.ts ← из auth/model/actions.ts
 ```
 
-### 4.2 — REST API роуты (В процессе) ⚠️
+### 4.2 — REST API роуты (Завершено) [x]
 
 ```
 4.2.1  Структура API:
