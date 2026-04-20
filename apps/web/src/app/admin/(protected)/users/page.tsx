@@ -40,7 +40,7 @@ export default async function AdminUsersPage({
               <th className="text-left p-4 font-bold">Дата</th>
               <th className="text-left p-4 font-bold">Статус</th>
               <th className="text-left p-4 font-bold">Изменить роль</th>
-              <th className="p-4 font-bold text-right"></th>
+              <th className="text-left p-4 font-bold">Действия</th>
             </tr>
           </thead>
           <tbody>
@@ -82,7 +82,7 @@ export default async function AdminUsersPage({
                 <td className="p-4">
                   <RoleSelect userId={user.id} currentRole={user.role} />
                 </td>
-                <td className="p-4 text-right">
+                <td className="p-4">
                   {user.role !== "ADMIN" && (
                     <DeleteUserButton userId={user.id} userName={user.firstName} />
                   )}
