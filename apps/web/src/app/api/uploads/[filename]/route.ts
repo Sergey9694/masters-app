@@ -14,7 +14,8 @@ export async function GET(_req: Request, ctx: Ctx) {
     return new NextResponse("Not Found", { status: 404 });
   }
 
-  const filePath = join(process.cwd(), "uploads", filename);
+  const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
+  const filePath = join(uploadsDir, filename);
 
   try {
     const fileStat = await stat(filePath);

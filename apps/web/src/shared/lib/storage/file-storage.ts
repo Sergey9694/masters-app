@@ -28,7 +28,7 @@ export async function uploadFile(file: File): Promise<string> {
     throw new Error("Не удалось обработать изображение. Убедитесь, что это JPG, PNG или WebP.");
   }
 
-  const uploadsDir = join(process.cwd(), "uploads");
+  const uploadsDir = process.env.UPLOADS_DIR ?? join(process.cwd(), "uploads");
 
   try {
     await mkdir(uploadsDir, { recursive: true });

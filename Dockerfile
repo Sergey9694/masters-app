@@ -46,6 +46,7 @@ WORKDIR /app
 
 ENV NODE_ENV="production"
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV UPLOADS_DIR="/app/uploads"
 
 # Устанавливаем необходимые системные зависимости и Prisma CLI для startup.js
 RUN apk add --no-cache openssl libc6-compat curl && \
