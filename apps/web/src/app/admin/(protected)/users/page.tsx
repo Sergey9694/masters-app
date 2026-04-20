@@ -39,7 +39,8 @@ export default async function AdminUsersPage({
               <th className="text-left p-4 font-bold">Роль</th>
               <th className="text-left p-4 font-bold">Дата</th>
               <th className="text-left p-4 font-bold">Статус</th>
-              <th className="text-left p-4 font-bold">Действия</th>
+              <th className="text-left p-4 font-bold">Изменить роль</th>
+              <th className="p-4 font-bold text-right"></th>
             </tr>
           </thead>
           <tbody>
@@ -79,15 +80,12 @@ export default async function AdminUsersPage({
                   )}
                 </td>
                 <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <RoleSelect userId={user.id} currentRole={user.role} />
-                    {user.role !== "ADMIN" && (
-                      <DeleteUserButton
-                        userId={user.id}
-                        userName={user.firstName}
-                      />
-                    )}
-                  </div>
+                  <RoleSelect userId={user.id} currentRole={user.role} />
+                </td>
+                <td className="p-4 text-right">
+                  {user.role !== "ADMIN" && (
+                    <DeleteUserButton userId={user.id} userName={user.firstName} />
+                  )}
                 </td>
               </tr>
             ))}
