@@ -6,8 +6,6 @@
 
 const HEIC_MIME_TYPES = ["image/heic", "image/heif"];
 
-import heic2any from "heic2any";
-
 /**
  * Проверяет, является ли файл HEIC/HEIF.
  */
@@ -25,6 +23,7 @@ export function isHeicFile(file: File): boolean {
  */
 export async function heicToJpeg(file: File, quality = 0.85): Promise<File> {
   try {
+    const { default: heic2any } = await import("heic2any");
     const convertedBlob = await heic2any({
       blob: file,
       toType: "image/jpeg",

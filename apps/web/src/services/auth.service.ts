@@ -2,6 +2,8 @@ import { db } from "@/shared/lib/db";
 import { createEmailToken, verifyEmailToken, sendEmail } from "@/shared/lib/email";
 import { logAudit } from "@/shared/lib/audit";
 
+const passwordResetCooldown = new Map<string, number>();
+
 export interface RegisterInput {
   email: string;
   password?: string;
@@ -78,27 +80,37 @@ export const authService = {
   async requestPasswordReset(email: string) {
     const user = await db.user.findUnique({
       where: { email },
-      select: { id: true, firstName: true }
+      select: { id: true, firstName: true },
     });
 
-    if (user) {
-      const token = await createEmailToken({ email, type: "reset" });
-      const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/reset-password?token=${token}`;
-
-      await logAudit({
-        userId: user.id,
-        action: "UPDATE",
-        entity: "User",
-        entityId: user.id,
-        metadata: { info: "Password reset requested" },
-      });
-
-      await sendEmail({
-        to: email,
-        subject: "Восстановление пароля — УслугиРядом",
-        html: `<p>Вы запросили сброс пароля. Перейдите по ссылке для установки нового:</p><a href="${resetLink}">${resetLink}</a>`,
-      });
+    if (!user) {
+      throw new Error("Пользователь с таким email не найден");
     }
+
+    // Кулдаун 60 секунд — защита от спама
+    const lastSent = passwordResetCooldown.get(email);
+    if (lastSent && Date.now() - lastSent < 60_000) {
+      const remaining = Math.ceil((60_000 - (Date.now() - lastSent)) / 1000);
+      throw new Error(`Подождите ${remaining} сек. перед повторной отправкой`);
+    }
+    passwordResetCooldown.set(email, Date.now());
+
+    const token = await createEmailToken({ email, type: "reset" });
+    const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/reset-password?token=${token}`;
+
+    await logAudit({
+      userId: user.id,
+      action: "UPDATE",
+      entity: "User",
+      entityId: user.id,
+      metadata: { info: "Password reset requested" },
+    });
+
+    await sendEmail({
+      to: email,
+      subject: "Восстановление пароля — УслугиРядом",
+      html: `<p>Вы запросили сброс пароля. Перейдите по ссылке для установки нового:</p><a href="${resetLink}">${resetLink}</a>`,
+    });
   },
 
   /**

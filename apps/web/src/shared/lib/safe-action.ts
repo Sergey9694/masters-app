@@ -8,7 +8,7 @@ import { db } from "./db";
 export const actionClient = createSafeActionClient({
   handleServerError(e) {
     console.error("Action error:", e.message);
-    return "Something went wrong, please try again.";
+    return e.message || "Something went wrong, please try again.";
   },
 });
 

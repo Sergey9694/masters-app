@@ -19,6 +19,8 @@ export function StaggerWrap({ children, className }: StaggerWrapProps) {
   return (
     <motion.div
       variants={STAGGER_CONTAINER}
+      initial="initial"
+      animate="animate"
       className={cn("w-full", className)}
     >
       {children}

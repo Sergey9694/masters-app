@@ -161,9 +161,13 @@ export function LoginForm({ botId }: { botId?: string }) {
     setLoading("reset");
     const result = await requestPasswordReset({ email });
     setLoading(null);
+    if (result?.serverError) {
+      toast.error(result.serverError);
+      return;
+    }
     if (result?.data?.success) {
       setResetSent(true);
-      toast.success("Ссылка для сброса отправлена (проверьте логи)");
+      toast.success("Ссылка для сброса отправлена — проверьте почту");
     }
   };
 
