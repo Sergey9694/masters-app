@@ -53,6 +53,29 @@ function parseFailedMigrations(output) {
 async function main() {
     console.log("[STARTUP] Инициализация базы данных...");
 
+    // ─── Фикс путей Prisma для seed-скриптов (ESM резолвит от /app/prisma/) ───
+    // Standalone build кладёт полный Prisma client в apps/web/node_modules,
+    // а /app/node_modules/@prisma/client — лишь stub без generated-файлов.
+    // Создаём symlink, чтобы node prisma/seed*.mjs нашёл клиент.
+    try {
+        const webPrisma = path.join(__dirname, "apps", "web", "node_modules", "@prisma", "client");
+        const rootPrisma = path.join(__dirname, "node_modules", "@prisma", "client");
+        const webDotPrisma = path.join(__dirname, "apps", "web", "node_modules", ".prisma");
+        const rootDotPrisma = path.join(__dirname, "node_modules", ".prisma");
+
+        if (fs.existsSync(webPrisma) && !fs.existsSync(path.join(rootPrisma, "index.js"))) {
+            fs.rmSync(rootPrisma, { recursive: true, force: true });
+            fs.symlinkSync(webPrisma, rootPrisma);
+            console.log("[STARTUP] ✓ @prisma/client symlinked");
+        }
+        if (fs.existsSync(webDotPrisma) && !fs.existsSync(rootDotPrisma)) {
+            fs.symlinkSync(webDotPrisma, rootDotPrisma);
+            console.log("[STARTUP] ✓ .prisma symlinked");
+        }
+    } catch (e) {
+        console.log(`[STARTUP] Warning: could not symlink prisma: ${e.message}`);
+    }
+
     // ─── Фикс прав на uploads (EACCES fix для Docker bind mount) ───
     const uploadsDir = path.join(__dirname, "uploads");
     try {
