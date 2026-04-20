@@ -5,6 +5,7 @@ import { Role } from "@/shared/types/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 import { RoleSelect } from "@/features/admin/ui/role-select";
 import { AdminUserFilters } from "@/features/admin/ui/admin-user-filters";
+import { DeleteUserButton } from "@/features/admin/ui/DeleteUserButton";
 import { Pagination } from "@/shared/ui/custom/pagination";
 
 export default async function AdminUsersPage({
@@ -78,7 +79,15 @@ export default async function AdminUsersPage({
                   )}
                 </td>
                 <td className="p-4">
-                  <RoleSelect userId={user.id} currentRole={user.role} />
+                  <div className="flex items-center gap-2">
+                    <RoleSelect userId={user.id} currentRole={user.role} />
+                    {user.role !== "ADMIN" && (
+                      <DeleteUserButton
+                        userId={user.id}
+                        userName={user.firstName}
+                      />
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
