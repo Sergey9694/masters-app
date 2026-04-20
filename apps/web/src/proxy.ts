@@ -10,19 +10,25 @@ export async function proxy(request: NextRequest) {
   // 1. Получаем сессию через Auth.js (для Web)
   const session = await auth();
 
-  // 1.1. Если сессии нет, проверяем Bearer токен (для Mobile/API)
+  // 1.1. Если сессии нет, проверяем кастомный JWT (Mobile/API + Admin)
   let apiSession = null;
-  if (!session && request.nextUrl.pathname.startsWith("/api/v1")) {
-    const { getSessionFromRequest } = await import("@/shared/lib/auth");
-    apiSession = await getSessionFromRequest(request);
+  if (!session) {
+    const isCustomJwtRoute =
+      request.nextUrl.pathname.startsWith("/api/v1") ||
+      request.nextUrl.pathname.startsWith("/admin");
+    if (isCustomJwtRoute) {
+      const { getSessionFromRequest } = await import("@/shared/lib/auth");
+      apiSession = await getSessionFromRequest(request);
+    }
   }
 
   // 2. Если сессии нет (ни Web, ни API) — проверяем публичные роуты
   if (!session && !apiSession) {
-    const isPublic = 
+    const isPublic =
       request.nextUrl.pathname === "/" ||
       request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname.startsWith("/auth") || 
+      request.nextUrl.pathname === "/admin/login" ||
+      request.nextUrl.pathname.startsWith("/auth") ||
       request.nextUrl.pathname.startsWith("/api/auth") ||
       request.nextUrl.pathname.startsWith("/_next") ||
       request.nextUrl.pathname === "/favicon.ico";
