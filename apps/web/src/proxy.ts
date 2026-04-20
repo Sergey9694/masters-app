@@ -30,6 +30,7 @@ export async function proxy(request: NextRequest) {
       request.nextUrl.pathname === "/admin/login" ||
       request.nextUrl.pathname.startsWith("/auth") ||
       request.nextUrl.pathname.startsWith("/api/auth") ||
+      request.nextUrl.pathname.startsWith("/api/uploads") ||
       request.nextUrl.pathname.startsWith("/_next") ||
       request.nextUrl.pathname === "/favicon.ico";
 
