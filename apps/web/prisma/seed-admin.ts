@@ -13,7 +13,7 @@ async function main() {
   if (user) {
     await db.user.update({
       where: { id: user.id },
-      data: { passwordHash: hash },
+      data: { firstName: "admin", passwordHash: hash },
     });
     console.log(`Updated admin "${user.firstName}" with password hash`);
   } else {
