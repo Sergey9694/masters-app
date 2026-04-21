@@ -121,6 +121,7 @@
   - **5.4 Лента заказов:** `(main)/orders` с `OrderFeedCard` (YouDo-стиль), виджет `OrdersFilters` с URL-синхронизацией (search/categoryId/cityId/sort), серверная сортировка по бюджету. `/dashboard/feed` → 301 на `/orders`.
   - **5.5 Страница заказа:** `(main)/orders/[id]` с breadcrumbs, grid `1fr_320px`, `OrderGalleryLight` (нативный lightbox с клавиатурной навигацией), `RespondFormLight`, `OrderControlsLight` (accept/cancel/complete/refuse), похожие заказы в сайдбаре. `/dashboard/order/[id]` → 301.
   - **5.6 Профиль и настройки:** `(main)/profile` (read-only), `(main)/settings` с секциями (основная инфа / провайдер / смена пароля). Feature `user-profile` (schema + Server Actions). Защита `/profile`, `/settings` в `proxy.ts`.
+  - **5.7 Создание заказа:** `(main)/orders/new` с `OrderWizardLight` — мастер из 5 шагов (категория/город → описание → бюджет/адрес → фото → проверка). Пошаговая валидация через `form.trigger(fields)` на едином RHF. `/dashboard/create-order` → 301, `createOrderAction` редиректит на `/orders/${id}`.
 - **Инфраструктура (Локальная):**
   - Скрипт `npm run dev:full` полностью автоматизирован: чистит порты (3000, 4040), ждет готовности Postgres, активирует PostGIS.
   - База данных синхронизирована под именем `uslugi_db`.
@@ -132,7 +133,7 @@
 |---|---|---|
 | 3. Модель данных | ✅ завершена | Все модели (City, Category tree, ServiceListing, Order, Proposal) полностью синхронизированы, PostGIS настроен, сиды исправлены. |
 | 4. REST API | ✅ завершена | Сервисный слой (`src/services/`) реализован. Все эндпоинты `app/api/v1/*` (auth, orders, listings, proposals, providers, categories, cities, notifications, reviews, upload) покрывают план 4.2.1. |
-| 5. Desktop UI | 🚧 в работе | **5.1–5.6 готовы.** Осталось: 5.7 многошаговая форма создания заказа, 5.8 миграция оставшихся `/dashboard/*` → `(main)/*` и чистка legacy TWA-стилей. |
+| 5. Desktop UI | 🚧 в работе | **5.1–5.7 готовы.** Осталось: 5.8 миграция оставшихся `/dashboard/*` → `(main)/*` (my-orders, my-proposals, my-listings, notifications, favorites, provider-profile) и чистка legacy TWA-компонентов. |
 | 6. Объявления | ❌ | Feature `listing/` не создан, страниц каталога нет. Admin-модерация listings — нет. |
 | 7. Чат | ❌ | Моделей `Conversation`, `ConversationParticipant`, `Message` нет. |
 | 8. Тесты/CI | ❌ | Vitest/Playwright не установлены. `.github/workflows/*` — требуют проверки. |
@@ -141,7 +142,7 @@
 | 11. Полировка | ❌ | SEO, sitemap, Sentry, PWA-manifest — не сделано. |
 
 ### Критичный следующий шаг
-**Фаза 5.7.** Многошаговая форма создания заказа: мастер с шагами (категория → описание → бюджет → адрес → фото → подтверждение), валидация на каждом шаге через Zod, черновик в URL-searchParams, завершающий Server Action.
+**Фаза 5.8.** Миграция оставшихся `/dashboard/*` маршрутов в `(main)/*`: my-orders, my-proposals, my-listings, notifications, favorites, profile/provider — с применением светлой YouDo-стилистики. Чистка legacy TWA-компонентов (`TelegramBackButton`, dark-тема `OrderCreateForm`, Telegram-специфичных виджетов).
 
 ### Принятые архитектурные решения (фиксация)
 - **Auth.js v5 (next-auth@beta)** вместо кастомного JWT-слоя. Session-стратегия: JWT (для Edge-совместимости). Схема БД — расширенная стандартная (`Account`, `Session`, `VerificationToken`).
