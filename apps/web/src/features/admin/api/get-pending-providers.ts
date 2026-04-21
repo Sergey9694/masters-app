@@ -22,7 +22,7 @@ export async function getPendingProviders(params: { page?: number } = {}) {
           },
         },
         categories: {
-          include: { category: true },
+          include: { category: { select: { id: true, name: true } } },
         },
         proposals: { select: { id: true } },
         reviews: { select: { id: true, rating: true } },
@@ -41,9 +41,9 @@ export async function getPendingProviders(params: { page?: number } = {}) {
     reviewsCount: p.reviews.length,
     rating:
       p.reviews.length > 0
-        ? p.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / p.reviews.length
+        ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length
         : 0,
-    completedOrders: p.assignedOrders.filter((t: any) => t.status === "COMPLETED").length,
+    completedOrders: p.assignedOrders.filter((t) => t.status === "COMPLETED").length,
   }));
 
   return {

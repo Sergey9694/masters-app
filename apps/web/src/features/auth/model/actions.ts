@@ -94,7 +94,7 @@ export const registerWithEmail = actionClient
       });
 
       return { success: true, message: "Проверьте почту для подтверждения" };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[registerWithEmail] error:", error);
       throw error instanceof Error ? error : new Error("Ошибка при регистрации");
     }
@@ -109,7 +109,7 @@ export const requestPasswordReset = actionClient
     try {
       await authService.requestPasswordReset(email);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[requestPasswordReset] error:", error);
       throw error;
     }
@@ -124,7 +124,7 @@ export const verifyEmailAction = actionClient
     try {
       await authService.verifyEmail(token);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[verifyEmailAction] error:", error);
       throw error;
     }
@@ -139,7 +139,7 @@ export const resetPasswordAction = actionClient
     try {
       await authService.resetPassword(token, password);
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[resetPasswordAction] error:", error);
       throw error;
     }
@@ -157,7 +157,7 @@ export const linkEmailToAccountAction = authActionClient
     try {
       const linkedUserId = await authService.linkEmailToAccount(userId, email, password);
       return { success: true, linkedUserId };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[linkEmailToAccountAction] error:", error);
       throw error instanceof Error ? error : new Error("Не удалось привязать email");
     }

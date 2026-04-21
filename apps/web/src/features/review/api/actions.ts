@@ -25,7 +25,7 @@ export const createReviewAction = authActionClient
       revalidatePath("/dashboard/feed");
       
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[createReviewAction] error:", error);
       throw error instanceof Error ? error : new Error("Не удалось сохранить отзыв");
     }

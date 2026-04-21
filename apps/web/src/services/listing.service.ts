@@ -33,18 +33,15 @@ export const listingService = {
       },
       include: {
         provider: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                displayName: true,
-                avatar: true,
-              },
-            },
+          select: {
+            id: true,
+            bio: true,
+            rating: true,
+            isVerified: true,
+            user: { select: { id: true, firstName: true, displayName: true, avatar: true } },
           },
         },
-        category: true,
+        category: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
       take: filters.limit || 20,
@@ -68,8 +65,8 @@ export const listingService = {
     const listings = await db.serviceListing.findMany({
       where: { providerId: provider.id },
       include: {
-        category: true,
-        city: true,
+        category: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
@@ -92,11 +89,11 @@ export const listingService = {
       include: {
         provider: {
           include: {
-            user: true,
+            user: { select: { id: true, firstName: true, lastName: true, displayName: true, avatar: true } },
           },
         },
-        category: true,
-        city: true,
+        category: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true } },
       },
     });
   },

@@ -1,4 +1,5 @@
 import { db } from "@/shared/lib/db";
+import { Prisma } from "@prisma/client";
 
 export interface SaveProviderProfileInput {
   bio: string;
@@ -27,7 +28,8 @@ export const providerService = {
 
     const provider = await db.$transaction(async (tx) => {
       const userProfile = await tx.providerProfile.findUnique({
-        where: { userId }
+        where: { userId },
+        select: { id: true },
       });
 
       // Clear old categories if updating
@@ -82,11 +84,11 @@ export const providerService = {
       where: { id },
       include: {
         user: { select: { firstName: true, lastName: true, avatar: true, createdAt: true } },
-        categories: { include: { category: true } },
+        categories: { include: { category: { select: { id: true, name: true } } } },
         reviews: {
           orderBy: { createdAt: "desc" },
           take: 10,
-          include: { author: { select: { firstName: true, avatar: true } } }
+          include: { author: { select: { firstName: true, avatar: true } } },
         }
       }
     });
@@ -103,7 +105,7 @@ export const providerService = {
   }) {
     const pageSize = params.pageSize ?? 20;
 
-    const where: any = {};
+    const where: Prisma.ProviderProfileWhereInput = {};
     if (params.cityId) {
       where.user = { cityId: params.cityId };
     }

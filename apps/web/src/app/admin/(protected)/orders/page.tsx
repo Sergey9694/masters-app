@@ -62,7 +62,7 @@ export default async function AdminOrdersPage({
             </tr>
           </thead>
           <tbody>
-            {data.orders.map((order: any) => (
+            {data.orders.map((order) => (
               <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                 <td className="p-4">
                   <p className="font-bold text-white truncate max-w-[250px]">{order.title}</p>

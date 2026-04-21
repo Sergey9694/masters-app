@@ -2,6 +2,7 @@ import { db } from "@/shared/lib/db";
 import { notifyProvidersInCategories } from "@/shared/lib/telegram/bot-notify";
 import type { OrderCardData } from "@/shared/types/domain";
 import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
+import { Prisma } from "@prisma/client";
 
 export interface CreateOrderInput {
   categoryId: string;
@@ -56,7 +57,7 @@ export const orderService = {
   async list(params: OrderListParams, userId?: string) {
     const { categoryId, search, cursor, pageSize = DEFAULT_PAGE_SIZE } = params;
 
-    const where: any = { status: "OPEN" as const };
+    const where: Prisma.OrderWhereInput = { status: "OPEN" };
     
     // Logic for category filtering (smart default for providers)
     if (categoryId && categoryId !== 'all') {
@@ -128,11 +129,11 @@ export const orderService = {
     return db.order.findUnique({
       where: { id },
       include: {
-        category: true,
+        category: { select: { id: true, name: true } },
         client: { select: { id: true, firstName: true, avatar: true } },
-        city: true,
-        _count: { select: { proposals: true } }
-      }
+        city: { select: { id: true, name: true } },
+        _count: { select: { proposals: true } },
+      },
     });
   },
 
@@ -143,9 +144,9 @@ export const orderService = {
     const orders = await db.order.findMany({
       where: { clientId: userId },
       include: {
-        category: true,
-        city: true,
-        _count: { select: { proposals: true } }
+        category: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true } },
+        _count: { select: { proposals: true } },
       },
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
@@ -341,7 +342,7 @@ export const orderService = {
   async refuse(orderId: string, userId: string) {
     const user = await db.user.findUnique({
       where: { id: userId },
-      include: { providerProfile: true },
+      select: { firstName: true, providerProfile: { select: { id: true } } },
     });
 
     if (!user?.providerProfile) throw new Error("Необходима профиль мастера");

@@ -32,7 +32,7 @@ export const submitProposalAction = authActionClient
       revalidatePath("/dashboard/feed");
       
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[submitProposalAction] error:", error);
       throw error instanceof Error ? error : new Error("Ошибка при отправке отклика");
     }
@@ -50,7 +50,7 @@ export const acceptProposalAction = authActionClient
       const result = await orderService.acceptProposal(proposalId, userId);
       revalidatePath(`/dashboard/feed`);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[acceptProposalAction] error:", error);
       throw error instanceof Error ? error : new Error("Ошибка при принятии отклика");
     }
@@ -68,7 +68,7 @@ export const completeOrderAction = authActionClient
       const result = await orderService.complete(referenceId, userId);
       revalidatePath(`/dashboard/order/${referenceId}`);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[completeOrderAction] error:", error);
       throw error instanceof Error ? error : new Error("Ошибка при завершении заказа");
     }
@@ -87,7 +87,7 @@ export const cancelOrderAction = authActionClient
       revalidatePath(`/dashboard/order/${referenceId}`);
       revalidatePath("/dashboard/feed");
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[cancelOrderAction] error:", error);
       throw error instanceof Error ? error : new Error("Ошибка при отмене заказа");
     }
@@ -106,7 +106,7 @@ export const refuseOrderAction = authActionClient
       revalidatePath(`/dashboard/order/${referenceId}`);
       revalidatePath("/dashboard/feed");
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[refuseOrderAction] error:", error);
       throw error instanceof Error ? error : new Error("Ошибка при отказе от заказа");
     }

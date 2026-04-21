@@ -14,7 +14,7 @@ export const proposalService = {
   async create(data: CreateProposalInput, userId: string) {
     const user = await db.user.findUnique({
       where: { id: userId },
-      include: { providerProfile: true },
+      select: { firstName: true, providerProfile: { select: { id: true } } },
     });
 
     if (!user?.providerProfile) {
