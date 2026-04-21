@@ -73,7 +73,7 @@ export const NAV_USER: NavItem[] = [
 export const NAV_BOTTOM: NavItem[] = [
   { href: "/", label: "Главная", icon: Home },
   { href: "/orders", label: "Заказы", icon: ClipboardList },
-  { href: "/create-order", label: "Создать", icon: Plus, authRequired: true },
+  { href: "/orders/new", label: "Создать", icon: Plus, authRequired: true },
   {
     href: "/notifications",
     label: "Уведомления",

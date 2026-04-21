@@ -26,10 +26,10 @@ export const createOrderAction = authActionClient
     try {
       const order = await orderService.create(validated, userId);
 
-      revalidatePath("/dashboard");
-      revalidatePath("/dashboard/feed");
+      revalidatePath("/orders");
+      revalidatePath("/my-orders");
 
-      return { success: true, redirect: "/dashboard/feed", orderId: order.id };
+      return { success: true, redirect: `/orders/${order.id}`, orderId: order.id };
     } catch (error: unknown) {
       console.error("FATAL: Error in createOrderAction:", error);
       throw new Error(error instanceof Error ? error.message : "Не удалось создать заказ. Попробуйте позже.");
