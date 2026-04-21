@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { Container } from "@/shared/ui/container";
@@ -16,8 +16,8 @@ import { TopProviders } from "@/widgets/TopProviders";
 
 /**
  * Главная страница (лендинг).
- * Для авторизованных — редирект в ленту заказов.
- * Для гостей — лендинг с Hero, категориями, шагами и топ-исполнителями.
+ * Авторизованных — редирект в ленту заказов.
+ * Гостям — лендинг: Hero → Категории → Как работает → Топ исполнителей → CTA.
  */
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -31,36 +31,65 @@ export default async function HomePage() {
       <Header />
 
       <main className="flex-1">
-        <Container size="2xl">
-          <HeroSection />
-          <PopularCategories />
-          <HowItWorks />
-          <TopProviders />
+        {/* Hero — decorative gradient background */}
+        <HeroSection />
 
-          <section className="my-16 rounded-xl border border-border/60 bg-surface p-8 text-center lg:my-20 lg:p-12">
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Готовы начать?
-            </h2>
-            <p className="mx-auto mt-3 max-w-lg text-sm text-muted-foreground sm:text-base">
-              Зарегистрируйтесь бесплатно и найдите исполнителя или клиентов за несколько минут.
-            </p>
-            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link
-                href="/auth/login"
-                className={cn(buttonVariants({ variant: "default", size: "lg" }), "group gap-2")}
-              >
-                Зарегистрироваться
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                href="/dashboard/feed"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-              >
-                Посмотреть заказы
-              </Link>
+        {/* Категории — на основном фоне */}
+        <PopularCategories />
+
+        {/* Как работает — чередующийся bg-muted/40 */}
+        <HowItWorks />
+
+        {/* Топ исполнители — снова основной фон */}
+        <TopProviders />
+
+        {/* CTA — primary-градиент */}
+        <section className="relative overflow-hidden bg-linear-to-br from-primary via-primary to-primary/80 py-20 lg:py-24">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-30"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 20% 50%, white 0%, transparent 40%), radial-gradient(circle at 80% 80%, white 0%, transparent 40%)",
+            }}
+          />
+
+          <Container size="2xl" className="relative">
+            <div className="mx-auto max-w-2xl text-center text-primary-foreground">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold backdrop-blur-sm">
+                <Sparkles className="size-3.5" />
+                Начните бесплатно
+              </div>
+              <h2 className="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
+                Готовы решить свою задачу?
+              </h2>
+              <p className="mx-auto mt-4 max-w-lg text-base opacity-90 sm:text-lg">
+                Зарегистрируйтесь за минуту и получите первые предложения уже сегодня.
+              </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/auth/login"
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "group gap-2 bg-white text-primary shadow-xl hover:bg-white/95"
+                  )}
+                >
+                  Зарегистрироваться
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+                <Link
+                  href="/dashboard/feed"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                  )}
+                >
+                  Посмотреть заказы
+                </Link>
+              </div>
             </div>
-          </section>
-        </Container>
+          </Container>
+        </section>
       </main>
 
       <Footer />
