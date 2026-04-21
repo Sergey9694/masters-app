@@ -179,3 +179,85 @@ export const PAGE_TRANSITION: Variants = {
   animate: { opacity: 1, transition: { duration: 0.2, ease: ANIMATION_EASING.PREMIUM } },
   exit: { opacity: 0, transition: { duration: 0.12 } },
 };
+
+/* ===========================================================================
+   Phase 5 — современные лёгкие пресеты (camelCase API).
+   Используются новым UI. Старые SCREAMING_SNAKE оставлены для обратной
+   совместимости и будут удалены после рефакторинга существующих страниц.
+   =========================================================================== */
+
+export const EASE_SMOOTH = [0.22, 1, 0.36, 1] as const;
+export const EASE_SPRING = [0.34, 1.56, 0.64, 1] as const;
+
+export const DURATION = {
+  fast: 0.15,
+  base: 0.2,
+  slow: 0.3,
+} as const;
+
+const defaultTransition: Transition = {
+  duration: DURATION.base,
+  ease: EASE_SMOOTH,
+};
+
+export const fadeIn: Variants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: defaultTransition },
+};
+
+export const slideUp: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  visible: { opacity: 1, y: 0, transition: defaultTransition },
+};
+
+export const slideDown: Variants = {
+  hidden: { opacity: 0, y: -8 },
+  visible: { opacity: 1, y: 0, transition: defaultTransition },
+};
+
+export const scaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.96 },
+  visible: { opacity: 1, scale: 1, transition: defaultTransition },
+};
+
+export const staggerContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.04,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+export const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: DURATION.base, ease: EASE_SMOOTH },
+  },
+};
+
+export const hoverLift = {
+  y: -2,
+  transition: { duration: DURATION.fast, ease: EASE_SMOOTH },
+} as const;
+
+export const tapScale = {
+  scale: 0.98,
+  transition: { duration: DURATION.fast },
+} as const;
+
+export const pageTransition: Variants = {
+  hidden: { opacity: 0, y: 6 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: DURATION.base, ease: EASE_SMOOTH },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: DURATION.fast, ease: EASE_SMOOTH },
+  },
+};

@@ -2,93 +2,180 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ---------------------------------------------------------------------------
+   Design tokens (SSOT).
+   Меняем цвета/шрифты/радиусы ТОЛЬКО здесь. Tailwind v4 автоматически
+   генерирует утилиты из @theme (bg-background, text-foreground, shadow-sm и т.д.).
+   --------------------------------------------------------------------------- */
 @theme {
-  --font-sans: var(--font-roboto-condensed), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Typography — Geist подключается через next/font в layout.tsx */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* District Master 2026 Core Palette - Refined & Lightened */
-  --color-background: #14171f;
-  --color-foreground: #ffffff;
-  --color-card: rgba(35, 38, 55, 0.9);
-  --color-border: rgba(255, 255, 255, 0.12);
-  
-  /* Semantic Accent Palette */
-  --color-cyan: #22d3ee;
-  --color-indigo: #6366f1;
-  --color-emerald: #10b981;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
-  
-  /* System Mapping */
-  --color-primary: var(--ui-accent-cyan);
-  --color-primary-foreground: #ffffff;
-  --color-border: rgba(255, 255, 255, 0.08); 
-  --color-input: rgba(255, 255, 255, 0.04);
-  --color-ring: rgba(34, 211, 238, 0.3);
+  /* Семантические цвета — значения задаются ниже в :root (light) и .dark */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-card: var(--surface); /* alias для shadcn-совместимости */
+  --color-card-foreground: var(--surface-foreground);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--surface-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
-  --radius-lg: 1.25rem;
-  --radius-md: 1rem;
-  --radius-sm: 0.75rem;
+  /* Radii */
+  --radius-sm: 0.375rem; /* 6px  */
+  --radius-md: 0.5rem;   /* 8px  — кнопки, инпуты */
+  --radius-lg: 0.75rem;  /* 12px — карточки */
+  --radius-xl: 1rem;     /* 16px — модалки */
+  --radius-2xl: 1.25rem; /* 20px */
+
+  /* Shadows — тонкие, с акцентом на бордер-подобные тени */
+  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --shadow-md: 0 2px 4px -1px rgb(15 23 42 / 0.04), 0 4px 12px -2px rgb(15 23 42 / 0.08);
+  --shadow-lg: 0 4px 8px -2px rgb(15 23 42 / 0.04), 0 12px 24px -4px rgb(15 23 42 / 0.10);
+  --shadow-xl: 0 8px 16px -4px rgb(15 23 42 / 0.08), 0 24px 48px -8px rgb(15 23 42 / 0.12);
+
+  /* Motion */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+
+  /* Legacy tokens (used by старые компоненты; чистим в фазе 5.8) */
+  --radius-premium: 1.25rem;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 }
 
-@layer base {
-  :root {
-    /* TYPOGRAPHY - STABLE 14PX MOBILE / 16PX DESKTOP */
-    --ui-font-size-mobile: 14px;
-    --ui-font-size-desktop: 16px;
-    --ui-radius-premium: 1.25rem;
-    
-    /* LAYOUT (SSOT) */
-    --ui-container-max-w: 896px; 
-    
-    /* MOBILE PAD - SYMMETRICAL 15PX (REQUESTED) */
-    --ui-mobile-px: 15px;
-    --ui-mobile-py: 15px;
-    
-    /* DESKTOP PAD */
-    --ui-desktop-px: 48px;
-    --ui-desktop-py: 48px;
+/* ---------------------------------------------------------------------------
+   Палитра: LIGHT (по умолчанию)
+   Вдохновение: Linear / Vercel / Arc — тёплый нейтральный фон, холодный акцент.
+   --------------------------------------------------------------------------- */
+:root {
+  --background: #fafaf9;          /* тёплый почти-белый */
+  --foreground: #0a0a0a;
+  --surface: #ffffff;             /* карточки */
+  --surface-foreground: #0a0a0a;
+  --muted: #f5f5f4;
+  --muted-foreground: #78716c;    /* тёплый серый текст */
+  --subtle: #e7e5e4;              /* hover-фон, разделители толще бордера */
+  --border: #e7e5e4;
+  --input: #f5f5f4;
+  --ring: rgb(99 102 241 / 0.35);
 
-    /* REFINED PILLARS OF COLOR */
-    --ui-accent-cyan: #22d3ee;
-    --ui-accent-indigo: #818cf8; 
-    --ui-accent-emerald: #34d399; 
-    
-    /* GRADIENTS */
-    --ui-grad-main: linear-gradient(to tr, #0891b2, #4f46e5); 
+  --primary: #6366f1;             /* indigo — спокойный brand */
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f4;
+  --secondary-foreground: #0a0a0a;
+  --accent: #f5f5f4;
+  --accent-foreground: #0a0a0a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --success: #10b981;
+  --warning: #f59e0b;
+
+  /* Legacy TWA переменные (используются старыми компонентами, удаляем в 5.8) */
+  --ui-font-size-mobile: 14px;
+  --ui-font-size-desktop: 16px;
+  --ui-radius-premium: 1.25rem;
+  --ui-container-max-w: 896px;
+  --ui-mobile-px: 15px;
+  --ui-mobile-py: 15px;
+  --ui-desktop-px: 48px;
+  --ui-desktop-py: 48px;
+  --ui-accent-cyan: #22d3ee;
+  --ui-accent-indigo: #818cf8;
+  --ui-accent-emerald: #34d399;
+  --ui-grad-main: linear-gradient(to tr, #0891b2, #4f46e5);
+}
+
+/* ---------------------------------------------------------------------------
+   Палитра: DARK
+   --------------------------------------------------------------------------- */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafaf9;
+  --surface: #141414;
+  --surface-foreground: #fafaf9;
+  --muted: #1c1c1c;
+  --muted-foreground: #a3a3a3;
+  --subtle: #262626;
+  --border: #262626;
+  --input: #1c1c1c;
+  --ring: rgb(129 140 248 / 0.45);
+
+  --primary: #818cf8;             /* чуть светлее для контраста в dark */
+  --primary-foreground: #0a0a0a;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #fafaf9;
+  --accent: #1c1c1c;
+  --accent-foreground: #fafaf9;
+  --destructive: #f87171;
+  --destructive-foreground: #0a0a0a;
+  --success: #34d399;
+  --warning: #fbbf24;
+}
+
+@layer base {
+  * {
+    @apply border-border;
   }
 
-  * { @apply border-border; }
-  
+  html {
+    color-scheme: light dark;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     @apply font-sans antialiased;
-    font-size: var(--ui-font-size-mobile);
-    background-image: 
-      radial-gradient(circle at 80% 10%, rgba(34, 211, 238, 0.12), transparent 45%),
-      radial-gradient(circle at 10% 90%, rgba(99, 102, 241, 0.12), transparent 45%),
-      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05), transparent 60%);
+    font-feature-settings: "cv11", "ss01", "ss03";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
-  /* Keep 16px for form inputs to prevent zoom, regardless of body size */
-  input, textarea, select {
-    font-size: 16px !important;
+  /* iOS zoom prevention на мобильных формах */
+  @media (max-width: 640px) {
+    input, textarea, select {
+      font-size: max(16px, 1rem);
+    }
   }
 
-  @media (min-width: 640px) {
-    body { font-size: var(--ui-font-size-desktop); }
+  button, [role="button"], select {
+    cursor: pointer;
   }
 
-  button, [role="button"], select, .cursor-pointer-all {
-    cursor: pointer !important;
+  /* Глобальный smooth-скролл и приятный focus-ring */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 }
 
-/* Base Neon Utility - Must be at top level for Tailwind v4 */
+/* ---------------------------------------------------------------------------
+   Legacy утилиты (TWA). Оставлены временно — чистим в 5.8.
+   --------------------------------------------------------------------------- */
 @utility neon-border-gradient {
   position: relative;
   border: none !important;
@@ -112,27 +199,24 @@
 
 @utility badge-category-neon {
   @apply neon-border-gradient;
-  /* Specific override for badges to allow bg-clip-text gradient to work on the main element */
   background-color: transparent !important;
 }
 
 @layer utilities {
-  /* THE GLOBAL STANDARD BLOCK WRAPPER (SSOT) */
+  /* Стандартный враппер контента */
   .container-standard {
     @apply mx-auto w-full transition-all duration-300;
     max-width: var(--ui-container-max-w);
-    
-    /* SYMMETRICAL 15PX ON MOBILE (REQUESTED) */
     padding: var(--ui-mobile-py) var(--ui-mobile-px);
   }
 
   @media (min-width: 640px) {
     .container-standard {
-      /* Balanced desktop spacing */
       padding: var(--ui-desktop-py) var(--ui-desktop-px);
     }
   }
 
+  /* Legacy glass — удалить в 5.8 */
   .glass-premium {
     background: rgba(23, 25, 35, 0.82);
     backdrop-filter: blur(28px) saturate(200%);
@@ -141,12 +225,6 @@
     box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7);
   }
 
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Frosted Glass Card - Premium 2026 Edition */
   .glass-card {
     background: rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(16px) saturate(160%);
@@ -160,5 +238,9 @@
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.2);
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }

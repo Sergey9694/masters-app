@@ -1,26 +1,28 @@
 import type { Metadata } from "next";
-import { Roboto_Condensed, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import Script from "next/script";
 
-const robotoCondensed = Roboto_Condensed({
+import { ProfileSync } from "@/features/auth/ui/ProfileSync";
+import { GlobalHaptics } from "@/shared/lib/telegram/GlobalHaptics";
+import { ThemeProvider } from "@/shared/ui/theme-provider";
+
+const geistSans = Geist({
   subsets: ["latin", "cyrillic"],
-  variable: "--font-roboto-condensed",
+  variable: "--font-geist-sans",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
   title: "УслугиРядом — услуги рядом с вами",
-  description: "Доска объявлений услуг в вашем городе. Найдите исполнителя или предложите свои услуги.",
+  description:
+    "Доска объявлений услуг в вашем городе. Найдите исполнителя или предложите свои услуги.",
 };
-
-import { ProfileSync } from "@/features/auth/ui/ProfileSync";
-import { GlobalHaptics } from "@/shared/lib/telegram/GlobalHaptics";
 
 export default function RootLayout({
   children,
@@ -28,39 +30,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru" className="dark">
-      <body className={`${robotoCondensed.variable} ${jetbrainsMono.variable} font-sans`}>
-        <Script
-          src="https://telegram.org/js/telegram-web-app.js"
-          strategy="afterInteractive"
-        />
-        <ProfileSync />
-        <GlobalHaptics />
-        {/*
-           GLOBAL APP ROOT:
-           All layout paddings are moved to .container-standard utility 
-           to prevent double-padding conflicts.
-        */}
-        <main className="min-h-screen overflow-visible">
-          {children}
-        </main>
+    <html lang="ru" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} font-sans`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Script
+            src="https://telegram.org/js/telegram-web-app.js"
+            strategy="afterInteractive"
+          />
+          <ProfileSync />
+          <GlobalHaptics />
 
-        <Toaster 
-          theme="dark" 
-          closeButton
-          position="bottom-right" 
-          toastOptions={{
-            duration: 4000,
-            className: "!border-none !rounded-[24px] !p-4 !font-sans",
-            style: {
-               background: 'linear-gradient(135deg, rgba(8, 145, 178, 0.4), rgba(79, 70, 229, 0.4))',
-               backdropFilter: 'blur(32px) saturate(200%)',
-               WebkitBackdropFilter: 'blur(32px) saturate(200%)',
-               border: '1px solid rgba(255, 255, 255, 0.15)',
-               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1)',
-            }
-          }}
-        />
+          <main className="min-h-screen">{children}</main>
+
+          <Toaster
+            theme="system"
+            closeButton
+            position="bottom-right"
+            toastOptions={{ duration: 4000 }}
+          />
+        </ThemeProvider>
       </body>
     </html>
   );
