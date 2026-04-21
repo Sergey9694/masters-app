@@ -14,9 +14,13 @@ export interface CreateOrderInput {
   images?: string[];
 }
 
+export type OrderSort = "new" | "budget_desc" | "budget_asc";
+
 export interface OrderListParams {
   categoryId?: string;
+  cityId?: string;
   search?: string;
+  sort?: OrderSort;
   cursor?: string;
   pageSize?: number;
 }
@@ -55,14 +59,18 @@ export const orderService = {
    * List orders with optional filters and pagination
    */
   async list(params: OrderListParams, userId?: string) {
-    const { categoryId, search, cursor, pageSize = DEFAULT_PAGE_SIZE } = params;
+    const { categoryId, cityId, search, sort = "new", cursor, pageSize = DEFAULT_PAGE_SIZE } = params;
 
     const where: Prisma.OrderWhereInput = { status: "OPEN" };
-    
+
+    if (cityId) {
+      where.cityId = cityId;
+    }
+
     // Logic for category filtering (smart default for providers)
     if (categoryId && categoryId !== 'all') {
       where.categoryId = categoryId;
-    } 
+    }
     else if (!categoryId && userId) {
       const userWithProvider = await db.user.findUnique({
         where: { id: userId },
@@ -87,6 +95,13 @@ export const orderService = {
       ];
     }
 
+    const orderBy: Prisma.OrderOrderByWithRelationInput[] =
+      sort === "budget_desc"
+        ? [{ budget: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }]
+        : sort === "budget_asc"
+          ? [{ budget: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }]
+          : [{ createdAt: "desc" }];
+
     const ordersRaw = await db.order.findMany({
       where,
       select: {
@@ -103,7 +118,7 @@ export const orderService = {
         city: { select: { name: true } },
         _count: { select: { proposals: true } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
       take: pageSize + 1,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     });

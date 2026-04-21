@@ -2,10 +2,13 @@
 
 import type { OrderCardData } from "@/shared/types/domain";
 import { getCurrentUser } from "@/shared/lib/get-user";
+import type { OrderSort } from "@/services/order.service";
 
 interface LoadOrdersParams {
   categoryId?: string;
+  cityId?: string;
   search?: string;
+  sort?: OrderSort;
   cursor?: string; // id of last order
 }
 
