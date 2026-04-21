@@ -10,7 +10,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-black text-white">Дашборд</h1>
+        <h1 className="text-3xl font-black text-white">Заявки на верификацию</h1>
         <p className="text-slate-500 mt-1">Обзор платформы</p>
       </div>
 
@@ -33,7 +33,7 @@ export default async function AdminDashboardPage() {
           href="/admin/orders"
         />
         <MetricCard
-          label="Ожидают верификации"
+          label="Заявки на верификацию"
           value={stats.pendingMasters}
           icon={<Award className="w-5 h-5" />}
           accent="from-amber-600 to-orange-600"

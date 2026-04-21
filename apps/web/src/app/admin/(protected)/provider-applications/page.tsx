@@ -18,7 +18,7 @@ export default async function AdminProviderApplicationsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-black text-white">Заявки исполнителей</h1>
+        <h1 className="text-3xl font-black text-white">Заявки на верификацию</h1>
         <p className="text-slate-500 mt-1">
           Ожидают верификации: {total}
         </p>

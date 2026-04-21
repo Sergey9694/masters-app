@@ -9,7 +9,7 @@ import { Button } from "@/shared/ui/button";
 const navItems = [
   { href: "/admin", icon: LayoutDashboard, label: "Дашборд" },
   { href: "/admin/users", icon: Users, label: "Пользователи" },
-  { href: "/admin/provider-applications", icon: Award, label: "Заявки мастеров" },
+  { href: "/admin/provider-applications", icon: Award, label: "Заявки на верификацию" },
   { href: "/admin/orders", icon: ClipboardList, label: "Задачи" },
   { href: "/admin/reviews", icon: MessageSquare, label: "Отзывы" },
   { href: "/admin/metrics", icon: BarChart3, label: "Метрики" },
