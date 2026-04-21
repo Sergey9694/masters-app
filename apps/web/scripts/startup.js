@@ -54,21 +54,26 @@ async function main() {
     console.log("[STARTUP] Инициализация базы данных...");
 
     // ─── Фикс путей Prisma для seed-скриптов (ESM резолвит от /app/prisma/) ───
-    // Standalone build кладёт полный Prisma client в apps/web/node_modules,
-    // а /app/node_modules/@prisma/client — лишь stub без generated-файлов.
-    // Создаём symlink, чтобы node prisma/seed*.mjs нашёл клиент.
     try {
         const webPrisma = path.join(__dirname, "apps", "web", "node_modules", "@prisma", "client");
-        const rootPrisma = path.join(__dirname, "node_modules", "@prisma", "client");
+        const rootNodeModules = path.join(__dirname, "node_modules");
+        const rootPrismaDir = path.join(rootNodeModules, "@prisma");
+        const rootPrismaClient = path.join(rootPrismaDir, "client");
+        
         const webDotPrisma = path.join(__dirname, "apps", "web", "node_modules", ".prisma");
-        const rootDotPrisma = path.join(__dirname, "node_modules", ".prisma");
+        const rootDotPrisma = path.join(rootNodeModules, ".prisma");
 
-        if (fs.existsSync(webPrisma) && !fs.existsSync(path.join(rootPrisma, "index.js"))) {
-            fs.rmSync(rootPrisma, { recursive: true, force: true });
-            fs.symlinkSync(webPrisma, rootPrisma);
+        // Создаем иерархию папок если её нет
+        if (!fs.existsSync(rootNodeModules)) fs.mkdirSync(rootNodeModules, { recursive: true });
+        if (!fs.existsSync(rootPrismaDir)) fs.mkdirSync(rootPrismaDir, { recursive: true });
+
+        if (fs.existsSync(webPrisma)) {
+            if (fs.existsSync(rootPrismaClient)) fs.rmSync(rootPrismaClient, { recursive: true, force: true });
+            fs.symlinkSync(webPrisma, rootPrismaClient);
             console.log("[STARTUP] ✓ @prisma/client symlinked");
         }
-        if (fs.existsSync(webDotPrisma) && !fs.existsSync(rootDotPrisma)) {
+        if (fs.existsSync(webDotPrisma)) {
+            if (fs.existsSync(rootDotPrisma)) fs.rmSync(rootDotPrisma, { recursive: true, force: true });
             fs.symlinkSync(webDotPrisma, rootDotPrisma);
             console.log("[STARTUP] ✓ .prisma symlinked");
         }
@@ -94,7 +99,7 @@ async function main() {
     if (!process.env.DATABASE_URL) {
         console.error("[STARTUP] ОШИБКА: DATABASE_URL не задана! Миграции невозможны.");
     } else {
-        console.log(`[STARTUP] База данных найдена: ${process.env.DATABASE_URL.split("@")[1]}`);
+        console.log(`[STARTUP] База данных найдена: ${process.env.DATABASE_URL.split("@")[1].split("/")[0]}`);
     }
 
     // Попытка 1: deploy
@@ -133,6 +138,12 @@ async function main() {
     // ─── Seed справочников (идемпотентно через upsert) ───
     console.log("[STARTUP] Запускаем seed справочников...");
     runSafe("node prisma/seed.mjs");
+    
+    // Seed городов (если есть файл)
+    if (fs.existsSync(path.join(__dirname, "prisma", "seed-cities.mjs"))) {
+        console.log("[STARTUP] Засеиваем города...");
+        runSafe("node prisma/seed-cities.mjs");
+    }
 
     // ─── Seed admin (идемпотентно: upsert по role=ADMIN) ───
     console.log("[STARTUP] Засеиваем admin-пользователя...");
