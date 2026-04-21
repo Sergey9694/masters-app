@@ -24,6 +24,7 @@ export const getCurrentUser = cache(async function getCurrentUser() {
         avatar: true,
         role: true,
         phone: true,
+        cityId: true,
         providerProfile: {
           select: {
             id: true,

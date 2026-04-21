@@ -23,8 +23,9 @@ DOSTUPI_TEST.md
 
 # database & media
 postgres_data/
-/uploads/
+uploads/
 public/uploads/
+brain/
 *.db
 *.sqlite
 

@@ -19,7 +19,7 @@ import {
   CLICK_SCALE,
 } from "@/shared/lib/motion";
 
-import { Button } from "@/shared/ui/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 import { MotionToast } from "@/shared/ui/motion-toast";
 import {
   Form,
@@ -47,9 +47,11 @@ import { AddressField } from "./AddressField";
 
 interface OrderCreateFormProps {
   categories: { id: string; name: string }[];
+  cities: { id: string; name: string }[];
+  defaultCityId?: string;
 }
 
-export function OrderCreateForm({ categories }: OrderCreateFormProps) {
+export function OrderCreateForm({ categories, cities, defaultCityId }: OrderCreateFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
@@ -61,6 +63,7 @@ export function OrderCreateForm({ categories }: OrderCreateFormProps) {
       title: "",
       description: "",
       categoryId: "",
+      cityId: defaultCityId || "",
       budget: "",
       address: "",
       images: [],
@@ -116,7 +119,10 @@ export function OrderCreateForm({ categories }: OrderCreateFormProps) {
         initial="initial"
         animate="animate"
         variants={SLIDE_UP}
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          console.error("[OrderCreateForm] Validation errors:", errors);
+          toast.error("Проверьте правильность заполнения формы");
+        })}
         className="space-y-8 sm:space-y-12"
       >
         <Card className="glass-premium border-none p-6 sm:p-8 rounded-[var(--ui-radius-premium)] shadow-2xl relative overflow-visible group/card">
@@ -180,6 +186,28 @@ export function OrderCreateForm({ categories }: OrderCreateFormProps) {
               />
               <FormField
                 control={form.control}
+                name="cityId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Город</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Выберите город" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {cities.map((city) => (
+                          <SelectItem key={city.id} value={city.id}>{city.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
                 name="budget"
                 render={({ field }) => (
                   <FormItem>
@@ -211,26 +239,23 @@ export function OrderCreateForm({ categories }: OrderCreateFormProps) {
             <AddressField form={form} />
           </div>
 
-          <Button
+          <motion.button
             type="submit"
-            variant="premium"
-            size="xl"
-            asChild
             disabled={isPending || isUploading}
-            className="w-full relative group rounded-[var(--ui-radius-premium)] mt-6"
+            whileHover={!isPending && !isUploading ? HOVER_GLOW : undefined}
+            whileTap={!isPending && !isUploading ? CLICK_SCALE : undefined}
+            className={buttonVariants({ variant: "premium", size: "xl", className: "w-full relative group rounded-(--ui-radius-premium) mt-6" })}
           >
-            <motion.button whileHover={HOVER_GLOW} whileTap={CLICK_SCALE}>
-              {isPending || isUploading ? (
-                <Loader2 className="w-7 h-7 animate-spin" />
-              ) : (
-                <div className="flex items-center gap-4">
-                  <span>Опубликовать заказ</span>
-                  <SendHorizontal className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all" />
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
-            </motion.button>
-          </Button>
+            {isPending || isUploading ? (
+              <Loader2 className="w-7 h-7 animate-spin" />
+            ) : (
+              <div className="flex items-center gap-4">
+                <span>Опубликовать заказ</span>
+                <SendHorizontal className="w-5 h-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1.5 transition-all" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-shimmer" />
+          </motion.button>
 
           <footer className="pt-3 flex justify-center opacity-30 relative z-10">
             <div className="flex items-center gap-6">

@@ -17,9 +17,10 @@ export const metadata: Metadata = {
 
 export default async function CreateOrderPage() {
   const user = await getCurrentUser();
-  const categories = await db.category.findMany({
-    orderBy: { name: "asc" },
-  });
+  const [categories, cities] = await Promise.all([
+    db.category.findMany({ orderBy: { name: "asc" } }),
+    db.city.findMany({ where: { isActive: true }, orderBy: { name: "asc" } }),
+  ]);
 
   return (
     <StaggerWrap className="min-h-screen pb-20 pt-6 max-w-2xl mx-auto container-standard overflow-x-hidden">
@@ -33,6 +34,8 @@ export default async function CreateOrderPage() {
       <StaggerItem>
         <OrderCreateForm 
           categories={categories.map(c => ({ id: c.id, name: c.name }))} 
+          cities={cities.map(c => ({ id: c.id, name: c.name }))}
+          defaultCityId={user?.cityId || undefined}
         />
       </StaggerItem>
     </StaggerWrap>
