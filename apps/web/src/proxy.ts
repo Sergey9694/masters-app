@@ -50,7 +50,10 @@ export async function proxy(request: NextRequest) {
   const userRole = session?.user?.role || apiSession?.role;
 
   // 3. Админ-роуты — только для ADMIN
-  if (request.nextUrl.pathname.startsWith("/admin") && userRole !== "ADMIN") {
+  const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
+  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+
+  if (isAdminPath && !isLoginPage && userRole !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard?error=forbidden", request.url));
   }
 
