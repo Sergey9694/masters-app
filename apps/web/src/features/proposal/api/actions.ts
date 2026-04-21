@@ -28,9 +28,9 @@ export const submitProposalAction = authActionClient
         message 
       }, userId);
 
-      revalidatePath(`/dashboard/order/${orderId}`);
-      revalidatePath("/dashboard/feed");
-      
+      revalidatePath(`/orders/${orderId}`);
+      revalidatePath("/orders");
+
       return { success: true };
     } catch (error: unknown) {
       console.error("[submitProposalAction] error:", error);
@@ -48,7 +48,7 @@ export const acceptProposalAction = authActionClient
 
     try {
       const result = await orderService.acceptProposal(proposalId, userId);
-      revalidatePath(`/dashboard/feed`);
+      revalidatePath("/orders");
       return result;
     } catch (error: unknown) {
       console.error("[acceptProposalAction] error:", error);
@@ -66,7 +66,8 @@ export const completeOrderAction = authActionClient
 
     try {
       const result = await orderService.complete(referenceId, userId);
-      revalidatePath(`/dashboard/order/${referenceId}`);
+      revalidatePath(`/orders/${referenceId}`);
+      revalidatePath("/orders");
       return result;
     } catch (error: unknown) {
       console.error("[completeOrderAction] error:", error);
@@ -84,8 +85,8 @@ export const cancelOrderAction = authActionClient
 
     try {
       const result = await orderService.cancel(referenceId, userId);
-      revalidatePath(`/dashboard/order/${referenceId}`);
-      revalidatePath("/dashboard/feed");
+      revalidatePath(`/orders/${referenceId}`);
+      revalidatePath("/orders");
       return result;
     } catch (error: unknown) {
       console.error("[cancelOrderAction] error:", error);
@@ -103,8 +104,8 @@ export const refuseOrderAction = authActionClient
 
     try {
       const result = await orderService.refuse(referenceId, userId);
-      revalidatePath(`/dashboard/order/${referenceId}`);
-      revalidatePath("/dashboard/feed");
+      revalidatePath(`/orders/${referenceId}`);
+      revalidatePath("/orders");
       return result;
     } catch (error: unknown) {
       console.error("[refuseOrderAction] error:", error);
