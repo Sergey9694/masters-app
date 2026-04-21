@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { getDashboardStats } from "@/features/admin/api/get-dashboard-stats";
 import { Users, ClipboardList, Award, MessageSquare, Star, TrendingUp } from "lucide-react";
+import Link from "next/link";
 
 export default async function AdminDashboardPage() {
   const stats = await getDashboardStats();
@@ -21,6 +22,7 @@ export default async function AdminDashboardPage() {
           icon={<Users className="w-5 h-5" />}
           accent="from-blue-600 to-indigo-600"
           sub={`+${stats.users.today} сегодня, +${stats.users.week} за неделю`}
+          href="/admin/users"
         />
         <MetricCard
           label="Задачи"
@@ -28,6 +30,7 @@ export default async function AdminDashboardPage() {
           icon={<ClipboardList className="w-5 h-5" />}
           accent="from-emerald-600 to-teal-600"
           sub={`${stats.orders.open} открытых · ${stats.orders.inProgress} в работе · ${stats.orders.completed} завершено`}
+          href="/admin/orders"
         />
         <MetricCard
           label="Ожидают верификации"
@@ -94,19 +97,26 @@ function MetricCard({
   sub: string;
   href?: string;
 }) {
-  const CardWrapper = href ? "a" : "div";
-
-  return (
-    <CardWrapper
-      href={href}
-      className="bg-[#16162a] rounded-2xl border border-white/5 p-5 block hover:border-white/10 transition-all cursor-pointer"
-    >
+  const content = (
+    <div className="flex flex-col h-full">
       <div className="flex items-start justify-between mb-3">
         <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
         <div className={`bg-gradient-to-tr ${accent} p-2 rounded-lg text-white`}>{icon}</div>
       </div>
       <p className="text-3xl font-black text-white">{value}</p>
       <p className="text-xs text-slate-500 mt-1">{sub}</p>
-    </CardWrapper>
+    </div>
   );
+
+  const className = "bg-[#16162a] rounded-2xl border border-white/5 p-5 block hover:border-white/10 hover:bg-white/[0.02] transition-all cursor-pointer h-full";
+
+  if (href) {
+    return (
+      <Link href={href} className={className}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }
