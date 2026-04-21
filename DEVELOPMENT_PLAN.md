@@ -102,9 +102,9 @@
 
 ---
 
-## Текущий статус (снимок на 2026-04-17)
+## Текущий статус (снимок на 2026-04-21)
 
-### Что реально сделано (Обновлено 2026-04-18)
+### Что реально сделано (Обновлено 2026-04-21)
 - **Монорепо:** Turborepo, `apps/web`, `apps/mobile` (пустой), `packages/{shared-types, validation, api-client}` — созданы.
 - **Ребрендинг:** Prisma-схема переведена (Master→Provider, TaskRequest→Order, TaskResponse→Proposal).
 - **Авторизация (Auth.js v5):**
@@ -113,6 +113,14 @@
   - **Исправлено:** Логика объединения аккаунтов (Telegram + Email) теперь обходит `Unique constraint` через транзакционный сброс ID.
   - **Исправлено:** Runtime-конфигурация `BOT_ID` (теперь передается как проп, а не берется из build-time env).
 - **Безопасность:** `next-safe-action` внедрён. Мутации защищены.
+- **REST API (Фаза 4):** 11 сервисов в `apps/web/src/services/`, 26 роутов в `apps/web/src/app/api/v1/`, Bearer + cookie auth.
+- **Desktop UI (Фаза 5 — частично):**
+  - **5.1 Дизайн-система:** Tailwind v4 `@theme` SSOT в `globals.css`, light+dark через CSS-переменные, шрифт **Geist** (вместо Inter), primary — indigo `#6366f1`.
+  - **5.2 Layout:** `(main)/layout.tsx` с Header/Sidebar/Footer/BottomNav. Виджеты реализованы, theme-toggle работает.
+  - **5.3 Лендинг:** `app/page.tsx` редиректит авторизованных на `/orders`, гостям показывает Hero → PopularCategories → HowItWorks → TopProviders → CTA.
+  - **5.4 Лента заказов:** `(main)/orders` с `OrderFeedCard` (YouDo-стиль), виджет `OrdersFilters` с URL-синхронизацией (search/categoryId/cityId/sort), серверная сортировка по бюджету. `/dashboard/feed` → 301 на `/orders`.
+  - **5.5 Страница заказа:** `(main)/orders/[id]` с breadcrumbs, grid `1fr_320px`, `OrderGalleryLight` (нативный lightbox с клавиатурной навигацией), `RespondFormLight`, `OrderControlsLight` (accept/cancel/complete/refuse), похожие заказы в сайдбаре. `/dashboard/order/[id]` → 301.
+  - **5.6 Профиль и настройки:** `(main)/profile` (read-only), `(main)/settings` с секциями (основная инфа / провайдер / смена пароля). Feature `user-profile` (schema + Server Actions). Защита `/profile`, `/settings` в `proxy.ts`.
 - **Инфраструктура (Локальная):**
   - Скрипт `npm run dev:full` полностью автоматизирован: чистит порты (3000, 4040), ждет готовности Postgres, активирует PostGIS.
   - База данных синхронизирована под именем `uslugi_db`.
@@ -124,7 +132,7 @@
 |---|---|---|
 | 3. Модель данных | ✅ завершена | Все модели (City, Category tree, ServiceListing, Order, Proposal) полностью синхронизированы, PostGIS настроен, сиды исправлены. |
 | 4. REST API | ✅ завершена | Сервисный слой (`src/services/`) реализован. Все эндпоинты `app/api/v1/*` (auth, orders, listings, proposals, providers, categories, cities, notifications, reviews, upload) покрывают план 4.2.1. |
-| 5. Desktop UI | ❌ | Маршрутизация всё ещё `/dashboard/*` (наследие TWA). Нет groups `(main)`/`(auth)`. Widgets только `CategoryGrid`, `OrderFeed`. Нет Header/Sidebar/Footer/BottomNav, темы-переключения, Inter-шрифта. |
+| 5. Desktop UI | 🚧 в работе | **5.1–5.6 готовы.** Осталось: 5.7 многошаговая форма создания заказа, 5.8 миграция оставшихся `/dashboard/*` → `(main)/*` и чистка legacy TWA-стилей. |
 | 6. Объявления | ❌ | Feature `listing/` не создан, страниц каталога нет. Admin-модерация listings — нет. |
 | 7. Чат | ❌ | Моделей `Conversation`, `ConversationParticipant`, `Message` нет. |
 | 8. Тесты/CI | ❌ | Vitest/Playwright не установлены. `.github/workflows/*` — требуют проверки. |
@@ -133,7 +141,7 @@
 | 11. Полировка | ❌ | SEO, sitemap, Sentry, PWA-manifest — не сделано. |
 
 ### Критичный следующий шаг
-**Фаза 5.** Переделка Desktop Web UI: маршрутизация `(main)`/`(auth)`, Header/Sidebar/Footer/BottomNav, переключение темы, шрифт Inter.
+**Фаза 5.7.** Многошаговая форма создания заказа: мастер с шагами (категория → описание → бюджет → адрес → фото → подтверждение), валидация на каждом шаге через Zod, черновик в URL-searchParams, завершающий Server Action.
 
 ### Принятые архитектурные решения (фиксация)
 - **Auth.js v5 (next-auth@beta)** вместо кастомного JWT-слоя. Session-стратегия: JWT (для Edge-совместимости). Схема БД — расширенная стандартная (`Account`, `Session`, `VerificationToken`).
