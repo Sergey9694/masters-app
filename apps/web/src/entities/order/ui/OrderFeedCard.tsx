@@ -41,7 +41,7 @@ export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
         </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-3 p-5">
+      <div className="flex min-w-0 flex-1 flex-col gap-3 p-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
             {order.category.name}
@@ -57,10 +57,10 @@ export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
         </div>
 
         <div>
-          <h3 className="line-clamp-2 text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 wrap-break-word text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
             {order.title}
           </h3>
-          <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
+          <p className="mt-1.5 line-clamp-2 wrap-break-word text-sm text-muted-foreground">
             {order.description}
           </p>
         </div>
