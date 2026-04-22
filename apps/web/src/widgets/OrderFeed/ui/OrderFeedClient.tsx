@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from "react";
 import { Loader2, SearchX, Zap } from "lucide-react";
+import Link from "next/link";
 
 import { OrderFeedCard } from "@/entities/order";
 import { loadOrdersAction } from "../api/load-orders";
@@ -33,6 +34,8 @@ export function OrderFeedClient({
   const [cursor, setCursor] = useState(initialCursor);
   const [isPending, startTransition] = useTransition();
   const loaderRef = useRef<HTMLDivElement>(null);
+
+  const hasActiveFilters = categoryId !== "all" || !!cityId || !!search;
 
   const loadMore = () => {
     if (!cursor || isPending) return;
@@ -77,13 +80,26 @@ export function OrderFeedClient({
           <SearchX className="size-7 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-semibold text-foreground">
-          {search ? "Ничего не найдено" : "Пока нет активных заказов"}
+          {search ? "Ничего не найдено" : "Заказов пока нет"}
         </h3>
         <p className="mt-2 max-w-sm text-sm text-muted-foreground">
           {search
-            ? "Попробуйте другой запрос или сбросьте фильтры"
-            : "Заказы появятся здесь, как только клиенты их разместят"}
+            ? `По запросу «${search}» не нашлось активных задач.`
+            : isDefaultFilter 
+              ? "В ваших категориях пока нет новых заказов." 
+              : cityId || (categoryId && categoryId !== "all")
+                ? "В выбранных категориях или городе сейчас нет заказов."
+                : "Заказы появятся здесь, как только клиенты их разместят."}
         </p>
+
+        {hasActiveFilters && (
+          <Link
+            href="?categoryId=all"
+            className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:brightness-110 active:scale-95"
+          >
+            Посмотреть все активные заказы
+          </Link>
+        )}
       </div>
     );
   }

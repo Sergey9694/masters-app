@@ -41,6 +41,7 @@ export function ProviderRegistrationFormLight({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const [portfolioPreviews, setPortfolioPreviews] = useState<Preview[]>([]);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     initialData?.avatarUrl ?? null
@@ -77,14 +78,30 @@ export function ProviderRegistrationFormLight({
 
   const onPortfolioPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    
     e.target.value = "";
     const remaining = 8 - portfolioPreviews.length;
+    if (remaining <= 0) {
+      toast.error("Лимит 8 фото достигнут");
+      return;
+    }
+
     const toProcess = files.slice(0, remaining);
-    const processed = await convertHeicFiles(toProcess);
-    setPortfolioPreviews((prev) => [
-      ...prev,
-      ...processed.map((f) => ({ file: f, url: URL.createObjectURL(f) })),
-    ]);
+    
+    setIsProcessingFiles(true);
+    try {
+      const processed = await convertHeicFiles(toProcess);
+      setPortfolioPreviews((prev) => [
+        ...prev,
+        ...processed.map((f) => ({ file: f, url: URL.createObjectURL(f) })),
+      ]);
+    } catch (err) {
+      console.error("[onPortfolioPick] error:", err);
+      toast.error("Ошибка при обработке изображений");
+    } finally {
+      setIsProcessingFiles(false);
+    }
   };
 
   const removePortfolio = (i: number) => {
@@ -264,21 +281,28 @@ export function ProviderRegistrationFormLight({
       {/* Portfolio */}
       <Field label="Портфолио" hint="До 8 фото ваших работ">
         <div
-          onClick={() => portfolioPreviews.length < 8 && portfolioRef.current?.click()}
+          onClick={() => !isProcessingFiles && portfolioPreviews.length < 8 && portfolioRef.current?.click()}
           className={cn(
             "flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed transition-all",
             portfolioPreviews.length < 8
               ? "border-border hover:border-primary/50 hover:bg-muted/30"
-              : "cursor-not-allowed border-border opacity-60"
+              : "cursor-not-allowed border-border opacity-60",
+            isProcessingFiles && "cursor-wait opacity-50"
           )}
         >
-          <ImageIcon className="size-7 text-muted-foreground" />
+          {isProcessingFiles ? (
+            <Loader2 className="size-7 animate-spin text-primary" />
+          ) : (
+            <ImageIcon className="size-7 text-muted-foreground" />
+          )}
           <p className="text-sm font-medium text-foreground">
-            {portfolioPreviews.length < 8
+            {isProcessingFiles
+              ? "Обработка изображений..."
+              : portfolioPreviews.length < 8
               ? `Добавить фото (${portfolioPreviews.length}/8)`
               : "Лимит достигнут"}
           </p>
-          {portfolioPreviews.length < 8 && (
+          {!isProcessingFiles && portfolioPreviews.length < 8 && (
             <p className="text-xs text-muted-foreground">
               Нажмите или перетащите файлы
             </p>
@@ -358,12 +382,12 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {children}
       {hint && !error && <span className="text-xs text-muted-foreground/80">{hint}</span>}
       {error && <span className="text-xs text-destructive">{error}</span>}
-    </label>
+    </div>
   );
 }
 

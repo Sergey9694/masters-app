@@ -5,6 +5,8 @@ import { OrderFeed } from "@/widgets/OrderFeed/ui/OrderFeed";
 import { OrdersFilters } from "@/widgets/OrdersFilters";
 import type { OrderSort } from "@/services/order.service";
 
+import { getCurrentUser } from "@/shared/lib/get-user";
+
 export const dynamic = "force-dynamic";
 
 export const metadata = {
@@ -23,6 +25,7 @@ interface OrdersPageProps {
 
 export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const { categoryId, cityId, search, sort } = await searchParams;
+  const user = await getCurrentUser();
 
   const [categories, cities] = await Promise.all([
     db.category.findMany({
@@ -51,7 +54,11 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         </p>
       </div>
 
-      <OrdersFilters categories={categories} cities={cities} />
+      <OrdersFilters
+        categories={categories}
+        cities={cities}
+        isProvider={!!user?.providerProfile}
+      />
 
       <Suspense
         key={`${categoryId ?? ""}-${cityId ?? ""}-${search ?? ""}-${sort ?? ""}`}

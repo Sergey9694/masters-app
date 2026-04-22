@@ -14,6 +14,7 @@ interface Option {
 interface OrdersFiltersProps {
   categories: Option[];
   cities: Option[];
+  isProvider?: boolean;
 }
 
 const SORT_OPTIONS = [
@@ -27,7 +28,7 @@ const SORT_OPTIONS = [
  * Изменение фильтра → router.replace с обновлёнными параметрами,
  * лента перерендеривается благодаря RSC.
  */
-export function OrdersFilters({ categories, cities }: OrdersFiltersProps) {
+export function OrdersFilters({ categories, cities, isProvider }: OrdersFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -45,7 +46,7 @@ export function OrdersFilters({ categories, cities }: OrdersFiltersProps) {
 
   const updateParam = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value && value !== "") {
+    if (value !== null && value !== undefined) {
       params.set(key, value);
     } else {
       params.delete(key);
@@ -90,8 +91,12 @@ export function OrdersFilters({ categories, cities }: OrdersFiltersProps) {
         <FilterSelect
           label="Категория"
           value={currentCategory}
-          onChange={(v) => updateParam("categoryId", v)}
-          options={[{ value: "", label: "Все категории" }, ...categories.map((c) => ({ value: c.id, label: c.name }))]}
+          onChange={(v) => updateParam("categoryId", v === "" ? null : v)}
+          options={[
+            ...(isProvider ? [{ value: "", label: "✨ Моя лента" }] : []),
+            { value: "all", label: "Все категории" },
+            ...categories.map((c) => ({ value: c.id, label: c.name })),
+          ]}
         />
         <FilterSelect
           label="Город"
