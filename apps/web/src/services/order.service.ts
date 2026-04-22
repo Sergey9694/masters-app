@@ -8,7 +8,7 @@ import { type OrderStatus } from "@prisma/client";
 
 export type OrderWithDetails = Prisma.OrderGetPayload<{
   include: {
-    category: { select: { id: true; name: true } };
+    category: { select: { id: true; name: true; slug: true } };
     client: { select: { id: true; firstName: true; lastName: true; avatar: true } };
     city: { select: { id: true; name: true } };
     assignedProvider: {
@@ -81,7 +81,7 @@ export const orderService = {
       where: { id: order.id },
       data: { slug },
       include: {
-        category: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
         city: { select: { id: true, name: true } },
       }
     });
@@ -157,7 +157,7 @@ export const orderService = {
         address: true,
         createdAt: true,
         status: true,
-        category: { select: { name: true } },
+        category: { select: { name: true, slug: true } },
         client: { select: { firstName: true, avatar: true } },
         city: { select: { name: true } },
         _count: { select: { proposals: true } },
@@ -204,7 +204,7 @@ export const orderService = {
         ]
       },
       include: {
-        category: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
         client: {
           select: { id: true, firstName: true, lastName: true, avatar: true },
         },
@@ -242,7 +242,7 @@ export const orderService = {
     const orders = await db.order.findMany({
       where: { clientId: userId },
       include: {
-        category: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
         city: { select: { id: true, name: true } },
         _count: { select: { proposals: true } },
       },

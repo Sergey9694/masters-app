@@ -16,7 +16,7 @@ interface OrderFeedCardProps {
  * Мобайл: вертикальная, десктоп: горизонтальная (флекс с фото слева).
  */
 export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
-  const target = href ?? `/orders/${order.slug || order.id}`;
+  const target = href ?? `/orders/${order.category.slug}/${order.slug || order.id}`;
   const hasImage = order.images && order.images.length > 0;
   const cover = hasImage ? order.images[0] : null;
 

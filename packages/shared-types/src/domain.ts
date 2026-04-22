@@ -10,6 +10,7 @@ export interface OrderCard {
   createdAt: Date;
   category: {
     name: string;
+    slug: string;
   };
   client: {
     firstName: string;
