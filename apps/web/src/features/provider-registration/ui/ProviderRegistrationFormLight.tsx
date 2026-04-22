@@ -143,7 +143,7 @@ export function ProviderRegistrationFormLight({
         <button
           type="button"
           onClick={() => avatarRef.current?.click()}
-          className="group relative size-24 overflow-hidden rounded-full border-2 border-dashed border-border bg-muted transition-colors hover:border-primary/60"
+          className="group relative flex size-24 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-border bg-muted transition-colors hover:border-primary/60"
         >
           {avatarPreview ? (
             /* eslint-disable-next-line @next/next/no-img-element */
