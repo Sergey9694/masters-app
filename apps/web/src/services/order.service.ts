@@ -3,6 +3,37 @@ import { notifyProvidersInCategories } from "@/shared/lib/telegram/bot-notify";
 import type { OrderCardData } from "@/shared/types/domain";
 import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
 import { Prisma } from "@prisma/client";
+import { slugify } from "@/shared/lib/slugify";
+import { type OrderStatus } from "@prisma/client";
+
+export type OrderWithDetails = Prisma.OrderGetPayload<{
+  include: {
+    category: { select: { id: true; name: true } };
+    client: { select: { id: true; firstName: true; lastName: true; avatar: true } };
+    city: { select: { id: true; name: true } };
+    assignedProvider: {
+      select: {
+        id: true;
+        rating: true;
+        isVerified: true;
+        user: { select: { firstName: true; avatar: true } };
+      };
+    };
+    review: { select: { id: true; rating: true; text: true } };
+    proposals: {
+      include: {
+        provider: {
+          select: {
+            id: true;
+            rating: true;
+            isVerified: true;
+            user: { select: { firstName: true; lastName: true; avatar: true } };
+          };
+        };
+      };
+    };
+  };
+}>;
 
 export interface CreateOrderInput {
   categoryId: string;
@@ -44,15 +75,26 @@ export const orderService = {
       },
     });
 
+    // Generate SEO slug: title-orderNumber
+    const slug = `${slugify(data.title)}-${order.orderNumber}`;
+    const updatedOrder = await db.order.update({
+      where: { id: order.id },
+      data: { slug },
+      include: {
+        category: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true } },
+      }
+    });
+
     // Notify providers (fire-and-forget)
     notifyProvidersInCategories(
       [data.categoryId],
       userId,
       data.title,
-      order.id
+      updatedOrder.slug || updatedOrder.id
     );
 
-    return order;
+    return updatedOrder;
   },
 
   /**
@@ -106,6 +148,8 @@ export const orderService = {
       where,
       select: {
         id: true,
+        orderNumber: true,
+        slug: true,
         title: true,
         description: true,
         images: true,
@@ -127,9 +171,20 @@ export const orderService = {
     const pageRaw = hasMore ? ordersRaw.slice(0, pageSize) : ordersRaw;
     
     const orders: OrderCardData[] = pageRaw.map(o => ({
-      ...o,
+      id: o.id,
+      orderNumber: o.orderNumber,
+      slug: o.slug,
+      title: o.title,
+      description: o.description,
+      images: o.images,
+      budget: o.budget,
+      address: o.address,
+      createdAt: o.createdAt,
+      status: o.status,
+      category: o.category,
+      client: o.client,
+      city: o.city || { name: 'Неизвестно' },
       proposalCount: o._count.proposals,
-      city: o.city || { name: 'Неизвестно' }
     }));
 
     const nextCursor = hasMore ? orders[orders.length - 1].id : null;
@@ -138,16 +193,44 @@ export const orderService = {
   },
 
   /**
-   * Get single order by ID
+   * Get single order by ID or Slug
    */
-  async getById(id: string) {
-    return db.order.findUnique({
-      where: { id },
+  async getById(idOrSlug: string): Promise<OrderWithDetails | null> {
+    return db.order.findFirst({
+      where: {
+        OR: [
+          { id: idOrSlug },
+          { slug: idOrSlug }
+        ]
+      },
       include: {
         category: { select: { id: true, name: true } },
-        client: { select: { id: true, firstName: true, avatar: true } },
+        client: {
+          select: { id: true, firstName: true, lastName: true, avatar: true },
+        },
         city: { select: { id: true, name: true } },
-        _count: { select: { proposals: true } },
+        assignedProvider: {
+          select: {
+            id: true,
+            rating: true,
+            isVerified: true,
+            user: { select: { firstName: true, avatar: true } },
+          },
+        },
+        review: { select: { id: true, rating: true, text: true } },
+        proposals: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            provider: {
+              select: {
+                id: true,
+                rating: true,
+                isVerified: true,
+                user: { select: { firstName: true, lastName: true, avatar: true } },
+              },
+            },
+          },
+        },
       },
     });
   },

@@ -30,48 +30,23 @@ import { OrderFeedCard, OrderStatusPill } from "@/entities/order";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 export default async function OrderDetailPage({ params }: PageProps) {
-  const { id } = await params;
+  const { slug: slugParam } = await params;
   const user = await getCurrentUser();
   if (!user) redirect("/");
 
-  const order = await db.order.findUnique({
-    where: { id },
-    include: {
-      category: { select: { id: true, name: true } },
-      client: {
-        select: { id: true, firstName: true, lastName: true, avatar: true },
-      },
-      city: { select: { id: true, name: true } },
-      assignedProvider: {
-        select: {
-          id: true,
-          rating: true,
-          isVerified: true,
-          user: { select: { firstName: true, avatar: true } },
-        },
-      },
-      review: { select: { id: true, rating: true, text: true } },
-      proposals: {
-        orderBy: { createdAt: "desc" },
-        include: {
-          provider: {
-            select: {
-              id: true,
-              rating: true,
-              isVerified: true,
-              user: { select: { firstName: true, lastName: true, avatar: true } },
-            },
-          },
-        },
-      },
-    },
-  });
+  const { orderService } = await import("@/services/order.service");
+  const order = await orderService.getById(slugParam);
 
   if (!order) notFound();
+
+  // SEO Redirect: If accessed by ID but slug exists, redirect to slug
+  if (slugParam === order.id && order.slug) {
+    redirect(`/orders/${order.slug}`);
+  }
 
   const isOwner = order.clientId === user.id;
   const isProvider = Boolean(user.providerProfile);
@@ -90,6 +65,8 @@ export default async function OrderDetailPage({ params }: PageProps) {
     },
     select: {
       id: true,
+      orderNumber: true,
+      slug: true,
       title: true,
       description: true,
       images: true,
@@ -161,6 +138,11 @@ export default async function OrderDetailPage({ params }: PageProps) {
             </div>
 
             <h1 className="mt-4 wrap-anywhere text-2xl font-semibold leading-tight sm:text-3xl">
+              {order.orderNumber && (
+                <span className="text-muted-foreground/60 mr-2 font-medium">
+                  №{order.orderNumber}
+                </span>
+              )}
               {order.title}
             </h1>
 
@@ -410,7 +392,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                   <OrderFeedCard
                     key={o.id}
                     order={o}
-                    href={`/orders/${o.id}`}
+                    href={`/orders/${o.slug || o.id}`}
                   />
                 ))}
               </div>

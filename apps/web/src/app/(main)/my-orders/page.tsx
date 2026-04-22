@@ -47,6 +47,8 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
       take: DEFAULT_PAGE_SIZE,
       select: {
         id: true,
+        orderNumber: true,
+        slug: true,
         title: true,
         status: true,
         budget: true,
@@ -138,7 +140,8 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
               key={o.id}
               data={{
                 id: o.id,
-                href: `/orders/${o.id}`,
+                orderNumber: o.orderNumber,
+                href: `/orders/${o.slug || o.id}`,
                 title: o.title,
                 category: o.category.name,
                 status: o.status,

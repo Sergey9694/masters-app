@@ -75,6 +75,8 @@ export default async function MyProposalsPage({
         order: {
           select: {
             id: true,
+            orderNumber: true,
+            slug: true,
             title: true,
             status: true,
             budget: true,
@@ -133,7 +135,8 @@ export default async function MyProposalsPage({
               key={p.id}
               data={{
                 id: p.id,
-                href: `/orders/${p.order.id}`,
+                orderNumber: p.order.orderNumber,
+                href: `/orders/${p.order.slug || p.order.id}`,
                 title: p.order.title,
                 category: p.order.category.name,
                 status: p.order.status,

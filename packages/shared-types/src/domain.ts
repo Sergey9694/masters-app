@@ -1,5 +1,7 @@
 export interface OrderCard {
   id: string;
+  orderNumber?: number;
+  slug?: string | null;
   title: string;
   description: string;
   budget: number | null;

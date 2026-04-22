@@ -16,7 +16,7 @@ interface OrderFeedCardProps {
  * Мобайл: вертикальная, десктоп: горизонтальная (флекс с фото слева).
  */
 export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
-  const target = href ?? `/orders/${order.id}`;
+  const target = href ?? `/orders/${order.slug || order.id}`;
   const hasImage = order.images && order.images.length > 0;
   const cover = hasImage ? order.images[0] : null;
 
@@ -58,6 +58,11 @@ export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
 
         <div>
           <h3 className="line-clamp-2 wrap-anywhere text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
+            {order.orderNumber && (
+              <span className="mr-1.5 text-muted-foreground/60 font-medium">
+                №{order.orderNumber}
+              </span>
+            )}
             {order.title}
           </h3>
           <p className="mt-1.5 line-clamp-2 wrap-anywhere text-sm text-muted-foreground">

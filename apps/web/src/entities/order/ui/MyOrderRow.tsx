@@ -17,6 +17,7 @@ export interface MyOrderRowData {
   createdAt: Date;
   proposalsCount?: number;
   isChosen?: boolean;
+  orderNumber?: number;
 }
 
 export function MyOrderRow({ data }: { data: MyOrderRowData }) {
@@ -36,6 +37,11 @@ export function MyOrderRow({ data }: { data: MyOrderRowData }) {
             <span className="rounded-full bg-muted px-2 py-0.5 font-medium text-foreground/80">
               {data.category}
             </span>
+            {data.orderNumber && (
+              <span className="font-medium text-muted-foreground/60">
+                №{data.orderNumber}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3" />
               {formatSmartDate(data.createdAt)}

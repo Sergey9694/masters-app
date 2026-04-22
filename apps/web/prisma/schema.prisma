@@ -184,7 +184,9 @@ model ServiceListing {
 }
 
 model Order {
-  id       String @id @default(cuid())
+  id          String @id @default(cuid())
+  orderNumber Int    @unique @default(autoincrement())
+  slug        String? @unique
   clientId String
   client   User   @relation(fields: [clientId], references: [id])
 

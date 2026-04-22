@@ -153,9 +153,9 @@ export function OrderWizardLight({
 
           const res = await createOrderAction({ ...vals, images: urls });
 
-          if (res?.data?.orderId) {
+          if (res?.data?.redirect) {
             toast.success("Заказ опубликован");
-            router.push(`/orders/${res.data.orderId}`);
+            router.push(res.data.redirect);
             return;
           }
 
