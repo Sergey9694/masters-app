@@ -47,7 +47,8 @@ export const authService = {
     // Send verification email if it's Email provider
     if (data.authProvider === "EMAIL" || !data.authProvider) {
       const token = await createEmailToken({ email: data.email, type: "verify" });
-      const verifyLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/verify?token=${token}`;
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || "http://localhost:3000";
+      const verifyLink = `${baseUrl}/auth/verify?token=${token}`;
 
       await sendEmail({
         to: data.email,
@@ -96,7 +97,8 @@ export const authService = {
     passwordResetCooldown.set(email, Date.now());
 
     const token = await createEmailToken({ email, type: "reset" });
-    const resetLink = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/reset-password?token=${token}`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || "http://localhost:3000";
+    const resetLink = `${baseUrl}/auth/reset-password?token=${token}`;
 
     await logAudit({
       userId: user.id,
