@@ -117,32 +117,37 @@ export default async function OrderDetailPage({ params }: PageProps) {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-6">
           <header className="rounded-2xl border border-border/60 bg-surface p-6 shadow-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                {order.category.name}
-              </span>
-              <OrderStatusPill status={order.status} />
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="size-3" />
-                {formatSmartDate(order.createdAt)}
-              </span>
-              {isOwner && order.status === "OPEN" && (
-                <Link
-                  href={`/dashboard/order/${order.id}/edit`}
-                  className="ml-auto inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Pencil className="size-3.5" />
-                  Редактировать
-                </Link>
-              )}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  {order.category.name}
+                </span>
+                <OrderStatusPill status={order.status} />
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="size-3" />
+                  {formatSmartDate(order.createdAt)}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3 sm:ml-auto">
+                {order.orderNumber && (
+                  <span className="inline-flex items-center rounded-lg bg-primary/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary ring-1 ring-inset ring-primary/20">
+                    Заказ №{order.orderNumber}
+                  </span>
+                )}
+                {isOwner && order.status === "OPEN" && (
+                  <Link
+                    href={`/dashboard/order/${order.id}/edit`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <Pencil className="size-3.5" />
+                    Редактировать
+                  </Link>
+                )}
+              </div>
             </div>
 
             <h1 className="mt-4 wrap-anywhere text-2xl font-semibold leading-tight sm:text-3xl">
-              {order.orderNumber && (
-                <span className="text-muted-foreground/60 mr-2 font-medium">
-                  №{order.orderNumber}
-                </span>
-              )}
               {order.title}
             </h1>
 
@@ -379,13 +384,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold">{order.client.firstName}</p>
-                <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                  <span>Разместил</span>
-                  <span className="inline-flex items-center rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary ring-1 ring-inset ring-primary/20">
-                    заказ №{order.orderNumber}
-                  </span>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Разместил заказ №{order.orderNumber}
                 </p>
-                <div className="mt-1 h-px w-full bg-border/40" />
               </div>
             </div>
           </section>
