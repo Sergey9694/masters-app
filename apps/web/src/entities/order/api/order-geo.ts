@@ -15,8 +15,10 @@ interface RawNearbyOrder {
   address: string | null;
   status: string;
   createdAt: Date;
+  executionDate: Date | null;
   images: string[];
   categoryName: string;
+  categorySlug: string;
   customerName: string;
   customerAvatar: string | null;
   cityName: string;
@@ -46,8 +48,10 @@ export async function getOrdersNearby(
         t.address, 
         t.status,
         t."createdAt",
+        t."executionDate",
         t.images,
         c.name as "categoryName",
+        c.slug as "categorySlug",
         u."firstName" as "customerName",
         u.avatar as "customerAvatar",
         city.name as "cityName",
@@ -81,6 +85,7 @@ export async function getOrdersNearby(
       status: t.status,
       distance: Math.round(Number(t.distance)),
       createdAt: new Date(t.createdAt),
+      executionDate: t.executionDate ? new Date(t.executionDate) : null,
       images: t.images || [],
       proposalCount: t.proposalCount || 0,
       city: {
@@ -88,6 +93,7 @@ export async function getOrdersNearby(
       },
       category: {
         name: t.categoryName,
+        slug: t.categorySlug,
       },
       client: {
         firstName: t.customerName,

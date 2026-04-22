@@ -210,8 +210,9 @@ model Order {
 
   proposals Proposal[]
   review    Review?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  executionDate DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 enum OrderStatus {
