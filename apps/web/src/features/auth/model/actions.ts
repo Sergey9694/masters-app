@@ -61,7 +61,7 @@ export async function mockLogin() {
     });
   }
   
-  redirect("/dashboard");
+  redirect("/orders");
 }
 
 /**

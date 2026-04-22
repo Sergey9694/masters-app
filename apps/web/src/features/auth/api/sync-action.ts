@@ -35,7 +35,7 @@ export async function syncProfileAction(data: {
           avatar: shouldUpdateAvatar ? data.avatar : user.avatar,
         },
       });
-      revalidatePath("/dashboard");
+      revalidatePath("/profile");
     }
     
     return { success: true };

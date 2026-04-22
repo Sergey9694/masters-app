@@ -38,8 +38,8 @@ export function HeroSection() {
     e.preventDefault();
     const trimmed = query.trim();
     const url = trimmed
-      ? `/dashboard/feed?query=${encodeURIComponent(trimmed)}`
-      : "/dashboard/feed";
+      ? `/orders?search=${encodeURIComponent(trimmed)}`
+      : "/orders";
     router.push(url);
   };
 
@@ -130,7 +130,7 @@ export function HeroSection() {
               {POPULAR_QUERIES.map((q) => (
                 <Link
                   key={q}
-                  href={`/dashboard/feed?query=${encodeURIComponent(q)}`}
+                  href={`/orders?search=${encodeURIComponent(q)}`}
                   className="rounded-full border border-border/60 bg-surface px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
                 >
                   {q}

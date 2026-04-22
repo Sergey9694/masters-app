@@ -65,7 +65,7 @@ export async function PopularCategories() {
             return (
               <Link
                 key={cat.id}
-                href={`/dashboard/feed?categoryId=${cat.id}`}
+                href={`/orders?categoryId=${cat.id}`}
                 className={`group relative flex flex-col gap-4 overflow-hidden rounded-2xl ${accent.bg} ${accent.dark} ${accent.hover} p-5 transition-all hover:-translate-y-0.5`}
               >
                 <div className={`inline-flex size-11 items-center justify-center rounded-xl ${accent.icon} transition-transform group-hover:scale-110`}>

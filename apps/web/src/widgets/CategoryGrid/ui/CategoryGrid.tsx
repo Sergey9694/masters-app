@@ -35,7 +35,7 @@ export function CategoryGrid({
       params.set("categoryId", id);
     }
     
-    router.push(`/dashboard/feed?${params.toString()}`);
+    router.push(`/orders?${params.toString()}`);
   }, [router, searchParams, activeCategoryId]);
 
   const categoriesToRender = [{ id: 'all', name: 'Все', icon: 'LayoutGrid' }, ...initialCategories];

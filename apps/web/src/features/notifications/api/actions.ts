@@ -10,8 +10,7 @@ export async function markReadAction(id: string): Promise<{ success: true } | { 
 
   await notificationService.markAsRead(id, user.id);
 
-  revalidatePath("/dashboard/notifications");
-  revalidatePath("/dashboard");
+  revalidatePath("/notifications");
   return { success: true };
 }
 
@@ -21,7 +20,6 @@ export async function markAllReadAction(): Promise<{ success: true } | { error: 
 
   await notificationService.markAllAsRead(user.id);
 
-  revalidatePath("/dashboard/notifications");
-  revalidatePath("/dashboard");
+  revalidatePath("/notifications");
   return { success: true };
 }

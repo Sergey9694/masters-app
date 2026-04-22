@@ -78,7 +78,7 @@ export default async function HomePage() {
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
                 </Link>
                 <Link
-                  href="/dashboard/feed"
+                  href="/orders"
                   className={cn(
                     buttonVariants({ variant: "outline", size: "lg" }),
                     "border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"

@@ -58,7 +58,7 @@ export function NotificationItem({ notification: n }: NotificationItemProps) {
     }
     
     if (n.referenceId) {
-      router.push(`/dashboard/order/${n.referenceId}`);
+      router.push(`/orders/${n.referenceId}`);
     }
   };
 

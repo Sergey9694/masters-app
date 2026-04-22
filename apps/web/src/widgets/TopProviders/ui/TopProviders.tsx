@@ -32,7 +32,7 @@ export async function TopProviders() {
           </div>
 
           <Link
-            href="/dashboard/feed"
+            href="/orders"
             className="group inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:opacity-80"
           >
             Смотреть все
@@ -132,7 +132,7 @@ export async function TopProviders() {
 
         <div className="mt-8 flex justify-center sm:hidden">
           <Link
-            href="/dashboard/feed"
+            href="/orders"
             className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
             Смотреть все
