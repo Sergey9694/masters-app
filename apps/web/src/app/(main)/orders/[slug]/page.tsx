@@ -379,9 +379,13 @@ export default async function OrderDetailPage({ params }: PageProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold">{order.client.firstName}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Разместил <span className="text-sm font-bold text-foreground">заказ №{order.orderNumber}</span>
+                <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  <span>Разместил</span>
+                  <span className="inline-flex items-center rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary ring-1 ring-inset ring-primary/20">
+                    заказ №{order.orderNumber}
+                  </span>
                 </p>
+                <div className="mt-1 h-px w-full bg-border/40" />
               </div>
             </div>
           </section>
