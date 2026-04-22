@@ -8,7 +8,6 @@ export interface OrderCard {
   address: string | null;
   status: string;
   createdAt: Date;
-  executionDate?: Date | null;
   category: {
     name: string;
     slug: string;

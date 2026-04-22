@@ -20,7 +20,6 @@ export const createOrderSchema = z.object({
     ),
   address: z.string().min(5, "Адрес слишком короткий").optional(),
   images: z.array(z.string()).optional(),
-  executionDate: z.coerce.date().optional().nullable(),
 });
 
 export const updateOrderSchema = createOrderSchema.partial();

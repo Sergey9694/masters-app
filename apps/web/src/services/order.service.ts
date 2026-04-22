@@ -43,7 +43,6 @@ export interface CreateOrderInput {
   budget?: string | null;
   address?: string | null;
   images?: string[];
-  executionDate?: Date | null;
 }
 
 export type OrderSort = "new" | "budget_desc" | "budget_asc";
@@ -72,7 +71,6 @@ export const orderService = {
         budget: data.budget ? parseFloat(data.budget) : null,
         address: data.address,
         images: data.images || [],
-        executionDate: data.executionDate,
         status: "OPEN",
       },
     });
@@ -158,7 +156,6 @@ export const orderService = {
         budget: true,
         address: true,
         createdAt: true,
-        executionDate: true,
         status: true,
         category: { select: { name: true, slug: true } },
         client: { select: { firstName: true, avatar: true } },
@@ -183,7 +180,6 @@ export const orderService = {
       budget: o.budget,
       address: o.address,
       createdAt: o.createdAt,
-      executionDate: o.executionDate,
       status: o.status,
       category: o.category,
       client: o.client,

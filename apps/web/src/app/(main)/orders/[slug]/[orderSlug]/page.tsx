@@ -245,20 +245,6 @@ export default async function OrderDetailPage({ params }: PageProps) {
                 <MessageSquare className="size-4" />
                 {order.proposals.length} откликов
               </div>
-              {order.executionDate && (
-                <div className="inline-flex items-center gap-1.5 text-amber-600 dark:text-amber-500">
-                  <Clock className="size-4" />
-                  <span className="font-medium">
-                    Приступить: {new Date(order.executionDate).toLocaleString('ru-RU', { 
-                      day: 'numeric', 
-                      month: 'long', 
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
-                </div>
-              )}
             </div>
 
             <p className="mt-6 wrap-anywhere whitespace-pre-line text-base leading-relaxed text-foreground">

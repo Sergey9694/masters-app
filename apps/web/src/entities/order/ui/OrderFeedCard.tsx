@@ -54,17 +54,6 @@ export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
             <Clock className="size-3" />
             {formatSmartDate(order.createdAt)}
           </span>
-          {order.executionDate && (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-500">
-              <Clock className="size-3" />
-              Приступить: {new Date(order.executionDate).toLocaleString('ru-RU', { 
-                day: 'numeric', 
-                month: 'short', 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
-            </span>
-          )}
         </div>
 
         <div>

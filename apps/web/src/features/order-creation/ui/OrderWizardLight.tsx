@@ -113,7 +113,6 @@ export function OrderWizardLight({
       budget: "",
       address: "",
       images: [],
-      executionDate: null,
     },
   });
 
@@ -403,21 +402,6 @@ function StepDetails({ form }: { form: UseFormReturn<OrderFormValues> }) {
           )}
         />
       </Field>
-
-      <Field
-        label="Когда приступить?"
-        hint="Выберите желаемую дату и время начала работ (необязательно)"
-        error={errors.executionDate?.message}
-      >
-        <div className="relative">
-          <input
-            type="datetime-local"
-            {...register("executionDate")}
-            className={cn(inputCls(!!errors.executionDate), "appearance-none")}
-          />
-          <Clock className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        </div>
-      </Field>
     </>
   );
 }
@@ -670,17 +654,6 @@ function StepReview({
         label="Адрес"
         value={vals.address || "не указан"}
         icon={<MapPin className="size-4" />}
-      />
-      <Summary
-        label="Срок исполнения"
-        value={vals.executionDate ? new Date(vals.executionDate).toLocaleString('ru-RU', { 
-          day: 'numeric', 
-          month: 'long', 
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }) : "как можно скорее"}
-        icon={<Clock className="size-4" />}
       />
 
       <div>
