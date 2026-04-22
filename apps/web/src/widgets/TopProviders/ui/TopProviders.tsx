@@ -56,7 +56,7 @@ export async function TopProviders() {
             return (
               <Link
                 key={p.id}
-                href={`/dashboard/provider/${p.id}`}
+                href={`/providers/${p.id}`}
                 className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-surface transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
               >
                 {/* Top strip with rating */}

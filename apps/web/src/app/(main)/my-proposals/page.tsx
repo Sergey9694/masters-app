@@ -46,7 +46,7 @@ export default async function MyProposalsPage({
           </p>
         </div>
         <Link
-          href="/dashboard/become-provider"
+          href="/become-provider"
           className="mt-2 inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-all hover:brightness-110"
         >
           Начать

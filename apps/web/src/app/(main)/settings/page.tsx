@@ -81,7 +81,7 @@ export default async function SettingsPage() {
         description="Специализации, опыт и портфолио для откликов на заказы"
       >
         <Link
-          href="/dashboard/profile/provider"
+          href="/become-provider"
           className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-background px-4 text-sm font-semibold transition-colors hover:border-primary/60 hover:text-primary"
         >
           Открыть редактор исполнителя

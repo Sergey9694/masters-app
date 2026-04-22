@@ -220,7 +220,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
               <section className="rounded-2xl border border-success/30 bg-success/5 p-5">
                 <h2 className="text-sm font-semibold text-success">Исполнитель</h2>
                 <Link
-                  href={`/dashboard/provider/${order.assignedProvider.id}`}
+                  href={`/providers/${order.assignedProvider.id}`}
                   className="mt-3 flex items-center gap-3 transition-colors hover:text-primary"
                 >
                   <div className="size-12 shrink-0 overflow-hidden rounded-full bg-muted">
@@ -263,7 +263,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
           {!isProvider && !isOwner && order.status === "OPEN" && (
             <Link
-              href="/dashboard/become-provider"
+              href="/become-provider"
               className="rounded-2xl border border-dashed border-border bg-muted/40 p-5 text-center text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               Чтобы откликнуться — станьте исполнителем
@@ -312,7 +312,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                   >
                     <div className="flex items-start justify-between gap-4">
                       <Link
-                        href={`/dashboard/provider/${p.providerId}`}
+                        href={`/providers/${p.providerId}`}
                         className="flex items-center gap-3 transition-colors hover:text-primary"
                       >
                         <div className="size-10 shrink-0 overflow-hidden rounded-full bg-muted">

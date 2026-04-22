@@ -11,11 +11,11 @@ export const saveProviderProfileAction = authActionClient
     try {
       const provider = await providerService.saveProfile(data, userId);
 
-      revalidatePath("/dashboard");
-      revalidatePath("/dashboard/become-provider");
-      revalidatePath(`/dashboard/providers/${provider.id}`);
-      
-      return { success: true, redirect: "/dashboard" };
+      revalidatePath("/become-provider");
+      revalidatePath(`/providers/${provider.id}`);
+      revalidatePath("/profile");
+
+      return { success: true, redirect: "/profile" };
     } catch (error) {
       console.error("[saveProviderProfileAction] error:", error);
       throw error instanceof Error ? error : new Error("Не удалось сохранить профиль");
