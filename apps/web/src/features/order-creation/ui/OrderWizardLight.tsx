@@ -10,10 +10,10 @@ import {
   ArrowRight,
   Check,
   Loader2,
-  Plus,
   SendHorizontal,
   X,
   Image as ImageIcon,
+  Upload,
   Tag,
   FileText,
   Banknote,
@@ -27,6 +27,7 @@ import { convertHeicFiles } from "@/shared/lib/image-convert";
 import { orderSchema, type OrderFormValues } from "../model/order-schema";
 import { createOrderAction } from "../api/create-order-action";
 import { uploadImagesAction } from "../api/upload-action";
+import { DadataAddressInput } from "./DadataAddressInput";
 
 interface Option {
   id: string;
@@ -131,40 +132,42 @@ export function OrderWizardLight({
     setStepIndex((i) => Math.max(i - 1, 0));
   };
 
-  const onSubmit = (vals: OrderFormValues) => {
-    startTransition(async () => {
-      try {
-        let urls: string[] = [];
-        if (previews.length > 0) {
-          setIsUploading(true);
-          const fd = new FormData();
-          previews.forEach((p) => fd.append("images", p.file));
-          const uploadRes = await uploadImagesAction(fd);
-          setIsUploading(false);
+  const handleSubmit = () => {
+    form.handleSubmit((vals: OrderFormValues) => {
+      startTransition(async () => {
+        try {
+          let urls: string[] = [];
+          if (previews.length > 0) {
+            setIsUploading(true);
+            const fd = new FormData();
+            previews.forEach((p) => fd.append("images", p.file));
+            const uploadRes = await uploadImagesAction(fd);
+            setIsUploading(false);
 
-          if (uploadRes.error) {
-            toast.error(uploadRes.error);
+            if (uploadRes.error) {
+              toast.error(uploadRes.error);
+              return;
+            }
+            urls = uploadRes.urls ?? [];
+          }
+
+          const res = await createOrderAction({ ...vals, images: urls });
+
+          if (res?.data?.orderId) {
+            toast.success("Заказ опубликован");
+            router.push(`/orders/${res.data.orderId}`);
             return;
           }
-          urls = uploadRes.urls ?? [];
-        }
 
-        const res = await createOrderAction({ ...vals, images: urls });
-
-        if (res?.data?.orderId) {
-          toast.success("Заказ опубликован");
-          router.push(`/orders/${res.data.orderId}`);
-          return;
+          if (res?.serverError) {
+            toast.error(res.serverError);
+          }
+        } catch (err: unknown) {
+          setIsUploading(false);
+          toast.error(err instanceof Error ? err.message : "Ошибка публикации");
         }
-
-        if (res?.serverError) {
-          toast.error(res.serverError);
-        }
-      } catch (err: unknown) {
-        setIsUploading(false);
-        toast.error(err instanceof Error ? err.message : "Ошибка публикации");
-      }
-    });
+      });
+    })();
   };
 
   return (
@@ -182,9 +185,17 @@ export function OrderWizardLight({
           </div>
         </div>
 
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
+        {/* Prevent accidental Enter-key form submission */}
+        <div
           className="flex flex-col gap-5"
+          onKeyDown={(e) => {
+            if (
+              e.key === "Enter" &&
+              (e.target as HTMLElement).tagName !== "TEXTAREA"
+            ) {
+              e.preventDefault();
+            }
+          }}
         >
           {step.key === "category" && (
             <StepCategory form={form} categories={categories} cities={cities} />
@@ -219,7 +230,8 @@ export function OrderWizardLight({
 
             {isLast ? (
               <button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
                 disabled={isPending || isUploading}
                 className={cn(
                   "inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm",
@@ -247,7 +259,7 @@ export function OrderWizardLight({
               </button>
             )}
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -383,7 +395,7 @@ function StepDetails({ form }: { form: UseFormReturn<OrderFormValues> }) {
           placeholder="Опишите задачу подробно..."
           {...register("description")}
           className={cn(
-            "min-h-[140px] w-full resize-y rounded-xl border bg-background p-3 text-sm",
+            "min-h-35 w-full resize-y rounded-xl border bg-background p-3 text-sm",
             "focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10",
             errors.description ? "border-destructive" : "border-border"
           )}
@@ -396,8 +408,11 @@ function StepDetails({ form }: { form: UseFormReturn<OrderFormValues> }) {
 function StepBudget({ form }: { form: UseFormReturn<OrderFormValues> }) {
   const {
     register,
+    setValue,
+    watch,
     formState: { errors },
   } = form;
+  const address = watch("address");
 
   return (
     <>
@@ -411,6 +426,11 @@ function StepBudget({ form }: { form: UseFormReturn<OrderFormValues> }) {
           inputMode="numeric"
           min={0}
           placeholder="3000"
+          onKeyDown={(e) => {
+            if (e.key === "-" || e.key === "e" || e.key === "E") {
+              e.preventDefault();
+            }
+          }}
           {...register("budget")}
           className={inputCls(!!errors.budget)}
         />
@@ -418,15 +438,14 @@ function StepBudget({ form }: { form: UseFormReturn<OrderFormValues> }) {
 
       <Field
         label="Адрес"
-        hint="Где находится объект? Можно указать частично"
+        hint="Где находится объект? Начните вводить — предложения подтянутся автоматически"
         error={errors.address?.message}
       >
-        <input
-          type="text"
-          placeholder="Город, улица, дом"
-          autoComplete="off"
-          {...register("address")}
-          className={inputCls(!!errors.address)}
+        <DadataAddressInput
+          value={address ?? ""}
+          onChange={(v) => setValue("address", v, { shouldValidate: true })}
+          onBlur={() => form.trigger("address")}
+          hasError={!!errors.address}
         />
       </Field>
     </>
@@ -441,20 +460,34 @@ function StepPhotos({
   setPreviews: React.Dispatch<React.SetStateAction<PreviewImage[]>>;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = "";
-    if (files.length + previews.length > 5) {
-      toast.error("Можно загрузить не больше 5 фото");
+  const processFiles = async (files: File[]) => {
+    const remaining = 5 - previews.length;
+    if (remaining <= 0) {
+      toast.error("Лимит 5 фото уже достигнут");
       return;
     }
-    const processed = await convertHeicFiles(files);
+    const toProcess = files.filter((f) => f.type.startsWith("image/")).slice(0, remaining);
+    if (!toProcess.length) return;
+    const processed = await convertHeicFiles(toProcess);
     const next: PreviewImage[] = processed.map((f) => ({
       file: f,
       url: URL.createObjectURL(f),
     }));
     setPreviews((prev) => [...prev, ...next]);
+  };
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    await processFiles(files);
+  };
+
+  const onDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    await processFiles(Array.from(e.dataTransfer.files));
   };
 
   const remove = (i: number) => {
@@ -465,44 +498,101 @@ function StepPhotos({
     });
   };
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-        {previews.map((img, i) => (
-          <div
-            key={img.url}
-            className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img.url}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-            <button
-              type="button"
-              onClick={() => remove(i)}
-              className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
-        ))}
+  const canAdd = previews.length < 5;
 
-        {previews.length < 5 && (
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className={cn(
-              "flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border bg-background",
-              "text-xs text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
-            )}
-          >
-            <Plus className="size-5" />
-            Добавить
-          </button>
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Dropzone */}
+      <div
+        role="button"
+        tabIndex={canAdd ? 0 : -1}
+        aria-label="Загрузить фото"
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (canAdd) setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsDragging(false);
+          }
+        }}
+        onDrop={onDrop}
+        onClick={() => canAdd && inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (canAdd) inputRef.current?.click();
+          }
+        }}
+        className={cn(
+          "flex min-h-45 flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed transition-all duration-200 select-none",
+          canAdd ? "cursor-pointer" : "cursor-not-allowed opacity-60",
+          isDragging
+            ? "scale-[1.01] border-primary bg-primary/5"
+            : canAdd
+              ? "border-border bg-background hover:border-primary/50 hover:bg-muted/30"
+              : "border-border bg-muted/20"
+        )}
+      >
+        {isDragging ? (
+          <>
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <Upload className="size-7" />
+            </div>
+            <p className="text-sm font-semibold text-primary">Отпустите для загрузки</p>
+          </>
+        ) : (
+          <>
+            <div className={cn(
+              "flex size-14 items-center justify-center rounded-2xl transition-colors",
+              canAdd ? "bg-muted text-muted-foreground" : "bg-muted/50 text-muted-foreground/50"
+            )}>
+              <ImageIcon className="size-7" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-foreground">
+                {canAdd
+                  ? `Перетащите фото сюда (${previews.length}/5)`
+                  : "Лимит достигнут (5/5)"}
+              </p>
+              {canAdd && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  или{" "}
+                  <span className="text-primary underline underline-offset-2">
+                    выберите с устройства
+                  </span>
+                </p>
+              )}
+            </div>
+          </>
         )}
       </div>
+
+      {/* Thumbnails */}
+      {previews.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+          {previews.map((img, i) => (
+            <div
+              key={img.url}
+              className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={img.url} alt="" className="h-full w-full object-cover" />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  remove(i);
+                }}
+                className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <p className="text-xs text-muted-foreground">
         До 5 фото, до 25 МБ каждое. JPG, PNG, WebP, HEIC.
       </p>
@@ -540,7 +630,7 @@ function StepReview({
   );
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       <Summary label="Категория" value={category} icon={<Tag className="size-4" />} />
       <Summary label="Город" value={city} icon={<MapPin className="size-4" />} />
       <Summary
@@ -578,11 +668,7 @@ function StepReview({
                 className="aspect-square overflow-hidden rounded-lg border border-border"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                <img src={img.url} alt="" className="h-full w-full object-cover" />
               </div>
             ))}
           </div>
@@ -606,16 +692,16 @@ function Summary({
   multiline?: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 text-muted-foreground">{icon}</span>
-      <div className="min-w-0 flex-1">
+    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/30 px-4 py-3">
+      <span className="mt-0.5 shrink-0 text-muted-foreground">{icon}</span>
+      <div className="min-w-0 flex-1 overflow-hidden">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           {label}
         </div>
         <div
           className={cn(
-            "mt-0.5 text-sm text-foreground",
-            multiline && "whitespace-pre-line"
+            "mt-0.5 wrap-break-word text-sm text-foreground",
+            multiline ? "max-h-40 overflow-y-auto whitespace-pre-line" : "truncate"
           )}
         >
           {value}

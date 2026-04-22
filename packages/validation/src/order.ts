@@ -11,7 +11,13 @@ export const createOrderSchema = z.object({
     .max(1000, { message: "Описание слишком длинное" }),
   categoryId: z.string().min(1, { message: "Пожалуйста, выберите категорию" }),
   cityId: z.string().min(1, { message: "Пожалуйста, выберите город" }),
-  budget: z.string().optional(),
+  budget: z
+    .string()
+    .optional()
+    .refine(
+      (v) => !v || (!isNaN(Number(v)) && Number(v) >= 0),
+      { message: "Бюджет не может быть отрицательным" }
+    ),
   address: z.string().min(5, "Адрес слишком короткий").optional(),
   images: z.array(z.string()).optional(),
 });
