@@ -21,7 +21,7 @@ export default function MainLayout({
 
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 pb-20 lg:pb-0">
+        <main className="min-w-0 flex-1 pb-20 lg:pb-0">
           <Container size="2xl" className="py-6 lg:py-10">
             {children}
           </Container>

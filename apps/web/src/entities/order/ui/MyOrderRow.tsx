@@ -41,7 +41,7 @@ export function MyOrderRow({ data }: { data: MyOrderRowData }) {
               {formatSmartDate(data.createdAt)}
             </span>
           </div>
-          <h3 className="mt-1.5 line-clamp-2 text-base font-semibold leading-tight transition-colors group-hover:text-primary">
+          <h3 className="mt-1.5 line-clamp-2 wrap-anywhere text-base font-semibold leading-tight transition-colors group-hover:text-primary">
             {data.title}
           </h3>
         </div>
@@ -63,9 +63,9 @@ export function MyOrderRow({ data }: { data: MyOrderRowData }) {
         </div>
 
         {data.address && (
-          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-            <MapPin className="size-4" />
-            <span className="line-clamp-1">{data.address}</span>
+          <div className="inline-flex min-w-0 max-w-full items-center gap-1.5 text-muted-foreground">
+            <MapPin className="size-4 shrink-0" />
+            <span className="line-clamp-1 wrap-anywhere">{data.address}</span>
           </div>
         )}
 

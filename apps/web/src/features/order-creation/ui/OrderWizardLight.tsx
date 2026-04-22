@@ -700,7 +700,7 @@ function Summary({
         </div>
         <div
           className={cn(
-            "mt-0.5 wrap-break-word text-sm text-foreground",
+            "mt-0.5 wrap-anywhere text-sm text-foreground",
             multiline ? "max-h-40 overflow-y-auto whitespace-pre-line" : "truncate"
           )}
         >

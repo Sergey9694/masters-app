@@ -57,10 +57,10 @@ export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
         </div>
 
         <div>
-          <h3 className="line-clamp-2 wrap-break-word text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
+          <h3 className="line-clamp-2 wrap-anywhere text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
             {order.title}
           </h3>
-          <p className="mt-1.5 line-clamp-2 wrap-break-word text-sm text-muted-foreground">
+          <p className="mt-1.5 line-clamp-2 wrap-anywhere text-sm text-muted-foreground">
             {order.description}
           </p>
         </div>

@@ -160,7 +160,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
               )}
             </div>
 
-            <h1 className="mt-4 wrap-break-word text-2xl font-semibold leading-tight sm:text-3xl">
+            <h1 className="mt-4 wrap-anywhere text-2xl font-semibold leading-tight sm:text-3xl">
               {order.title}
             </h1>
 
@@ -185,7 +185,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                   className="inline-flex max-w-full items-center gap-1.5 text-primary underline-offset-4 hover:underline"
                 >
                   <MapPin className="size-4 shrink-0" />
-                  <span className="wrap-break-word min-w-0">{order.address}</span>
+                  <span className="wrap-anywhere min-w-0">{order.address}</span>
                 </a>
               )}
               <div className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -194,7 +194,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <p className="mt-6 wrap-break-word whitespace-pre-line text-base leading-relaxed text-foreground">
+            <p className="mt-6 wrap-anywhere whitespace-pre-line text-base leading-relaxed text-foreground">
               {order.description}
             </p>
 
@@ -291,7 +291,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                 ))}
               </div>
               {order.review.text && (
-                <p className="mt-2 wrap-break-word text-sm text-foreground">{order.review.text}</p>
+                <p className="mt-2 wrap-anywhere text-sm text-foreground">{order.review.text}</p>
               )}
             </section>
           )}
@@ -351,7 +351,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     </div>
 
                     {p.message && (
-                      <p className="mt-3 wrap-break-word whitespace-pre-line text-sm leading-relaxed text-foreground">
+                      <p className="mt-3 wrap-anywhere whitespace-pre-line text-sm leading-relaxed text-foreground">
                         {p.message}
                       </p>
                     )}
