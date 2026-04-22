@@ -58,11 +58,6 @@ export function OrderFeedCard({ order, href }: OrderFeedCardProps) {
 
         <div>
           <h3 className="line-clamp-2 wrap-anywhere text-lg font-semibold leading-tight text-foreground transition-colors group-hover:text-primary">
-            {order.orderNumber && (
-              <span className="mr-1.5 text-muted-foreground/60 font-medium">
-                №{order.orderNumber}
-              </span>
-            )}
             {order.title}
           </h3>
           <p className="mt-1.5 line-clamp-2 wrap-anywhere text-sm text-muted-foreground">

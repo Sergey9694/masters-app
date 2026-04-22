@@ -379,7 +379,9 @@ export default async function OrderDetailPage({ params }: PageProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold">{order.client.firstName}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Разместил заказ</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Разместил <span className="text-sm font-bold text-foreground">заказ №{order.orderNumber}</span>
+                </p>
               </div>
             </div>
           </section>
