@@ -40,6 +40,7 @@ model City {
   id     String  @id @default(cuid())
   name   String  @unique // "Москва"
   slug   String  @unique // "moscow"
+  fiasId String? @unique // Код ФИАС для точного сопоставления с DaData
   region String? // "Московская область"
 
   location Unsupported("geometry(Point, 4326)")?

@@ -1,20 +1,13 @@
 import { PrismaClient } from "@prisma/client";
+import { PROJECT_CITIES } from "./cities.config";
 
 const prisma = new PrismaClient();
 
-const cities = [
-  { name: 'Москва', slug: 'moscow', region: 'Москва', lat: 55.7558, lon: 37.6173 },
-  { name: 'Санкт-Петербург', slug: 'spb', region: 'Санкт-Петербург', lat: 59.9343, lon: 30.3351 },
-  { name: 'Новосибирск', slug: 'novosibirsk', region: 'Новосибирская область', lat: 55.0084, lon: 82.9346 },
-  { name: 'Екатеринбург', slug: 'ekaterinburg', region: 'Свердловская область', lat: 56.8389, lon: 60.6122 },
-  { name: 'Казань', slug: 'kazan', region: 'Республика Татарстан', lat: 55.7887, lon: 49.1233 }
-];
-
 async function main() {
-  console.log("🌱 Seeding cities with PostGIS coordinates...");
+  console.log("🌱 Seeding cities from cities.config.ts...");
 
-  for (const city of cities) {
-    const { lat, lon, ...cityData } = city;
+  for (const city of PROJECT_CITIES) {
+    const { lat, lng, ...cityData } = city;
     
     // Upsert base city data
     const createdCity = await prisma.city.upsert({
@@ -24,12 +17,14 @@ async function main() {
     });
 
     // Update location using raw SQL for PostGIS
-    await prisma.$executeRawUnsafe(
-      `UPDATE "City" SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
-      lon, lat, createdCity.id
-    );
+    if (lat && lng) {
+      await prisma.$executeRawUnsafe(
+        `UPDATE "City" SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
+        lng, lat, createdCity.id
+      );
+    }
 
-    console.log(`✅ City created/updated: ${city.name} (${lat}, ${lon})`);
+    console.log(`✅ City synced: ${city.name} (${lat}, ${lng})`);
   }
 
   console.log("🏙️ Cities seeding finished.");

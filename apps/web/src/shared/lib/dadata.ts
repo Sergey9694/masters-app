@@ -10,6 +10,7 @@ export interface DadataSuggestion {
   data: {
     city?: string;
     city_with_type?: string;
+    city_fias_id?: string;
     geo_lat?: string;
     geo_lon?: string;
     [key: string]: any;
@@ -54,6 +55,8 @@ export async function detectCityByIp(): Promise<DadataSuggestion | null> {
     const headerList = await headers();
     const ip = headerList.get("x-forwarded-for")?.split(",")[0] || headerList.get("x-real-ip");
     
+    console.log(`[DADATA] Detecting city for IP: ${ip || "self"}`);
+
     const url = `https://suggestions.dadata.ru/suggestions/api/4_1/rs/iplocate/address${ip ? `?ip=${ip}` : ""}`;
     
     const res = await fetch(url, {

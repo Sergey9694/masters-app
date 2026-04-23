@@ -49,29 +49,64 @@ export async function getAllCities(): Promise<City[]> {
     orderBy: { name: "asc" },
   });
 }
-/**
- * Общий экшен для определения города (через DaData)
- */
 export async function detectCityAction(lat?: number, lng?: number): Promise<City | null> {
   try {
-    let cityName: string | undefined;
+    console.log(`[GEO_ACTION] Detecting city for: lat=${lat}, lng=${lng}`);
 
+    // Если есть координаты, используем PostGIS поиск как самый точный
     if (lat !== undefined && lng !== undefined) {
-      // 1. По координатам через DaData
-      const res = await geolocate(lat, lng);
-      cityName = res?.data?.city;
-    } else {
-      // 2. По IP через DaData
-      const res = await detectCityByIp();
-      cityName = res?.data?.city;
+      const closest = await detectClosestCity(lat, lng);
+      if (closest) {
+        console.log(`[GEO_ACTION] Closest city found via PostGIS: ${closest.name}`);
+        return closest;
+      }
     }
 
-    if (cityName) {
-      return db.city.findFirst({
-        where: { name: { contains: cityName, mode: "insensitive" }, isActive: true }
+    // Если координат нет или PostGIS не нашел, пробуем через DaData по IP
+    const res = await detectCityByIp();
+    const cityName = res?.data?.city;
+    const fiasId = res?.data?.city_fias_id;
+    const ipLat = res?.data?.geo_lat ? parseFloat(res.data.geo_lat) : undefined;
+    const ipLng = res?.data?.geo_lon ? parseFloat(res.data.geo_lon) : undefined;
+    
+    console.log(`[GEO_ACTION] DaData IP detect result:`, { cityName, fiasId, ipLat, ipLng });
+
+    // 1. Приоритетный поиск по fiasId (самый точный)
+    if (fiasId) {
+      const city = await db.city.findFirst({
+        where: { fiasId, isActive: true }
       });
+      if (city) {
+        console.log(`[GEO_ACTION] City found in DB by fiasId: ${city.name}`);
+        return city;
+      }
     }
 
+    // 2. Фолбек по названию
+    if (cityName) {
+      const city = await db.city.findFirst({
+        where: { 
+          name: { contains: cityName, mode: "insensitive" }, 
+          isActive: true 
+        }
+      });
+      if (city) {
+        console.log(`[GEO_ACTION] City found in DB by name: ${city.name}`);
+        return city;
+      }
+    }
+
+    // Фолбек: если по имени не нашли, но есть координаты от IP - ищем ближайший
+    if (ipLat !== undefined && ipLng !== undefined) {
+      console.log(`[GEO_ACTION] Falling back to nearest city via IP coordinates...`);
+      const closest = await detectClosestCity(ipLat, ipLng);
+      if (closest) {
+        console.log(`[GEO_ACTION] Found nearest city as fallback: ${closest.name}`);
+        return closest;
+      }
+    }
+
+    console.warn(`[GEO_ACTION] No city found in DB for cityName: ${cityName}`);
     return null;
   } catch (error) {
     console.error("[GEO_ACTION] Detect city failed:", error);

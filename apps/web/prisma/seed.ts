@@ -83,16 +83,16 @@ async function main() {
   }
 
   // 3. Link Categories to Cities (Popular categories)
-  const moscow = await prisma.city.findUnique({ where: { slug: 'moscow' } });
+  const mainCity = await prisma.city.findUnique({ where: { slug: 'rostov-na-donu' } });
   const allCategories = await prisma.category.findMany({ where: { parentId: null } });
   
-  if (moscow) {
-    console.log("🌱 Linking categories to Moscow...");
+  if (mainCity) {
+    console.log("🌱 Linking categories to Rostov...");
     for (const cat of allCategories) {
       await prisma.cityCategory.upsert({
-        where: { cityId_categoryId: { cityId: moscow.id, categoryId: cat.id } },
+        where: { cityId_categoryId: { cityId: mainCity.id, categoryId: cat.id } },
         update: {},
-        create: { cityId: moscow.id, categoryId: cat.id, sortOrder: cat.sortOrder },
+        create: { cityId: mainCity.id, categoryId: cat.id, sortOrder: cat.sortOrder },
       });
     }
   }
@@ -131,7 +131,7 @@ async function main() {
       firstName: 'Иван',
       lastName: 'Мастеров',
       role: Role.PROVIDER,
-      cityId: moscow?.id,
+      cityId: mainCity?.id,
       emailVerified: new Date(),
     }
   });
@@ -150,19 +150,19 @@ async function main() {
 
   // 5. Create Service Listing
   const santehnika = await prisma.category.findUnique({ where: { slug: 'santehnika' } });
-  if (santehnika && moscow) {
+  if (santehnika && mainCity) {
     console.log("🌱 Creating dummy service listing...");
     await prisma.serviceListing.create({
       data: {
         providerId: providerProfile.id,
         categoryId: santehnika.id,
-        cityId: moscow.id,
+        cityId: mainCity.id,
         title: 'Установка смесителей и ремонт труб',
         description: 'Быстро, качественно, с гарантией. Выезд в течение часа.',
         status: ListingStatus.ACTIVE,
         priceFrom: 1500,
         priceUnit: PriceUnit.PER_SERVICE,
-        address: 'г. Москва, ул. Арбат, 1',
+        address: 'г. Ростов-на-Дону, ул. Большая Садовая, 1',
       }
     });
   }
@@ -185,21 +185,21 @@ async function main() {
       firstName: 'Алексей',
       lastName: 'Заказчиков',
       role: Role.USER,
-      cityId: moscow?.id,
+      cityId: mainCity?.id,
       emailVerified: new Date(),
     }
   });
 
-  if (santehnika && moscow) {
+  if (santehnika && mainCity) {
     await prisma.order.create({
       data: {
         clientId: clientUser.id,
         categoryId: santehnika.id,
-        cityId: moscow.id,
+        cityId: mainCity.id,
         title: 'Нужно починить кран на кухне',
         description: 'Кран течет уже неделю, нужно заменить прокладку или весь кран.',
         budget: 2000,
-        address: 'Москва, ул. Тверская, 10',
+        address: 'Ростов-на-Дону, ул. Пушкинская, 10',
         status: OrderStatus.OPEN,
       }
     });
