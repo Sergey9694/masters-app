@@ -70,8 +70,10 @@ export function CitySelector() {
     const city = await detectCityAction(result.coords?.lat, result.coords?.lng);
     
     if (city) {
-      selectCity(city);
-      if (!silent) toast.success(`Ваш город: ${city.name}`);
+      if (!silent) {
+        sessionStorage.setItem("geo_toast_success", `Город определен: ${city.name}`);
+      }
+      selectCity(city, false); 
     } else if (!silent) {
       toast.error("Не удалось точно определить город в нашей базе");
     }
@@ -79,12 +81,15 @@ export function CitySelector() {
     setIsInitialLoading(false);
   };
 
-  const selectCity = (city: City) => {
+  const selectCity = (city: City, shouldToast = true) => {
     setCurrentCity(city);
     setCookie("cityId", city.id, 30); // 30 дней
     setIsOpen(false);
     
-    // Перезагружаем страницу, чтобы все RSC подхватили новую куку
+    if (shouldToast) {
+      sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
+    }
+    
     window.location.reload();
   };
 
