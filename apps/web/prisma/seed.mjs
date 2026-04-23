@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+// Хеш для "password123"
+const ADMIN_PASSWORD_HASH = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU.";
 
 const PROJECT_CITIES = [
   { name: 'Ростов-на-Дону', slug: 'rostov-na-donu', region: 'Ростовская область', fiasId: 'c1cfe4b9-f7c2-423c-abfa-6ed1c05a15c5', lat: 47.2313, lng: 39.7233 },
@@ -45,13 +47,12 @@ async function main() {
   });
 
   // 2. Тестовый админ
-  const passwordHash = await bcrypt.hash("password123", 10);
   await prisma.user.upsert({
     where: { email: 'admin@test.com' },
     update: {},
     create: {
       email: 'admin@test.com',
-      passwordHash,
+      passwordHash: ADMIN_PASSWORD_HASH,
       firstName: 'Админ',
       role: 'ADMIN',
       emailVerified: new Date(),
