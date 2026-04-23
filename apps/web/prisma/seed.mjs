@@ -2,8 +2,9 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// Хеш для "password123"
-const ADMIN_PASSWORD_HASH = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU.";
+// Настройки админа из окружения или дефолты
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@test.com';
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU.";
 
 const PROJECT_CITIES = [
   { name: 'Ростов-на-Дону', slug: 'rostov-na-donu', region: 'Ростовская область', fiasId: 'c1cfe4b9-f7c2-423c-abfa-6ed1c05a15c5', lat: 47.2313, lng: 39.7233 },
@@ -46,16 +47,17 @@ async function main() {
     data: { isActive: false }
   });
 
-  // 2. Тестовый админ (гарантируем наличие, правильный пароль и провайдер)
+  // 2. Дефолтный администратор
+  // Пароль ставится только при ПЕРВОМ создании.
+  // Если админ уже есть, мы обновляем только роль и провайдер.
   await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
+    where: { email: ADMIN_EMAIL },
     update: {
-      passwordHash: ADMIN_PASSWORD_HASH,
       role: 'ADMIN',
       authProvider: 'EMAIL',
     },
     create: {
-      email: 'admin@test.com',
+      email: ADMIN_EMAIL,
       passwordHash: ADMIN_PASSWORD_HASH,
       firstName: 'Админ',
       role: 'ADMIN',
