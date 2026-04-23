@@ -13,6 +13,10 @@ import {
   type UpdateBasicProfileInput,
 } from "../model/schema";
 import { updateBasicProfileAction } from "../api/actions";
+import { PhoneInput } from "@/shared/ui/phone-input";
+import { Controller } from "react-hook-form";
+import { formatPhoneNumber } from "@/shared/lib/phone";
+
 
 interface Option {
   id: string;
@@ -30,8 +34,12 @@ export function BasicInfoForm({ defaultValues, cities }: BasicInfoFormProps) {
 
   const form = useForm<UpdateBasicProfileInput>({
     resolver: zodResolver(updateBasicProfileSchema),
-    defaultValues,
+    defaultValues: {
+      ...defaultValues,
+      phone: defaultValues.phone ? formatPhoneNumber(defaultValues.phone) : "",
+    },
   });
+
 
   const {
     register,
@@ -85,13 +93,22 @@ export function BasicInfoForm({ defaultValues, cities }: BasicInfoFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Телефон" error={errors.phone?.message}>
-          <input
-            type="tel"
-            placeholder="+7 900 000 00 00"
-            {...register("phone")}
-            className={inputCls(!!errors.phone)}
+          <Controller
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneInput
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                disabled={isPending}
+                hasError={!!errors.phone}
+                placeholder="+7 (900) 000-00-00"
+              />
+            )}
           />
         </Field>
+
 
         <Field label="Город" error={errors.cityId?.message}>
           <select

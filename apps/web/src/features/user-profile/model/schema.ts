@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { normalizePhone } from "@/shared/lib/phone";
+
 
 export const updateBasicProfileSchema = z.object({
   firstName: z
@@ -21,7 +23,12 @@ export const updateBasicProfileSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(/^\+?\d[\d\s\-()]{6,20}$/, "Неверный формат телефона")
+    .refine((val) => {
+      if (!val) return true;
+      const digits = val.replace(/\D/g, "");
+      return digits.length === 11;
+    }, "Введите полный номер телефона")
+    .transform(normalizePhone)
     .optional()
     .or(z.literal("")),
   cityId: z.string().min(1, "Выберите город"),

@@ -13,6 +13,7 @@ import {
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { cn } from "@/shared/lib/cn";
+import { formatPhoneNumber } from "@/shared/lib/phone";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +28,9 @@ export default async function ProfilePage() {
   const [city, userFull] = await Promise.all([
     user.cityId
       ? db.city.findUnique({
-          where: { id: user.cityId },
-          select: { name: true },
-        })
+        where: { id: user.cityId },
+        select: { name: true },
+      })
       : Promise.resolve(null),
     db.user.findUnique({
       where: { id: user.id },
@@ -87,7 +88,7 @@ export default async function ProfilePage() {
           <InfoRow
             icon={<Phone className="size-4" />}
             label="Телефон"
-            value={user.phone || "не указан"}
+            value={user.phone ? formatPhoneNumber(user.phone) : "не указан"}
           />
           <InfoRow
             icon={<MapPin className="size-4" />}
