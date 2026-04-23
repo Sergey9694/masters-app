@@ -43,6 +43,11 @@ services:
             AUTH_SECRET: ${AUTH_SECRET}
             AUTH_URL: ${AUTH_URL}
             AUTH_TRUST_HOST: "true"
+            NEXT_PUBLIC_BOT_ID: ${NEXT_PUBLIC_BOT_ID}
+            NEXT_PUBLIC_BOT_NAME: ${NEXT_PUBLIC_BOT_NAME}
+            TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+            ADMIN_EMAIL: ${ADMIN_EMAIL}
+            ADMIN_PASSWORD: ${ADMIN_PASSWORD}
         volumes:
             - ./uploads:/app/uploads
         networks:
