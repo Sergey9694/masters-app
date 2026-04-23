@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Star, BadgeCheck, ArrowRight, Briefcase } from "lucide-react";
+import { cookies } from "next/headers";
 
 import { providerService } from "@/services/provider.service";
 import { buttonVariants } from "@/shared/ui/button";
@@ -11,7 +12,13 @@ import { cn } from "@/shared/lib/cn";
  * Серверный компонент: providerService.list с сортировкой rating desc.
  */
 export async function TopProviders() {
-  const { providers } = await providerService.list({ pageSize: 8 });
+  const cookieStore = await cookies();
+  const cityId = cookieStore.get("cityId")?.value;
+  
+  const { providers } = await providerService.list({ 
+    pageSize: 8,
+    cityId: cityId 
+  });
 
   if (!providers.length) return null;
 

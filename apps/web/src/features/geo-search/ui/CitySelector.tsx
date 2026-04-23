@@ -7,6 +7,7 @@ import { useLocation } from "@/shared/lib/hooks/use-location";
 import { detectCityAction, getCityByName, getAllCities } from "../actions";
 import { cn } from "@/shared/lib/cn";
 import { toast } from "sonner";
+import { setCookie, getCookie } from "@/shared/lib/cookies";
 
 interface City {
   id: string;
@@ -23,15 +24,36 @@ export function CitySelector() {
   
   const { detect, isLocating } = useLocation();
 
-  // Загрузка города из localStorage или автоопределение
+  // Загрузка города из URL, Cookies или автоопределение
   useEffect(() => {
-    const saved = localStorage.getItem("selected_city");
-    if (saved) {
-      setCurrentCity(JSON.parse(saved));
-      setIsInitialLoading(false);
-    } else {
+    // 1. Приоритет URL
+    const params = new URLSearchParams(window.location.search);
+    const urlCityId = params.get("cityId");
+    
+    // 2. Фолбек на Cookies
+    const savedCityId = getCookie("cityId");
+
+    const loadInitialCity = async (id: string) => {
+      const all = await getAllCities();
+      setCities(all);
+      const found = all.find(c => c.id === id);
+      if (found) {
+        setCurrentCity(found);
+        setIsInitialLoading(false);
+        return true;
+      }
+      return false;
+    };
+
+    const init = async () => {
+      if (urlCityId && await loadInitialCity(urlCityId)) return;
+      if (savedCityId && await loadInitialCity(savedCityId)) return;
+      
+      // 3. Автоопределение если ничего не найдено
       handleAutoDetect(true);
-    }
+    };
+
+    init();
   }, []);
 
   // Загрузка списка городов при открытии
@@ -59,13 +81,11 @@ export function CitySelector() {
 
   const selectCity = (city: City) => {
     setCurrentCity(city);
-    localStorage.setItem("selected_city", JSON.stringify(city));
+    setCookie("cityId", city.id, 30); // 30 дней
     setIsOpen(false);
     
-    // Обновляем URL или состояние, если нужно
-    const url = new URL(window.location.href);
-    url.searchParams.set("cityId", city.id);
-    window.history.pushState({}, "", url.toString());
+    // Перезагружаем страницу, чтобы все RSC подхватили новую куку
+    window.location.reload();
   };
 
   const filteredCities = cities.filter(c => 
