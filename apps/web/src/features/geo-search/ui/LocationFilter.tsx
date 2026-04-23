@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Loader2, Navigation } from "lucide-react";
 import { Button } from "@/shared/ui/button";
@@ -8,95 +7,35 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BLUR_IN, CLICK_SCALE } from "@/shared/lib/motion";
 import { toast } from "sonner";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
+import { useLocation } from "@/shared/lib/hooks/use-location";
 
 /**
  * Кнопка быстрого поиска заказов по геолокации.
- * Приоритетная механика для мастеров "Районного Мастера" 2026.
+ * Использует универсальный хук useLocation.
  */
 export function LocationFilter() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isLocating, setIsLocating] = useState(false);
   const haptics = useHaptics();
+  const { detect, isLocating } = useLocation();
   
   const hasGeo = searchParams.has("lat") && searchParams.has("lng");
 
-  const handleGeoSearch = () => {
-    console.log("[GEO_DEBUG] Запуск стратегии 'Авто-выбор' (Двухэтапный поиск)...");
-    setIsLocating(true);
+  const handleGeoSearch = async () => {
     haptics.impact("medium");
-    
-    if (!navigator.geolocation) {
-      toast.error("Геолокация не поддерживается");
-      setIsLocating(false);
-      return;
-    }
+    const result = await detect();
 
-    // Вспомогательная функция для попытки получения координат
-    const getPos = (high: boolean, timeout: number): Promise<GeolocationPosition> => {
-      console.log(`[GEO_DEBUG] Попытка: highAccuracy=${high}, timeout=${timeout}ms...`);
-      return new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: high,
-          timeout,
-          maximumAge: 60000
-        });
-      });
-    };
-
-    const runSearch = async () => {
-      try {
-        // Шаг 1: Пробуем GPS (точность) - 3 секунды
-        const pos = await getPos(true, 3000);
-        handleSuccess(pos.coords.latitude, pos.coords.longitude);
-      } catch {
-        // Шаг 2: Фолбек на Wi-Fi (браузер) - 4 секунды
-        console.warn("[GEO_DEBUG] GPS не ответил. Пробуем Wi-Fi/Браузер...");
-        try {
-          const fastPos = await getPos(false, 4000);
-          handleSuccess(fastPos.coords.latitude, fastPos.coords.longitude);
-        } catch {
-          // Шаг 3 (ФИНАЛ): Сетевой поиск по IP (ipapi.co) - 100% надежность
-          console.warn("[GEO_DEBUG] Браузерный поиск заблокирован или не сработал. Фолбек на IP-API...");
-          try {
-            const res = await fetch("https://ipapi.co/json/", { cache: "no-store" });
-            const data = await res.json();
-            if (data.latitude && data.longitude) {
-              console.log("[GEO_DEBUG] УСПЕХ ПО IP:", data.latitude, data.longitude);
-              handleSuccess(data.latitude, data.longitude);
-              toast.info("Местоположение определено по IP-адресу");
-            } else {
-              throw new Error("IP API вернул некорректные данные");
-            }
-          } catch {
-            handleError();
-          }
-        }
-      }
-    };
-
-    const handleSuccess = (lat: number, lng: number) => {
-      console.log(`[GEO_DEBUG] ПРИМЕНЕНИЕ КООРДИНАТ: ${lat}, ${lng}`);
+    if (result.coords) {
       const current = new URLSearchParams(Array.from(searchParams.entries()));
-      current.set("lat", lat.toString());
-      current.set("lng", lng.toString());
+      current.set("lat", result.coords.lat.toString());
+      current.set("lng", result.coords.lng.toString());
       router.push(`?${current.toString()}`);
-      setIsLocating(false);
       haptics.notification("success");
       toast.success("Локация обновлена!");
-    };
-
-    const handleError = (err?: unknown) => {
-      let msg = "Не удалось определить координаты";
-      if (err && typeof err === "object" && "code" in err && err.code === 1) msg = "Доступ к геопозиции запрещен (проверьте настройки)";
-
-      console.error("[GEO_DEBUG] ФАТАЛЬНАЯ ОШИБКА геолокации");
+    } else if (result.error) {
       haptics.notification("error");
-      toast.error(msg);
-      setIsLocating(false);
-    };
-
-    runSearch();
+      toast.error(result.error);
+    }
   };
 
   const clearGeo = () => {

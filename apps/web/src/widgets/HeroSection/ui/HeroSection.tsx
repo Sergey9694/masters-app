@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Search, Sparkles, TrendingUp, Users, Shield } from "lucide-react";
@@ -10,6 +10,7 @@ import { fadeIn, slideUp, staggerContainer, staggerItem } from "@/shared/lib/mot
 import { buttonVariants } from "@/shared/ui/button";
 import { Container } from "@/shared/ui/container";
 import { cn } from "@/shared/lib/cn";
+import { CitySelector } from "@/features/geo-search/ui/CitySelector";
 
 const POPULAR_QUERIES = [
   "Уборка квартиры",
@@ -32,14 +33,19 @@ const TRUST_BADGES = [
  */
 export function HeroSection() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = query.trim();
-    const url = trimmed
-      ? `/orders?search=${encodeURIComponent(trimmed)}`
-      : "/orders";
+    const cityId = searchParams.get("cityId");
+    
+    const params = new URLSearchParams();
+    if (trimmed) params.set("search", trimmed);
+    if (cityId) params.set("cityId", cityId);
+    
+    const url = params.toString() ? `/orders?${params.toString()}` : "/orders";
     router.push(url);
   };
 
@@ -95,9 +101,13 @@ export function HeroSection() {
             <motion.form
               variants={slideUp}
               onSubmit={onSubmit}
-              className="mx-auto mt-8 flex w-full max-w-2xl items-center gap-2 rounded-full border border-border bg-surface p-1.5 shadow-lg shadow-primary/5 transition-shadow focus-within:shadow-xl focus-within:shadow-primary/10"
+              className="mx-auto mt-8 flex w-full max-w-2xl items-center gap-1 rounded-full border border-border bg-surface p-1.5 shadow-lg shadow-primary/5 transition-shadow focus-within:shadow-xl focus-within:shadow-primary/10"
             >
-              <div className="flex flex-1 items-center gap-3 pl-4">
+              <div className="pl-2">
+                <CitySelector />
+              </div>
+              <div className="h-8 w-px bg-border/60" />
+              <div className="flex flex-1 items-center gap-3 pl-3">
                 <Search className="size-5 shrink-0 text-muted-foreground" />
                 <input
                   type="text"

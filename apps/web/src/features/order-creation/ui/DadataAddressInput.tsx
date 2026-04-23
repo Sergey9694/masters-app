@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { MapPin, Loader2 } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
-import { suggestAddressAction, type DadataSuggestion } from "../api/dadata-action";
+import { suggestAddress, type DadataSuggestion } from "@/shared/lib/dadata";
 
 interface Props {
   value: string;
@@ -28,7 +28,7 @@ export function DadataAddressInput({ value, onChange, onBlur, hasError }: Props)
     }
     setIsLoading(true);
     try {
-      const results = await suggestAddressAction(query);
+      const results = await suggestAddress(query);
       setSuggestions(results);
       if (results.length > 0) setIsOpen(true);
     } finally {
