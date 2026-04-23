@@ -8,7 +8,7 @@ import crypto from "crypto";
  * Получение секретного ключа (Lazy Evaluation по Правилу 6)
  */
 function getSecretKey() {
-  const secret = process.env.JWT_SECRET;
+  const secret = process.env.AUTH_SECRET || process.env.JWT_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("JWT_SECRET is not defined in production environment");
