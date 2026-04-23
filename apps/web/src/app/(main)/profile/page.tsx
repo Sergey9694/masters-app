@@ -14,6 +14,7 @@ import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { cn } from "@/shared/lib/cn";
 import { formatPhoneNumber } from "@/shared/lib/phone";
+import { LogoutButton } from "@/features/auth/ui/LogoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -156,6 +157,10 @@ export default async function ProfilePage() {
           </Link>
         </section>
       )}
+
+      <div className="mt-4 flex justify-center sm:justify-start">
+        <LogoutButton variant="ghost" className="text-muted-foreground hover:text-red-500 hover:bg-red-500/5" />
+      </div>
     </div>
   );
 }

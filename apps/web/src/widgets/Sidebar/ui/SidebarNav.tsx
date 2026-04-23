@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 
 import { cn } from "@/shared/lib/cn";
 import { NAV_MAIN, NAV_USER, type NavItem } from "@/shared/config/navigation";
+import { logoutAction } from "@/features/auth/model/actions";
+import { LogOut } from "lucide-react";
 
 interface SidebarNavProps {
   isAuth: boolean;
@@ -29,6 +31,18 @@ export function SidebarNav({ isAuth, isProvider }: SidebarNavProps) {
             Личное
           </p>
           <NavList items={userItems} pathname={pathname} />
+        </div>
+      )}
+
+      {isAuth && (
+        <div className="mt-auto pt-6 border-t border-border/40">
+          <button
+            onClick={() => logoutAction()}
+            className="group flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-red-500/5 hover:text-red-500"
+          >
+            <LogOut className="size-4 transition-colors group-hover:text-red-500" />
+            <span>Выйти</span>
+          </button>
         </div>
       )}
     </div>

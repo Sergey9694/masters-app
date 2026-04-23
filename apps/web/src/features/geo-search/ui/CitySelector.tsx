@@ -63,6 +63,19 @@ export function CitySelector() {
     }
   }, [isOpen]);
 
+  // Блокировка скролла при открытой модалке
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   const handleAutoDetect = async (silent = false) => {
     const result = await detect();
     
