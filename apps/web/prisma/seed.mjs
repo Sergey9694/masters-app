@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -8,10 +7,18 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@test.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // Обычный пароль из ENV
 const DEFAULT_HASH = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU."; // для "password123"
 
-// Если задан чистый пароль - хешируем его, иначе берем готовый хеш или дефолт
-const ADMIN_PASSWORD_HASH = ADMIN_PASSWORD 
-  ? bcrypt.hashSync(ADMIN_PASSWORD, 10) 
-  : (process.env.ADMIN_PASSWORD_HASH || DEFAULT_HASH);
+// Динамический импорт bcrypt для надежности в Docker
+let ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || DEFAULT_HASH;
+
+if (ADMIN_PASSWORD) {
+  try {
+    const bcrypt = await import("bcryptjs");
+    ADMIN_PASSWORD_HASH = bcrypt.default.hashSync(ADMIN_PASSWORD, 10);
+  } catch (e) {
+    console.warn("⚠️ [SEED] bcryptjs не найден, используем дефолтный хеш или пароль без хеша.");
+    ADMIN_PASSWORD_HASH = ADMIN_PASSWORD; // Fallback
+  }
+}
 
 const PROJECT_CITIES = [
   { name: 'Ростов-на-Дону', slug: 'rostov-na-donu', region: 'Ростовская область', fiasId: 'c1cfe4b9-f7c2-423c-abfa-6ed1c05a15c5', lat: 47.2313, lng: 39.7233 },

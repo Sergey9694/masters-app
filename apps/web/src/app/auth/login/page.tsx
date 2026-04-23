@@ -9,7 +9,8 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  const botId = process.env.NEXT_PUBLIC_BOT_ID;
+  // Используем не-публичную переменную, чтобы Next.js не вшивал её при билде
+  const botId = process.env.TELEGRAM_BOT_ID || process.env.NEXT_PUBLIC_BOT_ID;
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden">
