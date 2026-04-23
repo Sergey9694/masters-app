@@ -138,16 +138,6 @@ async function main() {
     // ─── Seed справочников (идемпотентно через upsert) ───
     console.log("[STARTUP] Запускаем seed справочников...");
     runSafe("node prisma/seed.mjs");
-    
-    // Seed городов (если есть файл)
-    if (fs.existsSync(path.join(__dirname, "prisma", "seed-cities.mjs"))) {
-        console.log("[STARTUP] Засеиваем города...");
-        runSafe("node prisma/seed-cities.mjs");
-    }
-
-    // ─── Seed admin (идемпотентно: upsert по role=ADMIN) ───
-    console.log("[STARTUP] Засеиваем admin-пользователя...");
-    runSafe("node prisma/seed-admin.mjs");
 
     // ─── Next.js standalone server ───
     // В монорепо `COPY .next/standalone ./` копирует структуру воркспейса:

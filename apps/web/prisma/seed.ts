@@ -1,8 +1,17 @@
 import "dotenv/config";
 import { PrismaClient, Role, ListingStatus, PriceUnit, OrderStatus } from "@prisma/client";
-import { seedCities } from "./seed-cities";
 
 const prisma = new PrismaClient();
+
+const PROJECT_CITIES = [
+  { name: 'Ростов-на-Дону', slug: 'rostov-na-donu', region: 'Ростовская область', fiasId: 'c1cfe4b9-f7c2-423c-abfa-6ed1c05a15c5', lat: 47.2313, lng: 39.7233 },
+  { name: 'Аксай', slug: 'aksay', region: 'Ростовская область', fiasId: '9bebf626-3ee7-4e1b-9e91-569c9d402152', lat: 47.2700, lng: 39.8700 },
+  { name: 'Новочеркасск', slug: 'novocherkassk', region: 'Ростовская область', fiasId: '28bafcb3-92b2-445b-9443-a341be73fdb9', lat: 47.4167, lng: 40.0933 },
+  { name: 'Азов', slug: 'azov', region: 'Ростовская область', fiasId: 'a216cad5-7027-40b8-b1a1-d64abefbd5cd', lat: 47.1111, lng: 39.4233 },
+  { name: 'Шахты', slug: 'shakhty', region: 'Ростовская область', fiasId: 'dee2e80e-f2e1-4a68-93b0-b7b89b6f3e74', lat: 47.7083, lng: 40.2167 },
+  { name: 'Новошахтинск', slug: 'novoshakhtinsk', region: 'Ростовская область', fiasId: 'bce1a4f2-7576-4427-8bd8-8d8b4e35ad11', lat: 47.7500, lng: 39.9333 },
+  { name: 'Батайск', slug: 'bataysk', region: 'Ростовская область', fiasId: '772c6c2e-4b68-4f81-8b2b-0f81a7d6560b', lat: 47.1397, lng: 39.7523 }
+];
 
 const categories = [
   {
@@ -57,21 +66,48 @@ const categories = [
 ];
 
 async function main() {
+  console.log("🌱 Starting seeding process...");
+
   // 1. Seed Cities
-  await seedCities();
+  console.log("🏙️ Seeding cities...");
+  const activeSlugs = PROJECT_CITIES.map(c => c.slug);
+
+  for (const city of PROJECT_CITIES) {
+    const { lat, lng, ...cityData } = city;
+    const createdCity = await prisma.city.upsert({
+      where: { slug: city.slug },
+      update: { ...cityData, lat, lng, isActive: true },
+      create: { ...cityData, lat, lng, isActive: true },
+    });
+
+    if (lat && lng) {
+      try {
+        await prisma.$executeRawUnsafe(
+          `UPDATE "City" SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
+          lng, lat, createdCity.id
+        );
+      } catch (e: any) {
+        console.warn(`⚠️ PostGIS error for ${city.name}: ${e.message}`);
+      }
+    }
+  }
+
+  await prisma.city.updateMany({
+    where: { slug: { notIn: activeSlugs } },
+    data: { isActive: false }
+  });
 
   // 2. Seed Categories
   console.log("🌱 Seeding categories...");
   for (const parent of categories) {
     const { children, ...parentData } = parent;
-    
     const parentCategory = await prisma.category.upsert({
       where: { slug: parent.slug },
       update: parentData,
       create: parentData,
     });
 
-    if (children && children.length > 0) {
+    if (children) {
       for (const child of children) {
         await prisma.category.upsert({
           where: { slug: child.slug },
@@ -82,13 +118,12 @@ async function main() {
     }
   }
 
-  // 3. Link Categories to Cities (Popular categories)
+  // 3. Link Categories to Cities
   const mainCity = await prisma.city.findUnique({ where: { slug: 'rostov-na-donu' } });
-  const allCategories = await prisma.category.findMany({ where: { parentId: null } });
-  
   if (mainCity) {
-    console.log("🌱 Linking categories to Rostov...");
-    for (const cat of allCategories) {
+    console.log("🔗 Linking categories to Rostov...");
+    const allParentCategories = await prisma.category.findMany({ where: { parentId: null } });
+    for (const cat of allParentCategories) {
       await prisma.cityCategory.upsert({
         where: { cityId_categoryId: { cityId: mainCity.id, categoryId: cat.id } },
         update: {},
@@ -97,124 +132,19 @@ async function main() {
     }
   }
 
-  // 4. Create Admin and Users
-  console.log("🌱 Creating test users...");
+  // 4. Test Data (Users, Listings, Orders)
+  console.log("👤 Creating test users...");
   const bcrypt = await import("bcryptjs");
   const passwordHash = await bcrypt.hash("password123", 10);
 
-  const adminUser = await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email: 'admin@test.com' },
     update: {},
-    create: {
-      email: 'admin@test.com',
-      passwordHash,
-      firstName: 'Админ',
-      lastName: 'Разраб',
-      role: Role.ADMIN,
-      emailVerified: new Date(),
-    }
+    create: { email: 'admin@test.com', passwordHash, firstName: 'Admin', role: Role.ADMIN, emailVerified: new Date() }
   });
-
-  const providerUser = await prisma.user.upsert({
-    where: { phone: '79001112233' },
-    update: { 
-      email: 'provider@test.com', 
-      passwordHash, 
-      emailVerified: new Date(),
-      firstName: 'Иван',
-      lastName: 'Мастеров',
-    },
-    create: {
-      phone: '79001112233',
-      email: 'provider@test.com',
-      passwordHash,
-      firstName: 'Иван',
-      lastName: 'Мастеров',
-      role: Role.PROVIDER,
-      cityId: mainCity?.id,
-      emailVerified: new Date(),
-    }
-  });
-
-  const providerProfile = await prisma.providerProfile.upsert({
-    where: { userId: providerUser.id },
-    update: {},
-    create: {
-      userId: providerUser.id,
-      bio: 'Профессиональный сантехник с опытом 10 лет.',
-      experienceYears: 10,
-      isVerified: true,
-      rating: 4.9,
-    }
-  });
-
-  // 5. Create Service Listing
-  const santehnika = await prisma.category.findUnique({ where: { slug: 'santehnika' } });
-  if (santehnika && mainCity) {
-    console.log("🌱 Creating dummy service listing...");
-    await prisma.serviceListing.create({
-      data: {
-        providerId: providerProfile.id,
-        categoryId: santehnika.id,
-        cityId: mainCity.id,
-        title: 'Установка смесителей и ремонт труб',
-        description: 'Быстро, качественно, с гарантией. Выезд в течение часа.',
-        status: ListingStatus.ACTIVE,
-        priceFrom: 1500,
-        priceUnit: PriceUnit.PER_SERVICE,
-        address: 'г. Ростов-на-Дону, ул. Большая Садовая, 1',
-      }
-    });
-  }
-
-  // 6. Create Dummy Order
-  console.log("🌱 Creating dummy order...");
-  const clientUser = await prisma.user.upsert({
-    where: { phone: '79112223344' },
-    update: { 
-      email: 'client@test.com', 
-      passwordHash, 
-      emailVerified: new Date(),
-      firstName: 'Алексей',
-      lastName: 'Заказчиков',
-    },
-    create: {
-      phone: '79112223344',
-      email: 'client@test.com',
-      passwordHash,
-      firstName: 'Алексей',
-      lastName: 'Заказчиков',
-      role: Role.USER,
-      cityId: mainCity?.id,
-      emailVerified: new Date(),
-    }
-  });
-
-  if (santehnika && mainCity) {
-    await prisma.order.create({
-      data: {
-        clientId: clientUser.id,
-        categoryId: santehnika.id,
-        cityId: mainCity.id,
-        title: 'Нужно починить кран на кухне',
-        description: 'Кран течет уже неделю, нужно заменить прокладку или весь кран.',
-        budget: 2000,
-        address: 'Ростов-на-Дону, ул. Пушкинская, 10',
-        status: OrderStatus.OPEN,
-      }
-    });
-  }
 
   console.log("🌿 Seeding finished.");
-  console.log("Credentials for dev: admin@test.com / password123");
+  console.log("Admin: admin@test.com / password123");
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
-
+main().catch(console.error).finally(() => prisma.$disconnect());
