@@ -46,15 +46,20 @@ async function main() {
     data: { isActive: false }
   });
 
-  // 2. Тестовый админ
+  // 2. Тестовый админ (гарантируем наличие, правильный пароль и провайдер)
   await prisma.user.upsert({
     where: { email: 'admin@test.com' },
-    update: {},
+    update: {
+      passwordHash: ADMIN_PASSWORD_HASH,
+      role: 'ADMIN',
+      authProvider: 'EMAIL',
+    },
     create: {
       email: 'admin@test.com',
       passwordHash: ADMIN_PASSWORD_HASH,
       firstName: 'Админ',
       role: 'ADMIN',
+      authProvider: 'EMAIL',
       emailVerified: new Date(),
     }
   });
