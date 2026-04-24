@@ -84,6 +84,7 @@ export default async function MyProposalsPage({
             assignedProviderId: true,
             createdAt: true,
             category: { select: { name: true, slug: true } },
+            city: { select: { slug: true } },
           },
         },
       },
@@ -136,7 +137,7 @@ export default async function MyProposalsPage({
               data={{
                 id: p.id,
                 orderNumber: p.order.orderNumber,
-                href: `/orders/${p.order.category.slug}/${p.order.slug || p.order.id}`,
+                href: `/orders/${p.order.city.slug}/${p.order.category.slug}/${p.order.slug || p.order.id}`,
                 title: p.order.title,
                 category: p.order.category.name,
                 status: p.order.status,

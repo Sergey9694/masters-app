@@ -55,6 +55,7 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
         address: true,
         createdAt: true,
         category: { select: { name: true, slug: true } },
+        city: { select: { slug: true } },
         _count: { select: { proposals: true } },
       },
     }),
@@ -141,7 +142,7 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
               data={{
                 id: o.id,
                 orderNumber: o.orderNumber,
-                href: `/orders/${o.category.slug}/${o.slug || o.id}`,
+                href: `/orders/${o.city.slug}/${o.category.slug}/${o.slug || o.id}`,
                 title: o.title,
                 category: o.category.name,
                 status: o.status,
