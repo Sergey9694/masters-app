@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/shared/lib/get-user";
+import { db } from "@/shared/lib/db";
 import { suggestAddress } from "@/shared/lib/dadata";
 
 const querySchema = z.object({
@@ -20,7 +21,21 @@ export async function GET(req: Request) {
   }
 
   try {
-    const data = await suggestAddress(parsed.data.q);
+    const locations = [
+      { region: "Адыгея" },
+      { region: "Калмыкия" },
+      { region: "Крым" },
+      { region: "Краснодарский" },
+      { region: "Астраханская" },
+      { region: "Волгоградская" },
+      { region: "Ростовская" },
+      { region: "Севастополь" },
+      { region: "Донецкая" },
+      { region: "Луганская" },
+      { region: "Херсонская" },
+      { region: "Запорожская" },
+    ];
+    const data = await suggestAddress(parsed.data.q, locations);
     return NextResponse.json({ suggestions: data });
   } catch (e) {
     console.error("[API_SUGGEST] error:", e);

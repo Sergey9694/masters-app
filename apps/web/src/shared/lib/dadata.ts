@@ -20,7 +20,7 @@ export interface DadataSuggestion {
 /**
  * Подсказки адресов
  */
-export async function suggestAddress(query: string): Promise<DadataSuggestion[]> {
+export async function suggestAddress(query: string, locations?: any[]): Promise<DadataSuggestion[]> {
   if (!DADATA_TOKEN || !query.trim()) return [];
 
   try {
@@ -33,7 +33,11 @@ export async function suggestAddress(query: string): Promise<DadataSuggestion[]>
           Accept: "application/json",
           Authorization: `Token ${DADATA_TOKEN}`,
         },
-        body: JSON.stringify({ query, count: 5 }),
+        body: JSON.stringify({ 
+          query, 
+          count: 5,
+          locations: locations && locations.length > 0 ? locations : undefined
+        }),
         cache: "no-store",
       }
     );

@@ -5,6 +5,7 @@ import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ensureCityAction } from "../api/ensure-city-action";
 import {
   ArrowLeft,
   ArrowRight,
@@ -71,7 +72,7 @@ const STEPS: StepDef[] = [
     title: "Бюджет и адрес",
     subtitle: "Сколько готовы заплатить и куда приехать",
     icon: Banknote,
-    fields: ["budget", "address"],
+    fields: ["budget", "address", "cityId"],
   },
   {
     key: "photos",
@@ -124,6 +125,16 @@ export function OrderWizardLight({
     const fields = step.fields;
     if (fields.length > 0) {
       const ok = await form.trigger(fields);
+      
+      // Strict check for cityId if address is being filled
+      if (fields.includes("address") && !form.getValues("cityId")) {
+        form.setError("address", { 
+          type: "manual", 
+          message: "Пожалуйста, выберите адрес из предложенного списка для привязки к городу" 
+        });
+        return;
+      }
+
       if (!ok) return;
     }
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
@@ -440,28 +451,34 @@ function StepBudget({ form, cities }: { form: UseFormReturn<OrderFormValues>, ci
         <DadataAddressInput
           value={address ?? ""}
           onChange={(v) => {
-            setValue("address", v, { shouldValidate: true });
-            clearErrors("address");
+            setValue("address", v);
           }}
-          onSelect={(s) => {
-            const cityName = s.data.city || s.data.settlement;
-            if (cityName) {
-              const matchedCity = cities.find(c => 
-                c.name.toLowerCase().includes(cityName.toLowerCase()) ||
-                cityName.toLowerCase().includes(c.name.toLowerCase())
-              );
-              if (matchedCity) {
-                setValue("cityId", matchedCity.id, { shouldValidate: true });
+          onSelect={async (s) => {
+            const cityName = s.data.city || s.data.settlement || s.data.city_with_type;
+            const regionName = s.data.region_with_type || s.data.region;
+
+            if (cityName && regionName) {
+              try {
+                const { id } = await ensureCityAction({
+                  name: cityName,
+                  fiasId: s.data.city_fias_id || s.data.settlement_fias_id,
+                  region: regionName,
+                  lat: s.data.geo_lat ? parseFloat(s.data.geo_lat) : null,
+                  lng: s.data.geo_lon ? parseFloat(s.data.geo_lon) : null,
+                });
+
+                setValue("cityId", id, { shouldValidate: true });
                 clearErrors("address");
-              } else {
-                setError("address", {
-                  type: "manual",
-                  message: `Мы пока не работаем в г. ${cityName}. Выберите другой город.`
+              } catch (error) {
+                console.error("[CITY_ERROR]", error);
+                setError("address", { 
+                  type: "manual", 
+                  message: "Мы работаем только в Ростовской области. Выберите другой адрес." 
                 });
               }
             }
           }}
-          onBlur={() => form.trigger("address")}
+          onBlur={() => {}} // Remove trigger on blur to prevent clearing manual errors
           hasError={!!errors.address}
         />
       </Field>

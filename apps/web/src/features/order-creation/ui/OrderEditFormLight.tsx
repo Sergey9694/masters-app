@@ -10,6 +10,7 @@ import { z } from "zod";
 
 import { cn } from "@/shared/lib/cn";
 import { updateOrderAction } from "../api/update-order-action";
+import { ensureCityAction } from "../api/ensure-city-action";
 import { DadataAddressInput } from "./DadataAddressInput";
 
 const schema = z.object({
@@ -120,25 +121,32 @@ export function OrderEditFormLight({ orderId, defaultValues, categories, cities 
             <DadataAddressInput
               value={field.value ?? ""}
               onChange={field.onChange}
-              onSelect={(s) => {
-                const cityName = s.data.city || s.data.settlement;
-                if (cityName) {
-                  const matchedCity = cities.find(c => 
-                    c.name.toLowerCase().includes(cityName.toLowerCase()) ||
-                    cityName.toLowerCase().includes(c.name.toLowerCase())
-                  );
-                  if (matchedCity) {
-                    setValue("cityId", matchedCity.id, { shouldValidate: true });
+              onSelect={async (s) => {
+                const cityName = s.data.city || s.data.settlement || s.data.city_with_type;
+                const regionName = s.data.region_with_type || s.data.region;
+
+                if (cityName && regionName) {
+                  try {
+                    const { id } = await ensureCityAction({
+                      name: cityName,
+                      fiasId: s.data.city_fias_id || s.data.settlement_fias_id,
+                      region: regionName,
+                      lat: s.data.geo_lat ? parseFloat(s.data.geo_lat) : null,
+                      lng: s.data.geo_lon ? parseFloat(s.data.geo_lon) : null,
+                    });
+
+                    setValue("cityId", id, { shouldValidate: true });
                     clearErrors("address");
-                  } else {
+                  } catch (error) {
+                    console.error("[CITY_ERROR]", error);
                     setError("address", { 
                       type: "manual", 
-                      message: `Мы пока не работаем в г. ${cityName}. Выберите другой адрес.` 
+                      message: "Мы работаем только в Ростовской области. Выберите другой адрес." 
                     });
                   }
                 }
               }}
-              onBlur={field.onBlur}
+              onBlur={() => {}} // Remove onBlur to prevent clearing manual errors
               hasError={!!errors.address}
             />
           )}

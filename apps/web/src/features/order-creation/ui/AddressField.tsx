@@ -7,6 +7,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/shar
 import { Input } from "@/shared/ui/input";
 import type { DadataSuggestion } from "@/shared/lib/dadata";
 import type { OrderFormValues } from "../model/order-schema";
+import { ensureCityAction } from "../api/ensure-city-action";
 
 interface AddressFieldProps {
   form: UseFormReturn<OrderFormValues>;
@@ -78,7 +79,6 @@ export function AddressField({ form, cities }: AddressFieldProps) {
                 fetchAddressSuggest(e.target.value);
               }}
               onBlur={() => {
-                field.onBlur();
                 setTimeout(() => setShowSuggestions(false), 200);
               }}
             />
@@ -104,23 +104,30 @@ export function AddressField({ form, cities }: AddressFieldProps) {
                     key={`${s.unrestricted_value}-${i}`}
                     type="button"
                     className="w-full px-5 py-4 text-left text-[11px] font-black uppercase tracking-wider text-slate-300 hover:bg-indigo-600/40 hover:text-white transition-all border-b border-white/5 last:border-none"
-                    onMouseDown={(e) => {
+                    onMouseDown={async (e) => {
                       e.preventDefault();
                       form.setValue("address", s.value, { shouldValidate: true });
                       
-                      const cityName = s.data.city || s.data.settlement;
-                      if (cityName) {
-                        const matchedCity = cities.find(c => 
-                          c.name.toLowerCase().includes(cityName.toLowerCase()) ||
-                          cityName.toLowerCase().includes(c.name.toLowerCase())
-                        );
-                        if (matchedCity) {
-                          form.setValue("cityId", matchedCity.id, { shouldValidate: true });
+                      const cityName = s.data.city || s.data.settlement || s.data.city_with_type;
+                      const regionName = s.data.region_with_type || s.data.region;
+
+                      if (cityName && regionName) {
+                        try {
+                          const { id } = await ensureCityAction({
+                            name: cityName,
+                            fiasId: s.data.city_fias_id || s.data.settlement_fias_id,
+                            region: regionName,
+                            lat: s.data.geo_lat ? parseFloat(s.data.geo_lat) : null,
+                            lng: s.data.geo_lon ? parseFloat(s.data.geo_lon) : null,
+                          });
+
+                          form.setValue("cityId", id, { shouldValidate: true });
                           form.clearErrors("address");
-                        } else {
-                          form.setError("address", {
-                            type: "manual",
-                            message: `Мы пока не работаем в г. ${cityName}. Выберите другой город.`
+                        } catch (error) {
+                          console.error("[CITY_ERROR]", error);
+                          form.setError("address", { 
+                            type: "manual", 
+                            message: "Мы работаем только в Ростовской области. Выберите другой адрес." 
                           });
                         }
                       }
