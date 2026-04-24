@@ -130,10 +130,10 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
             type="button"
             onClick={() => setMode("email")}
             disabled={loading}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background text-sm font-semibold transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-50"
+            className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background text-sm font-semibold transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-50"
           >
             <Mail className="size-4" />
-            Продолжить через Email
+            Войти через Email
           </button>
 
           <p className="mt-2 text-center text-sm text-muted-foreground">

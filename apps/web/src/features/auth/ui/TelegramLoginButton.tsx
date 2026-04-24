@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { signIn } from "next-auth/react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/shared/ui/button";
 
 interface Props {
   disabled?: boolean;
@@ -74,22 +73,20 @@ export function TelegramLoginButton({ disabled, botId }: Props) {
   };
 
   return (
-    <Button
+    <button
       type="button"
-      variant="outline"
-      size="lg"
-      className="w-full h-14 rounded-2xl bg-[#229ED9]/10 border-[#229ED9]/30 hover:bg-[#229ED9]/20 hover:border-[#229ED9]/60 text-white gap-3 group transition-all"
       onClick={handleClick}
       disabled={!!loading || !!disabled}
+      className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
     >
       {loading ? (
-        <Loader2 className="w-5 h-5 animate-spin" />
+        <Loader2 className="size-4 animate-spin" />
       ) : (
-        <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24" fill="currentColor">
+        <svg className="size-4 shrink-0" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.16 13.947l-2.95-.924c-.64-.204-.657-.64.135-.954l11.57-4.461c.537-.194 1.006.131.98.613z" />
         </svg>
       )}
       Войти через Telegram
-    </Button>
+    </button>
   );
 }

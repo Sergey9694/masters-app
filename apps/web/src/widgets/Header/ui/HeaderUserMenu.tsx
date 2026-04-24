@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { User } from "lucide-react";
 import type { Role } from "@prisma/client";
 
 import { cn } from "@/shared/lib/cn";
+import { AuthModal } from "@/features/auth/ui/AuthModal";
 
 interface HeaderUserMenuProps {
   user: {
@@ -14,30 +16,40 @@ interface HeaderUserMenuProps {
     avatar: string | null;
     role: Role;
   } | null;
+  botId?: string;
 }
 
-/**
- * Меню пользователя в шапке.
- * Незалогинен: ссылки Войти / Регистрация.
- * Залогинен: аватар → /profile (полноценный dropdown появится в 5.6).
- */
-export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
+export function HeaderUserMenu({ user, botId }: HeaderUserMenuProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"social" | "register">("social");
+
   if (!user) {
     return (
-      <div className="flex items-center gap-1">
-        <Link
-          href="/auth/login"
-          className="hidden sm:inline-flex h-9 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-subtle hover:text-foreground"
-        >
-          Войти
-        </Link>
-        <Link
-          href="/auth/register"
-          className="inline-flex h-9 items-center rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
-        >
-          Регистрация
-        </Link>
-      </div>
+      <>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => { setModalMode("social"); setModalOpen(true); }}
+            className="hidden sm:inline-flex h-9 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-subtle hover:text-foreground"
+          >
+            Войти
+          </button>
+          <button
+            type="button"
+            onClick={() => { setModalMode("register"); setModalOpen(true); }}
+            className="inline-flex h-9 items-center rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
+          >
+            Регистрация
+          </button>
+        </div>
+
+        <AuthModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          initialMode={modalMode}
+          botId={botId}
+        />
+      </>
     );
   }
 
