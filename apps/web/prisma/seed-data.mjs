@@ -16,7 +16,7 @@ export const PROJECT_CITIES = [
   { name: 'Азов', slug: 'azov', region: 'Ростовская область', lat: 47.1111, lng: 39.4233 },
   { name: 'Гуково', slug: 'gukovo', region: 'Ростовская область', lat: 48.0500, lng: 39.9333 },
   { name: 'Сальск', slug: 'salsk', region: 'Ростовская область', lat: 46.4833, lng: 41.5333 },
-  { name: 'Донецк', slug: 'doneck-ro', region: 'Ростовская область', lat: 48.3333, lng: 39.9500 },
+  { name: 'Донецк (РФ)', slug: 'doneck-ro', region: 'Ростовская область', lat: 48.3333, lng: 39.9500 },
   { name: 'Аксай', slug: 'aksay', region: 'Ростовская область', lat: 47.2700, lng: 39.8700 },
   { name: 'Белая Калитва', slug: 'belaya-kalitva', region: 'Ростовская область', lat: 48.1667, lng: 40.7833 },
   { name: 'Красный Сулин', slug: 'krasnyy-sulin', region: 'Ростовская область', lat: 47.8833, lng: 40.0667 },
@@ -61,7 +61,7 @@ export const PROJECT_CITIES = [
   { name: 'Элиста', slug: 'elista', region: 'Республика Калмыкия', lat: 46.3078, lng: 44.2702 },
 
   // --- НОВЫЕ РЕГИОНЫ ---
-  { name: 'Донецк', slug: 'doneck-dnr', region: 'Донецкая Народная Республика', lat: 48.0089, lng: 37.8042 },
+  { name: 'Донецк (ДНР)', slug: 'doneck-dnr', region: 'Донецкая Народная Республика', lat: 48.0089, lng: 37.8042 },
   { name: 'Мариуполь', slug: 'mariupol', region: 'Донецкая Народная Республика', lat: 47.0951, lng: 37.5413 },
   { name: 'Макеевка', slug: 'makeevka', region: 'Донецкая Народная Республика', lat: 48.0556, lng: 37.9611 },
   { name: 'Горловка', slug: 'gorlovka', region: 'Донецкая Народная Республика', lat: 48.3060, lng: 38.0263 },
