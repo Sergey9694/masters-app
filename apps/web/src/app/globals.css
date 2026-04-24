@@ -93,15 +93,7 @@
   --success: #10b981;
   --warning: #f59e0b;
 
-  /* Legacy TWA переменные (используются старыми компонентами, удаляем в 5.8) */
-  --ui-font-size-mobile: 14px;
-  --ui-font-size-desktop: 16px;
   --ui-radius-premium: 1.25rem;
-  --ui-container-max-w: 896px;
-  --ui-mobile-px: 15px;
-  --ui-mobile-py: 15px;
-  --ui-desktop-px: 48px;
-  --ui-desktop-py: 48px;
   --ui-accent-cyan: #22d3ee;
   --ui-accent-indigo: #818cf8;
   --ui-accent-emerald: #34d399;
@@ -203,19 +195,6 @@
 }
 
 @layer utilities {
-  /* Стандартный враппер контента */
-  .container-standard {
-    @apply mx-auto w-full transition-all duration-300;
-    max-width: var(--ui-container-max-w);
-    padding: var(--ui-mobile-py) var(--ui-mobile-px);
-  }
-
-  @media (min-width: 640px) {
-    .container-standard {
-      padding: var(--ui-desktop-py) var(--ui-desktop-px);
-    }
-  }
-
   /* Legacy glass — удалить в 5.8 */
   .glass-premium {
     background: rgba(23, 25, 35, 0.82);

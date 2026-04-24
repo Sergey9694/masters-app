@@ -44,7 +44,7 @@ export function CategoryGrid({
     <div className={cn("w-full relative py-0", className)}>
       <motion.div 
         variants={STAGGER_CONTAINER}
-        className="flex items-center gap-3 overflow-x-auto no-scrollbar px-[15px] -mx-[15px] sm:px-[var(--ui-desktop-px)] sm:-mx-[var(--ui-desktop-px)] py-4 scroll-smooth"
+        className="flex items-center gap-3 overflow-x-auto no-scrollbar px-4 -mx-4 sm:px-6 sm:-mx-6 lg:px-8 lg:-mx-8 py-4 scroll-smooth"
       >
         {categoriesToRender.map((cat) => {
            const Icon = (Icons as any)[cat.icon || "Hammer"] || Icons.Hammer;
