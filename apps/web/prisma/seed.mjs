@@ -5,22 +5,9 @@ import { PROJECT_CITIES, PROJECT_CATEGORIES } from "./seed-data.mjs";
 const prisma = new PrismaClient();
 const require = createRequire(import.meta.url);
 
-// Настройки админа из окружения или дефолты
+// Настройки админа из окружения
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@test.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // Обычный пароль из ENV
-const DEFAULT_HASH = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU."; // для "password123"
-
-let ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || DEFAULT_HASH;
-
-if (ADMIN_PASSWORD) {
-  try {
-    const bcrypt = require("bcryptjs");
-    ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD, 10);
-    console.log("[SEED] bcryptjs загружен, хеш пароля сгенерирован.");
-  } catch (e) {
-    console.warn("⚠️ [SEED] bcryptjs не найден, используем дефолтный хеш.");
-  }
-}
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 async function main() {
   console.log("[SEED] Запуск процесса сидинга...");
@@ -93,22 +80,29 @@ async function main() {
 
   // 4. Дефолтный администратор
   console.log("[SEED] 👤 Синхронизация администратора...");
-  await prisma.user.upsert({
-    where: { email: ADMIN_EMAIL },
-    update: {
-      role: 'ADMIN',
-      authProvider: 'EMAIL',
-      passwordHash: ADMIN_PASSWORD_HASH,
-    },
-    create: {
-      email: ADMIN_EMAIL,
-      passwordHash: ADMIN_PASSWORD_HASH,
-      firstName: 'Админ',
-      role: 'ADMIN',
-      authProvider: 'EMAIL',
-      emailVerified: new Date(),
-    }
-  });
+  if (!ADMIN_PASSWORD) {
+    console.warn("[SEED] ⚠️ ADMIN_PASSWORD не задан — пропускаем создание админа.");
+  } else {
+    const bcrypt = require("bcryptjs");
+    const passwordHash = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+
+    await prisma.user.upsert({
+      where: { email: ADMIN_EMAIL },
+      update: {
+        role: 'ADMIN',
+        authProvider: 'EMAIL',
+        passwordHash,
+      },
+      create: {
+        email: ADMIN_EMAIL,
+        passwordHash,
+        firstName: 'Админ',
+        role: 'ADMIN',
+        authProvider: 'EMAIL',
+        emailVerified: new Date(),
+      }
+    });
+  }
 
   console.log("[SEED] Сидинг завершен успешно.");
 }

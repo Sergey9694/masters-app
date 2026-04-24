@@ -142,6 +142,14 @@ export const authService = {
 
     const user = await db.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        role: true,
+        passwordHash: true,
+        emailVerified: true,
+      },
     });
 
     if (!user || !user.passwordHash) return null;

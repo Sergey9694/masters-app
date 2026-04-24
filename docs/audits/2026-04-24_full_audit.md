@@ -31,22 +31,15 @@
 +  // Нужна интеграция с SMTP (nodemailer / Resend / Postmark)
 ```
 
-### C2. `validateCredentials` возвращает ПОЛНЫЙ объект User
+### ~~C2. `validateCredentials` возвращает ПОЛНЫЙ объект User~~ ✅ ИСПРАВЛЕНО
 **Файл:** [auth.service.ts:143](file:///c:/Users/drobi/Desktop/projects/antigraviti/uslugi_ryadom/apps/web/src/services/auth.service.ts#L143-L145)
 
-```typescript
-const user = await db.user.findUnique({ where: { email } });
-// ↑ Выбирает ВСЕ поля, включая passwordHash, telegramId, isBanned
-```
+Добавлен `select` с явным перечислением полей: `id, email, firstName, role, passwordHash, emailVerified`. PII-данные (telegramId, isBanned, avatar) больше не загружаются.
 
-Нарушение правила «Never return full user objects with PII». Нужен `select`.
-
-### C3. `AUTH_SECRET` отсутствует в `.env.example` корня
+### ~~C3. `AUTH_SECRET` отсутствует в `.env.example` корня~~ ✅ ИСПРАВЛЕНО
 **Файл:** [.env.example](file:///c:/Users/drobi/Desktop/projects/antigraviti/uslugi_ryadom/.env.example)
 
-Корневой `.env.example` НЕ содержит `AUTH_SECRET` и `AUTH_SERVER_SECRET`. При деплое без них:
-- `auth.ts` (Auth.js) упадёт
-- Кастомный JWT в `shared/lib/auth.ts` использует fallback `dev_fallback_secret` — **предсказуемый секрет**
+Корневой `.env.example` полностью синхронизирован с `apps/web/.env.example`: добавлены `AUTH_SECRET`, `CRON_SECRET`, `TELEGRAM_BOT_NAME/ID`, удалён устаревший `DEFAULT_CITY`.
 
 ### C4. Дублирование `upload-action` — два файла делают одно и то же
 **Файлы:**
@@ -55,21 +48,14 @@ const user = await db.user.findUnique({ where: { email } });
 
 Два Server Action для загрузки файлов. Потенциальный баг: один может обновиться, другой нет. Нужен единый источник.
 
-### C5. `seed.ts` использует `e: any`
+### ~~C5. `seed.ts` использует `e: any`~~ ✅ ИСПРАВЛЕНО
 **Файл:** [seed.ts:29](file:///c:/Users/drobi/Desktop/projects/antigraviti/uslugi_ryadom/apps/web/prisma/seed.ts#L29)
 
-```typescript
-} catch (e: any) { // ← нарушение правила "No Any"
-```
+Заменено `catch (e: any)` → `catch (e: unknown)` с `instanceof Error` guard.
 
-### C6. Захардкоженный пароль админа в seed
-**Файл:** [seed.ts:82](file:///c:/Users/drobi/Desktop/projects/antigraviti/uslugi_ryadom/apps/web/prisma/seed.ts#L82)
+### ~~C6. Захардкоженный пароль админа в seed~~ ✅ ИСПРАВЛЕНО
 
-```typescript
-let passwordHash = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy..."; // password123
-```
-
-Если `ADMIN_PASSWORD` не задан, используется **известный всем** хеш `password123`.
+Убран захардкоженный хеш `password123` из обоих seed-файлов (`seed.ts` и `seed.mjs`). Теперь `ADMIN_PASSWORD` обязателен — без него создание админа пропускается с предупреждением.
 
 ### C7. Два seed-файла: `seed.ts` и `seed.mjs`
 **Файлы:** `prisma/seed.ts` и `prisma/seed.mjs`
@@ -170,27 +156,23 @@ async update(id: string, data: ...) {    // ← нет проверки, что 
 locations?: any[]             // строка 23
 ```
 
-### M3. `upload.service.ts` — мёртвый код
-**Файл:** [upload.service.ts](file:///c:/Users/drobi/Desktop/projects/antigraviti/uslugi_ryadom/apps/web/src/services/upload.service.ts)
+### ~~M3. `upload.service.ts` — мёртвый код~~ ⚠️ ЛОЖНОЕ СРАБАТЫВАНИЕ
 
-Обёртка над `uploadFile` без добавленной ценности. `deleteFile()` — пустая заглушка с `console.log`. Файл не используется (загрузка идёт через `upload-action.ts`).
+Используется в `api/v1/upload/route.ts`. Не удалять. Но `deleteFile()` — заглушка, стоит дореализовать при необходимости.
 
-### M4. Легаси-скрипты в `scripts/`
-Файлы, которые можно удалить:
-- `rename-types.js` / `rename-types-2.js` / `rename-types-3.js` / `rename-types-4.js` — одноразовые миграционные скрипты
-- `auth-selftest.ts` — тестовый скрипт
-- `resize-image.ts` — не используется (sharp встроен в file-storage)
+### ~~M4. Легаси-скрипты в `scripts/`~~ ✅ ИСПРАВЛЕНО
+
+Удалены: `rename-types.js`, `rename-types-2.js`, `rename-types-3.js`, `rename-types-4.js`, `resize-image.ts`. Оставлены полезные: `auth-selftest.ts`, `db-check.ts`, `geo-sync.ts`, `dev.ps1`, `startup.js`.
 
 ### M5. `template.tsx` — framer-motion на КАЖДОМ переходе
 **Файл:** [template.tsx](file:///c:/Users/drobi/Desktop/projects/antigraviti/uslugi_ryadom/apps/web/src/app/template.tsx)
 
 `motion.div` с `willChange: "opacity"` на корневом template. Это создаёт composite layer на **каждой странице** и замедляет навигацию на слабых устройствах.
 
-### M6. `check-env.js` — пустой файл (57 байт)
+### ~~M6. `check-env.js` — пустой файл (57 байт)~~ ✅ УДАЛЁН
 **Файл:** `apps/web/check-env.js` — вероятно, заглушка. Удалить или реализовать.
 
-### M7. `postgres_data/` в корне проекта
-Директория `postgres_data/` должна быть в `.gitignore` (проверить). Docker volume для данных БД не должен лежать в репозитории.
+### ~~M7. `postgres_data/` в корне проекта~~ ✅ ПРОВЕРЕНО — в `.gitignore`
 
 ### M8. Нет `error.tsx` и `not-found.tsx` на уровне app
 Отсутствуют глобальные обработчики ошибок Next.js:
@@ -270,8 +252,9 @@ async getByProvider(providerId: string) {
 ### L7. `prisma/cities.config.ts` — 271 байт
 Крайне маленький конфиг. Связь с `seed-data.mjs` неочевидна.
 
-### L8. `.env` файлы с реальными секретами в репозитории
-`apps/web/.env` и корневой `.env` содержат `AUTH_SECRET` с реальным значением. Проверить, что они в `.gitignore`.
+### ~~L8. `.env` файлы с реальными секретами в репозитории~~ ✅ ПРОВЕРЕНО — в `.gitignore`
+
+`git ls-files` подтвердил: ни `.env`, ни `apps/web/.env`, ни `postgres_data/` не отслеживаются.
 
 ### L9. `db.ts` — `beforeExit` может не работать в serverless
 ```typescript

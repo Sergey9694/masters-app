@@ -26,8 +26,9 @@ async function main() {
           `UPDATE "City" SET location = ST_SetSRID(ST_MakePoint($1, $2), 4326) WHERE id = $3`,
           lng, lat, createdCity.id
         );
-      } catch (e: any) {
-        console.warn(`⚠️ PostGIS error for ${city.name}: ${e.message}`);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.warn(`⚠️ PostGIS error for ${city.name}: ${msg}`);
       }
     }
   }
@@ -77,25 +78,25 @@ async function main() {
   console.log("👤 Creating/Updating admin user...");
   const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@test.com';
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-  const bcrypt = await import("bcryptjs");
-  
-  let passwordHash = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU."; // password123
-  if (ADMIN_PASSWORD) {
-    passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-  }
+  if (!ADMIN_PASSWORD) {
+    console.warn("⚠️ ADMIN_PASSWORD не задан — пропускаем создание админа. Задайте переменную окружения.");
+  } else {
+    const bcrypt = await import("bcryptjs");
+    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
 
-  await prisma.user.upsert({
-    where: { email: ADMIN_EMAIL },
-    update: { role: Role.ADMIN, passwordHash },
-    create: { 
-      email: ADMIN_EMAIL, 
-      passwordHash, 
-      firstName: 'Admin', 
-      role: Role.ADMIN, 
-      emailVerified: new Date(),
-      authProvider: 'EMAIL'
-    }
-  });
+    await prisma.user.upsert({
+      where: { email: ADMIN_EMAIL },
+      update: { role: Role.ADMIN, passwordHash },
+      create: { 
+        email: ADMIN_EMAIL, 
+        passwordHash, 
+        firstName: 'Admin', 
+        role: Role.ADMIN, 
+        emailVerified: new Date(),
+        authProvider: 'EMAIL'
+      }
+    });
+  }
 
   console.log("🌿 Seeding finished successfully.");
 }
