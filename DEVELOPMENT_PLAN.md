@@ -102,9 +102,9 @@
 
 ---
 
-## Текущий статус (снимок на 2026-04-22)
+## Текущий статус (снимок на 2026-04-25)
 
-### Что реально сделано (Обновлено 2026-04-22)
+### Что реально сделано (Обновлено 2026-04-25)
 - **Монорепо:** Turborepo, `apps/web`, `apps/mobile` (пустой), `packages/{shared-types, validation, api-client}` — созданы.
 - **Ребрендинг:** Prisma-схема переведена (Master→Provider, TaskRequest→Order, TaskResponse→Proposal).
 - **Авторизация (Auth.js v5):**
@@ -124,6 +124,7 @@
   - **5.7 Создание заказа:** `(main)/orders/new` с `OrderWizardLight` — мастер из 5 шагов (категория/город → описание → бюджет/адрес → фото → проверка). Пошаговая валидация через `form.trigger(fields)` на едином RHF. `/dashboard/create-order` → 301, `createOrderAction` редиректит на `/orders/${id}`.
   - **5.8 Миграция `/dashboard/*` → `(main)/*` (ядро):** `(main)/my-orders` (табы active/completed/archived через `?tab=`, `groupBy` для счётчиков), `(main)/my-proposals` (табы active/won/lost с составным OR-условием по `assignedProviderId`), `(main)/notifications` (с `MarkAllReadButton`, `NotificationItemLight`). Общие компоненты `OrderStatusPill` и `MyOrderRow` вынесены в `entities/order`. Старые `/dashboard/my-orders|my-proposals|notifications|page` → `redirect(...)`. Проверены и обновлены внутренние ссылки (виджеты лендинга, `OrderCard`, `auth actions`, `sync-action`) на новые маршруты. Параметр поиска в `HeroSection` приведён к `?search=`.
   - **5.9 Миграция `/dashboard/*` → `(main)/*` (вторичные флоу):** `(main)/become-provider` с `ProviderRegistrationFormLight` (аватар, портфолио, специализации, опыт, цена), `(main)/providers/[id]` — публичный профиль исполнителя (статы, категории, портфолио, отзывы). `/dashboard/become-provider` и `/dashboard/provider/[id]` → `redirect(...)`. Все ссылки на `dashboard/provider/*` и `dashboard/become-provider` заменены на новые маршруты во всех `(main)/*` страницах, виджете `TopProviders`, `proxy.ts` и server action `saveProviderProfileAction`. Исправлен overflow длинного текста (`wrap-anywhere` + `min-w-0`) во всех карточках и страницах.
+  - **5.10 Завершение Фазы 5 — чистка TWA:** `(main)/my-reviews` — светлая страница отзывов исполнителя (рейтинг, карточки с аватаром/звёздами/ссылкой на заказ). `(main)/orders/[slug]/[orderSlug]/edit` — редактирование заказа (только OPEN, только владелец); `updateOrderAction` + `OrderEditFormLight` (RHF + Zod, DadataAddressInput). Кнопка «Редактировать» в детальной странице заказа теперь ведёт на новый маршрут. `/dashboard/reviews` → `redirect("/my-reviews")`. Удалено 10 legacy TWA-компонентов (`telegram-back-button`, `stagger-wrap`, `stagger-item`, `page-header`, `section-header`, `expandable-text`, `status-accordion`, `page-transition`, `back-button`, `photo-upload-field`) и 2 мёртвых файла (`DashboardContent.tsx`, `ProviderRegistrationForm.tsx`). TypeScript clean.
 - **Инфраструктура (Локальная):**
   - Скрипт `npm run dev:full` полностью автоматизирован: чистит порты (3000, 4040), ждет готовности Postgres, активирует PostGIS.
   - База данных синхронизирована под именем `uslugi_db`.
@@ -135,7 +136,7 @@
 |---|---|---|
 | 3. Модель данных | ✅ завершена | Все модели (City, Category tree, ServiceListing, Order, Proposal) полностью синхронизированы, PostGIS настроен, сиды исправлены. |
 | 4. REST API | ✅ завершена | Сервисный слой (`src/services/`) реализован. Все эндпоинты `app/api/v1/*` (auth, orders, listings, proposals, providers, categories, cities, notifications, reviews, upload) покрывают план 4.2.1. |
-| 5. Desktop UI | 🚧 в работе | **5.1–5.9 готовы.** Осталось: `/dashboard/reviews`, `/dashboard/order/[id]/edit`, `/dashboard/my-listings`, `/dashboard/favorites` + чистка legacy TWA-компонентов (`TelegramBackButton`, `StaggerWrap`, `PageHeader`, dark-`OrderCreateForm`, `status-accordion`). |
+| 5. Desktop UI | ✅ завершена | **5.1–5.10 готовы.** Все основные страницы мигрированы на `(main)/*`. Legacy TWA-компоненты удалены. TypeScript clean. |
 | 6. Объявления | ❌ | Feature `listing/` не создан, страниц каталога нет. Admin-модерация listings — нет. |
 | 7. Чат | ❌ | Моделей `Conversation`, `ConversationParticipant`, `Message` нет. |
 | 8. Тесты/CI | ❌ | Vitest/Playwright не установлены. `.github/workflows/*` — требуют проверки. |
@@ -144,7 +145,7 @@
 | 11. Полировка | ❌ | SEO, sitemap, Sentry, PWA-manifest — не сделано. |
 
 ### Критичный следующий шаг
-**Фаза 5.10 (завершение Фазы 5).** Оставшиеся маршруты: `/dashboard/reviews`, `/dashboard/order/[id]/edit` → светлые `(main)/*` аналоги. Чистка legacy TWA-компонентов: удалить `TelegramBackButton`, `StaggerWrap`, `PageHeader`, `status-accordion`, dark-`OrderCreateForm`, `MotionToast`, `ExpandableText`, `SectionHeader` — все они использовались только в уже мигрированных страницах. Следом — Фаза 6 (объявления/каталог услуг).
+**Фаза 6 — Объявления от исполнителей.** Feature `listing/` (ServiceListing CRUD), каталог `/services`, страница объявления `/services/[slug]`, модерация в /admin. Подробнее — в разделе Фаза 6 ниже.
 
 ### Принятые архитектурные решения (фиксация)
 - **Auth.js v5 (next-auth@beta)** вместо кастомного JWT-слоя. Session-стратегия: JWT (для Edge-совместимости). Схема БД — расширенная стандартная (`Account`, `Session`, `VerificationToken`).

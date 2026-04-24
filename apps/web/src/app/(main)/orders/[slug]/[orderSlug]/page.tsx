@@ -203,7 +203,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                 )}
                 {isOwner && order.status === "OPEN" && (
                   <Link
-                    href={`/dashboard/order/${order.id}/edit`}
+                    href={`/orders/${order.category.slug}/${order.slug ?? order.id}/edit`}
                     className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <Pencil className="size-3.5" />

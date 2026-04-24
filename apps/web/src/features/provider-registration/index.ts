@@ -1,2 +1,2 @@
-export { ProviderRegistrationForm } from "./ui/ProviderRegistrationForm";
+export { ProviderRegistrationFormLight } from "./ui/ProviderRegistrationFormLight";
 export { saveProviderProfileAction } from "./api/actions";

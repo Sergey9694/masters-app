@@ -75,6 +75,7 @@ export const config = {
     "/my-orders/:path*",
     "/my-proposals",
     "/my-proposals/:path*",
+    "/my-reviews",
     "/notifications",
     "/notifications/:path*",
     "/become-provider",
