@@ -26,7 +26,7 @@ import {
   AcceptProposalButton,
   OrderStatusControlsLight,
 } from "@/features/proposal/ui/OrderControlsLight";
-import { ReviewForm } from "@/features/review/ui/ReviewForm";
+import { ReviewModal } from "@/features/review/ui/ReviewModal";
 import { OrderFeedCard, OrderStatusPill } from "@/entities/order";
 import type { OrderCardData } from "@/shared/types/domain";
 
@@ -326,7 +326,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
           {isOwner &&
             order.status === "COMPLETED" &&
             !order.review &&
-            order.assignedProviderId && <ReviewForm referenceId={order.id} />}
+            order.assignedProviderId && <ReviewModal referenceId={order.id} />}
 
           {order.review && (
             <section className="rounded-2xl border border-warning/30 bg-warning/5 p-5">
