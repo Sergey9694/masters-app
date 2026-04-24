@@ -43,6 +43,9 @@ export function OrderEditFormLight({ orderId, defaultValues, categories, cities 
     register,
     control,
     handleSubmit,
+    setValue,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -85,29 +88,16 @@ export function OrderEditFormLight({ orderId, defaultValues, categories, cities 
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4">
-        <Field label="Категория" error={errors.categoryId?.message}>
-          <select {...register("categoryId")} className={inputCls(!!errors.categoryId)}>
-            <option value="">Выберите...</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Город" error={errors.cityId?.message}>
-          <select {...register("cityId")} className={inputCls(!!errors.cityId)}>
-            <option value="">Выберите...</option>
-            {cities.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+      <Field label="Категория" error={errors.categoryId?.message}>
+        <select {...register("categoryId")} className={inputCls(!!errors.categoryId)}>
+          <option value="">Выберите...</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <Field label="Бюджет (₽)" hint="Оставьте пустым, если не определились" error={errors.budget?.message}>
         <input
@@ -130,6 +120,24 @@ export function OrderEditFormLight({ orderId, defaultValues, categories, cities 
             <DadataAddressInput
               value={field.value ?? ""}
               onChange={field.onChange}
+              onSelect={(s) => {
+                const cityName = s.data.city || s.data.settlement;
+                if (cityName) {
+                  const matchedCity = cities.find(c => 
+                    c.name.toLowerCase().includes(cityName.toLowerCase()) ||
+                    cityName.toLowerCase().includes(c.name.toLowerCase())
+                  );
+                  if (matchedCity) {
+                    setValue("cityId", matchedCity.id, { shouldValidate: true });
+                    clearErrors("address");
+                  } else {
+                    setError("address", { 
+                      type: "manual", 
+                      message: `Мы пока не работаем в г. ${cityName}. Выберите другой адрес.` 
+                    });
+                  }
+                }
+              }}
               onBlur={field.onBlur}
               hasError={!!errors.address}
             />

@@ -21,8 +21,7 @@ export async function GET(req: Request) {
 
   try {
     const data = await suggestAddress(parsed.data.q);
-    const suggestions = data.map((s) => s.value);
-    return NextResponse.json({ suggestions });
+    return NextResponse.json({ suggestions: data });
   } catch (e) {
     console.error("[API_SUGGEST] error:", e);
     return NextResponse.json({ suggestions: [] });

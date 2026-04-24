@@ -8,11 +8,12 @@ import { suggestAddress, type DadataSuggestion } from "@/shared/lib/dadata";
 interface Props {
   value: string;
   onChange: (value: string) => void;
+  onSelect?: (suggestion: DadataSuggestion) => void;
   onBlur?: () => void;
   hasError?: boolean;
 }
 
-export function DadataAddressInput({ value, onChange, onBlur, hasError }: Props) {
+export function DadataAddressInput({ value, onChange, onBlur, hasError, onSelect }: Props) {
   const [suggestions, setSuggestions] = useState<DadataSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +45,7 @@ export function DadataAddressInput({ value, onChange, onBlur, hasError }: Props)
 
   const handleSelect = (s: DadataSuggestion) => {
     onChange(s.value);
+    onSelect?.(s);
     setSuggestions([]);
     setIsOpen(false);
   };

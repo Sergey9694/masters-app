@@ -226,11 +226,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     : "Договорная"}
                 </span>
               </div>
-              <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-                <MapPin className="size-4" />
-                {order.city.name}
-              </div>
-              {order.address && (
+              {order.address ? (
                 <a
                   href={getMapUrl(order.address)}
                   target="_blank"
@@ -240,6 +236,11 @@ export default async function OrderDetailPage({ params }: PageProps) {
                   <MapPin className="size-4 shrink-0" />
                   <span className="wrap-anywhere min-w-0">{order.address}</span>
                 </a>
+              ) : (
+                <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <MapPin className="size-4" />
+                  {order.city.name}
+                </div>
               )}
               <div className="inline-flex items-center gap-1.5 text-muted-foreground">
                 <MessageSquare className="size-4" />

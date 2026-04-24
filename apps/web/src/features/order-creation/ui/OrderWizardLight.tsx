@@ -54,10 +54,10 @@ interface StepDef {
 const STEPS: StepDef[] = [
   {
     key: "category",
-    title: "Категория и город",
-    subtitle: "Где и что нужно сделать",
+    title: "Категория",
+    subtitle: "Что именно нужно сделать",
     icon: Tag,
-    fields: ["categoryId", "cityId"],
+    fields: ["categoryId"],
   },
   {
     key: "details",
@@ -202,7 +202,7 @@ export function OrderWizardLight({
             <StepCategory form={form} categories={categories} cities={cities} />
           )}
           {step.key === "details" && <StepDetails form={form} />}
-          {step.key === "budget" && <StepBudget form={form} />}
+          {step.key === "budget" && <StepBudget form={form} cities={cities} />}
           {step.key === "photos" && (
             <StepPhotos previews={previews} setPreviews={setPreviews} />
           )}
@@ -215,19 +215,23 @@ export function OrderWizardLight({
             />
           )}
 
-          <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <button
-              type="button"
-              onClick={goBack}
-              disabled={isFirst}
-              className={cn(
-                "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 text-sm font-semibold",
-                "transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-40 disabled:hover:border-border disabled:hover:text-foreground"
-              )}
-            >
-              <ArrowLeft className="size-4" />
-              Назад
-            </button>
+          <div className={cn(
+            "mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center",
+            isFirst ? "sm:justify-end" : "sm:justify-between"
+          )}>
+            {!isFirst && (
+              <button
+                type="button"
+                onClick={goBack}
+                className={cn(
+                  "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-border bg-background px-5 text-sm font-semibold",
+                  "transition-colors hover:border-primary/60 hover:text-primary"
+                )}
+              >
+                <ArrowLeft className="size-4" />
+                Назад
+              </button>
+            )}
 
             {isLast ? (
               <button
@@ -350,17 +354,6 @@ function StepCategory({
           })}
         </div>
       </Field>
-
-      <Field label="Город" error={errors.cityId?.message}>
-        <select {...register("cityId")} className={inputCls(!!errors.cityId)}>
-          <option value="">Выберите город</option>
-          {cities.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </Field>
     </>
   );
 }
@@ -406,10 +399,12 @@ function StepDetails({ form }: { form: UseFormReturn<OrderFormValues> }) {
   );
 }
 
-function StepBudget({ form }: { form: UseFormReturn<OrderFormValues> }) {
+function StepBudget({ form, cities }: { form: UseFormReturn<OrderFormValues>, cities: Option[] }) {
   const {
     register,
     setValue,
+    clearErrors,
+    setError,
     watch,
     formState: { errors },
   } = form;
@@ -444,7 +439,28 @@ function StepBudget({ form }: { form: UseFormReturn<OrderFormValues> }) {
       >
         <DadataAddressInput
           value={address ?? ""}
-          onChange={(v) => setValue("address", v, { shouldValidate: true })}
+          onChange={(v) => {
+            setValue("address", v, { shouldValidate: true });
+            clearErrors("address");
+          }}
+          onSelect={(s) => {
+            const cityName = s.data.city || s.data.settlement;
+            if (cityName) {
+              const matchedCity = cities.find(c => 
+                c.name.toLowerCase().includes(cityName.toLowerCase()) ||
+                cityName.toLowerCase().includes(c.name.toLowerCase())
+              );
+              if (matchedCity) {
+                setValue("cityId", matchedCity.id, { shouldValidate: true });
+                clearErrors("address");
+              } else {
+                setError("address", {
+                  type: "manual",
+                  message: `Мы пока не работаем в г. ${cityName}. Выберите другой город.`
+                });
+              }
+            }
+          }}
           onBlur={() => form.trigger("address")}
           hasError={!!errors.address}
         />

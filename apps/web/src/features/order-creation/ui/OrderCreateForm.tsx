@@ -186,28 +186,6 @@ export function OrderCreateForm({ categories, cities, defaultCityId }: OrderCrea
               />
               <FormField
                 control={form.control}
-                name="cityId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[10px] uppercase font-black tracking-[0.15em] text-indigo-300 opacity-60 px-1">Город</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Выберите город" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {cities.map((city) => (
-                          <SelectItem key={city.id} value={city.id}>{city.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="budget"
                 render={({ field }) => (
                   <FormItem>
@@ -236,7 +214,7 @@ export function OrderCreateForm({ categories, cities, defaultCityId }: OrderCrea
             />
 
             {/* Address Field Extracted */}
-            <AddressField form={form} />
+            <AddressField form={form} cities={cities} />
           </div>
 
           <motion.button
