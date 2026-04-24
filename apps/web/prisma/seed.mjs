@@ -69,6 +69,7 @@ async function main() {
     update: {
       role: 'ADMIN',
       authProvider: 'EMAIL',
+      passwordHash: ADMIN_PASSWORD_HASH,
     },
     create: {
       email: ADMIN_EMAIL,
