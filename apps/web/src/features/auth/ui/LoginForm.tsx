@@ -1,131 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Loader2, ShieldCheck, ChevronRight, Lock, UserPlus, ArrowLeft } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { Input } from "@/shared/ui/input";
-import { Card, CardContent } from "@/shared/ui/card";
+import Link from "next/link";
+import {
+  Mail,
+  Loader2,
+  Lock,
+  UserPlus,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/shared/lib/cn";
 import { registerWithEmail, requestPasswordReset } from "../model/actions";
 import { TelegramLoginButton } from "./TelegramLoginButton";
 
-/**
- * Переиспользуемый компонент поля ввода для авторизации
- */
-function AuthField({ 
-  label, 
-  type = "text", 
-  placeholder, 
-  value, 
-  onChange, 
-  required = true 
-}: {
-  label: string;
-  type?: string;
-  placeholder: string;
-  value: string;
-  onChange: (val: string) => void;
-  required?: boolean;
-}) {
-  return (
-    <div className="space-y-2 text-left">
-      <label className="text-xs font-black uppercase tracking-widest text-indigo-300 opacity-60 ml-1">
-        {label}
-      </label>
-      <Input
-        type={type}
-        placeholder={placeholder}
-        className="h-12 bg-white/5 border-white/10 rounded-xl text-white focus:border-indigo-500/50 transition-colors"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-      />
-    </div>
-  );
+type Mode = "social" | "email" | "register" | "forgot-password";
+
+interface LoginFormProps {
+  botId?: string;
+  initialMode?: Mode;
 }
 
-/**
- * Основная кнопка действия (Submit)
- */
-function AuthSubmitButton({ 
-  loading, 
-  children, 
-  disabled 
-}: { 
-  loading: boolean; 
-  children: React.ReactNode;
-  disabled?: boolean;
-}) {
-  return (
-    <Button
-      type="submit"
-      variant="premium"
-      size="lg"
-      className="w-full h-14 rounded-2xl group transition-all active:scale-[0.98]"
-      disabled={disabled || loading}
-    >
-      {loading ? (
-        <Loader2 className="animate-spin" />
-      ) : (
-        <>
-          {children}
-          <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-        </>
-      )}
-    </Button>
-  );
-}
+export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
+  const searchParams = useSearchParams();
+  const verified = searchParams.get("verified") === "1";
+  const errorParam = searchParams.get("error");
 
-export function LoginForm({ botId }: { botId?: string }) {
-  const [mode, setMode] = useState<"social" | "email" | "register" | "forgot-password">("social");
-  const [loading, setLoading] = useState<string | null>(null);
-  
-  // Form states
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [resetSent, setResetSent] = useState(false);
 
-  const handleSocialLogin = async (provider: string) => {
-    setLoading(provider);
-    try {
-      await signIn(provider, { callbackUrl: "/dashboard" });
-    } catch (err) {
-      toast.error("Ошибка при входе через " + provider);
-      setLoading(null);
+  useEffect(() => {
+    if (errorParam === "CredentialsSignin") {
+      toast.error("Неверный email или пароль");
     }
-  };
+  }, [errorParam]);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(mode);
-    
+    setLoading(true);
+
     if (mode === "register") {
-      const regRes = await registerWithEmail({ email, password, name });
-      
-      if (regRes?.validationErrors) {
-        toast.error("Ошибка валидации: Пароль должен быть от 8 символов");
-        setLoading(null);
+      const res = await registerWithEmail({ email, password, name });
+      setLoading(false);
+      if (res?.validationErrors) {
+        toast.error("Пароль должен быть не менее 8 символов");
         return;
       }
-      
-      if (regRes?.serverError) {
-        toast.error(regRes.serverError);
-        setLoading(null);
+      if (res?.serverError) {
+        toast.error(res.serverError);
         return;
       }
-
-      if (!regRes?.data?.success) {
-        toast.error("Не удалось создать аккаунт");
-        setLoading(null);
-        return;
-      }
-
-      toast.success(regRes.data.message || "Аккаунт создан! Проверьте почту для подтверждения.");
-      setLoading(null);
-      setMode("email"); // Переключаем на вход, чтобы пользователь мог войти после подтверждения
+      toast.success("Аккаунт создан! Проверьте почту для подтверждения.");
+      setMode("email");
+      setPassword("");
       return;
     }
 
@@ -133,210 +71,257 @@ export function LoginForm({ botId }: { botId?: string }) {
       email,
       password,
       redirect: false,
-      callbackUrl: "/dashboard"
+      callbackUrl: "/orders",
     });
 
+    setLoading(false);
+
     if (res?.error) {
-      // Пытаемся показать конкретную ошибку (например, "Email не подтвержден")
-      const errorMsg = res.error === "CredentialsSignin" 
-        ? "Неверный email или пароль" 
-        : res.error;
-      toast.error(errorMsg);
-      setLoading(null);
+      toast.error(
+        res.error === "CredentialsSignin" ? "Неверный email или пароль" : res.error
+      );
     } else if (res && !res.error) {
-      toast.success("Вход выполнен!");
-      window.location.href = "/dashboard";
-    } else {
-      toast.error("Произошла неизвестная ошибка при входе");
-      setLoading(null);
+      window.location.href = res.url ?? "/orders";
     }
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast.error("Введите email");
-      return;
-    }
-    setLoading("reset");
-    const result = await requestPasswordReset({ email });
-    setLoading(null);
-    if (result?.serverError) {
-      toast.error(result.serverError);
-      return;
-    }
-    if (result?.data?.success) {
+    if (!email) { toast.error("Введите email"); return; }
+    setLoading(true);
+    const res = await requestPasswordReset({ email });
+    setLoading(false);
+    if (res?.serverError) { toast.error(res.serverError); return; }
+    if (res?.data?.success) {
       setResetSent(true);
       toast.success("Ссылка для сброса отправлена — проверьте почту");
     }
   };
 
-  const isDev = process.env.NODE_ENV === "development";
-
   return (
-    <Card className="glass-premium border-white/10 shadow-2xl overflow-hidden rounded-[32px] w-full max-w-[440px]">
-      <motion.div
-        animate={{ height: "auto" }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-        className="overflow-visible"
-      >
-        <CardContent className="p-8 pb-6">
-          <AnimatePresence mode="wait">
-            {mode === "social" ? (
-              <motion.div
-                key="social"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="space-y-6"
+    <div className="flex w-full flex-col gap-6">
+      {/* Email verified banner */}
+      {verified && (
+        <div className="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
+          <CheckCircle2 className="size-5 shrink-0 text-success" />
+          <p className="text-sm font-medium text-success">
+            Email подтверждён — теперь войдите в аккаунт
+          </p>
+        </div>
+      )}
+
+      {/* Mode: social */}
+      {mode === "social" && (
+        <div className="flex flex-col gap-3">
+          <TelegramLoginButton botId={botId} disabled={loading} />
+
+          <div className="relative my-1">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-surface px-3 text-xs text-muted-foreground uppercase tracking-widest">
+                или
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMode("email")}
+            disabled={loading}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-background text-sm font-semibold transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-50"
+          >
+            <Mail className="size-4" />
+            Продолжить через Email
+          </button>
+
+          <p className="mt-2 text-center text-sm text-muted-foreground">
+            Ещё нет аккаунта?{" "}
+            <button
+              type="button"
+              onClick={() => setMode("register")}
+              className="font-semibold text-primary hover:underline"
+            >
+              Зарегистрироваться
+            </button>
+          </p>
+        </div>
+      )}
+
+      {/* Mode: email login or register */}
+      {(mode === "email" || mode === "register") && (
+        <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
+          <button
+            type="button"
+            onClick={() => setMode("social")}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Назад
+          </button>
+
+          {mode === "register" && (
+            <Field label="Имя и фамилия">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Иван Иванов"
+                required
+                autoComplete="name"
+                className={inputCls}
+              />
+            </Field>
+          )}
+
+          <Field label="Email">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+              className={inputCls}
+            />
+          </Field>
+
+          <Field label="Пароль">
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                minLength={mode === "register" ? 8 : 1}
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
+                className={cn(inputCls, "pr-10")}
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
               >
-                <div className="text-center space-y-2 mb-4">
-                  <h2 className="text-2xl font-black text-white tracking-tight">Добро пожаловать</h2>
-                  <p className="text-sm text-slate-400">Выберите способ входа в систему</p>
-                </div>
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+          </Field>
 
-                <TelegramLoginButton disabled={!!loading} botId={botId} />
+          {mode === "email" && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setMode("forgot-password")}
+                className="text-xs text-muted-foreground transition-colors hover:text-primary"
+              >
+                Забыли пароль?
+              </button>
+            </div>
+          )}
 
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-[#0f172a] px-2 text-slate-500 font-bold tracking-widest">ИЛИ</span></div>
-                </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
+          >
+            {loading && <Loader2 className="size-4 animate-spin" />}
+            {mode === "email" ? "Войти" : "Создать аккаунт"}
+          </button>
 
-                <Button
-                  variant="premium"
-                  size="lg"
-                  className="w-full h-14 rounded-2xl gap-3"
-                  onClick={() => setMode("email")}
-                  disabled={!!loading}
+          <p className="text-center text-sm text-muted-foreground">
+            {mode === "email" ? (
+              <>
+                Нет аккаунта?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("register")}
+                  className="font-semibold text-primary hover:underline"
                 >
-                  <Mail className="w-5 h-5" />
-                  Продолжить через Email
-                </Button>
-
-                {isDev && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full mt-2 text-slate-500 hover:text-indigo-400 gap-2"
-                    onClick={() => handleSocialLogin("mock-admin")}
-                    disabled={!!loading}
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    Вход как Админ (Dev)
-                  </Button>
-                )}
-              </motion.div>
+                  Зарегистрироваться
+                </button>
+              </>
             ) : (
-              <motion.div
-                key={mode}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                className="space-y-8"
-              >
-                <div className="relative flex items-center justify-center pb-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => setMode(mode === "forgot-password" ? "email" : "social")} 
-                      className="absolute left-0 w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white"
-                    >
-                      <ArrowLeft className="w-5 h-5" />
-                    </Button>
-                    <h2 className="text-xl font-bold text-white uppercase tracking-wider">
-                      {mode === 'email' ? 'Вход' : mode === 'register' ? 'Регистрация' : 'Сброс пароля'}
-                    </h2>
-                </div>
-
-                {mode === 'forgot-password' ? (
-                  <form onSubmit={handleForgotPassword} className="space-y-6">
-                    <p className="text-sm text-slate-400 text-center max-w-[280px] mx-auto leading-relaxed">
-                      Введите ваш email, и мы отправим ссылку для восстановления доступа.
-                    </p>
-                    
-                    <AuthField
-                      label="Ваш Email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={setEmail}
-                    />
-                    
-                    <AuthSubmitButton loading={loading === 'reset'}>
-                      Отправить ссылку
-                    </AuthSubmitButton>
-                  </form>
-                ) : (
-                  <form onSubmit={handleEmailLogin} className="space-y-5">
-                    {mode === 'register' && (
-                      <AuthField 
-                        label="Как вас зовут?"
-                        placeholder="Имя Фамилия"
-                        value={name}
-                        onChange={setName}
-                      />
-                    )}
-                    <AuthField 
-                      label="Email"
-                      type="email"
-                      placeholder="name@example.com"
-                      value={email}
-                      onChange={setEmail}
-                    />
-                    <AuthField 
-                      label="Пароль"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={setPassword}
-                    />
-                    
-                    {mode === 'email' && (
-                      <div className="flex justify-end">
-                        <button 
-                          type="button"
-                          onClick={() => setMode("forgot-password")}
-                          className="text-xs text-indigo-400 hover:text-white transition-colors font-medium"
-                          disabled={!!loading}
-                        >
-                          Забыли пароль?
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="pt-2">
-                      <AuthSubmitButton loading={loading === 'email' || loading === 'register'}>
-                        {mode === 'email' ? 'Войти в аккаунт' : 'Создать аккаунт'}
-                      </AuthSubmitButton>
-                    </div>
-                  </form>
-                )}
-
-              {mode !== 'forgot-password' && (
-                <div className="text-center">
-                  <button 
-                    onClick={() => setMode(mode === 'email' ? 'register' : 'email')}
-                    className="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-2 group"
-                  >
-                    {mode === 'email' ? (
-                      <>
-                        <UserPlus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                        Еще нет аккаунта? <span className="text-indigo-400 group-hover:underline">Зарегистрироваться</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                        Уже есть аккаунт? <span className="text-indigo-400 group-hover:underline">Войти</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
-              </motion.div>
+              <>
+                Уже есть аккаунт?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("email")}
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Войти
+                </button>
+              </>
             )}
-          </AnimatePresence>
-        </CardContent>
-      </motion.div>
-    </Card>
+          </p>
+        </form>
+      )}
+
+      {/* Mode: forgot password */}
+      {mode === "forgot-password" && (
+        <form onSubmit={handleForgotPassword} className="flex flex-col gap-4">
+          <button
+            type="button"
+            onClick={() => setMode("email")}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Назад
+          </button>
+
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Введите email — пришлём ссылку для восстановления пароля.
+            </p>
+          </div>
+
+          {resetSent ? (
+            <div className="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
+              <CheckCircle2 className="size-5 shrink-0 text-success" />
+              <p className="text-sm font-medium text-success">
+                Письмо отправлено — проверьте почту
+              </p>
+            </div>
+          ) : (
+            <>
+              <Field label="Email">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoComplete="email"
+                  className={inputCls}
+                />
+              </Field>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
+              >
+                {loading && <Loader2 className="size-4 animate-spin" />}
+                Отправить ссылку
+              </button>
+            </>
+          )}
+        </form>
+      )}
+    </div>
   );
 }
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+const inputCls =
+  "h-11 w-full rounded-xl border border-border bg-background px-3 text-sm focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10";

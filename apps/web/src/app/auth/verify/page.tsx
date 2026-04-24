@@ -1,11 +1,8 @@
 export const dynamic = "force-dynamic";
 
 import { verifyEmailAction } from "@/features/auth/model/actions";
-import { Button } from "@/shared/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Mail } from "lucide-react";
 import Link from "next/link";
-import { AutoRedirect } from "./AutoRedirect";
 
 export default async function VerifyPage({
   searchParams,
@@ -15,75 +12,85 @@ export default async function VerifyPage({
   const { token } = await searchParams;
 
   if (!token) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <VerifyCard title="Ошибка" icon={<XCircle className="w-12 h-12 text-red-500" />} message="Токен отсутствует." />
-      </div>
-    );
+    return <VerifyLayout icon="error" title="Ошибка" message="Токен подтверждения отсутствует." />;
   }
 
   const result = await verifyEmailAction({ token });
 
   if (result?.serverError || !result?.data?.success) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <VerifyCard 
-          title="Ошибка" 
-          icon={<XCircle className="w-12 h-12 text-red-500" />} 
-          message={result?.serverError || "Неверный или просроченный токен."} 
-        />
-      </div>
+      <VerifyLayout
+        icon="error"
+        title="Ссылка недействительна"
+        message={result?.serverError ?? "Токен истёк или уже был использован. Запросите новое письмо."}
+      />
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <VerifyCard 
-        title="Email подтвержден!" 
-        icon={<CheckCircle2 className="w-12 h-12 text-green-500" />} 
-        message="Ваша почта успешно подтверждена. Теперь вы можете пользоваться всеми функциями сервиса."
-        targetUrl="/dashboard"
-        buttonText="В личный кабинет"
-        autoRedirect
-      />
-    </div>
+    <VerifyLayout
+      icon="success"
+      title="Email подтверждён!"
+      message="Отлично! Теперь войдите в аккаунт, чтобы начать пользоваться сервисом."
+      cta={{ href: "/auth/login?verified=1", label: "Войти в аккаунт" }}
+    />
   );
 }
 
-function VerifyCard({ 
-  title, 
-  icon, 
-  message, 
-  targetUrl = "/", 
-  buttonText = "На главную",
-  autoRedirect 
-}: { 
-  title: string; 
-  icon: React.ReactNode; 
-  message: string; 
-  targetUrl?: string;
-  buttonText?: string;
-  autoRedirect?: boolean;
+function VerifyLayout({
+  icon,
+  title,
+  message,
+  cta,
+}: {
+  icon: "success" | "error";
+  title: string;
+  message: string;
+  cta?: { href: string; label: string };
 }) {
   return (
-    <Card className="glass-premium border-white/10 shadow-2xl max-w-md w-full text-center p-6 rounded-[32px]">
-      <CardHeader>
-        <div className="flex justify-center mb-4">{icon}</div>
-        <CardTitle className="text-2xl font-bold text-white">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <p className="text-slate-400">{message}</p>
-        
-        <div className="space-y-4">
-          <Button asChild variant="premium" className="w-full h-12 rounded-xl">
-            <Link href={targetUrl}>
-              {buttonText}
-            </Link>
-          </Button>
-
-          {autoRedirect && <AutoRedirect to={targetUrl} delay={3000} />}
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md rounded-2xl border border-border/60 bg-surface p-8 text-center shadow-sm">
+        <div className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full">
+          {icon === "success" ? (
+            <CheckCircle2 className="size-14 text-success" />
+          ) : (
+            <XCircle className="size-14 text-destructive" />
+          )}
         </div>
-      </CardContent>
-    </Card>
+
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
+
+        <div className="mt-8 flex flex-col gap-3">
+          {cta && (
+            <Link
+              href={cta.href}
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-110"
+            >
+              {cta.label}
+            </Link>
+          )}
+          {!cta && (
+            <Link
+              href="/auth/login"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-background px-6 text-sm font-medium transition-colors hover:border-primary/60 hover:text-primary"
+            >
+              На страницу входа
+            </Link>
+          )}
+        </div>
+
+        {icon === "error" && (
+          <p className="mt-4 text-xs text-muted-foreground">
+            Не получили письмо?{" "}
+            <Link href="/auth/login" className="text-primary hover:underline">
+              Войдите
+            </Link>{" "}
+            и запросите повторную отправку
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
