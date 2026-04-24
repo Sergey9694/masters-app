@@ -45,7 +45,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="page-section">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Лента заказов
         </h1>

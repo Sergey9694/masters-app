@@ -194,6 +194,23 @@
   background-color: transparent !important;
 }
 
+@keyframes section-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger-появление секций страницы (серверные компоненты).
+   Добавляй .page-section на каждый блок страницы. */
+@layer utilities {
+  .page-section {
+    animation: section-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .page-section:nth-child(2) { animation-delay: 0.05s; }
+  .page-section:nth-child(3) { animation-delay: 0.10s; }
+  .page-section:nth-child(4) { animation-delay: 0.15s; }
+  .page-section:nth-child(5) { animation-delay: 0.20s; }
+}
+
 @layer utilities {
   /* Legacy glass — удалить в 5.8 */
   .glass-premium {

@@ -80,7 +80,7 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="page-section flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             Мои заказы
@@ -99,7 +99,7 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
         </Link>
       </div>
 
-      <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-surface p-1">
+      <div className="page-section flex items-center gap-1 rounded-xl border border-border/60 bg-surface p-1">
         {TABS.map((t) => {
           const active = t.key === activeTab;
           const count = countByTab(t.key);
@@ -135,7 +135,7 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
       {orders.length === 0 ? (
         <EmptyState tab={activeTab} />
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="page-section flex flex-col gap-3">
           {orders.map((o) => (
             <OrderFeedCard
               key={o.id}

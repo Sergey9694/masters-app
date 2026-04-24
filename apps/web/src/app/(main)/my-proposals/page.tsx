@@ -96,7 +96,7 @@ export default async function MyProposalsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <div className="page-section">
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Мои отклики
         </h1>
@@ -105,7 +105,7 @@ export default async function MyProposalsPage({
         </p>
       </div>
 
-      <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-surface p-1">
+      <div className="page-section flex items-center gap-1 rounded-xl border border-border/60 bg-surface p-1">
         {TABS.map((t) => {
           const active = t.key === activeTab;
           return (
@@ -130,7 +130,7 @@ export default async function MyProposalsPage({
       {proposals.length === 0 ? (
         <EmptyProposals tab={activeTab} />
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="page-section flex flex-col gap-3">
           {proposals.map((p) => (
             <OrderFeedCard
               key={p.id}
