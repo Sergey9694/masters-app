@@ -21,6 +21,7 @@ interface RawNearbyOrder {
   customerName: string;
   customerAvatar: string | null;
   cityName: string;
+  citySlug: string;
   proposalCount: number;
   distance: number;
 }
@@ -53,6 +54,7 @@ export async function getOrdersNearby(
         u."firstName" as "customerName",
         u.avatar as "customerAvatar",
         city.name as "cityName",
+        city.slug as "citySlug",
         (SELECT COUNT(*)::int FROM "Proposal" p WHERE p."orderId" = t.id) as "proposalCount",
         ST_Distance(
           t."orderLocation"::geography, 
@@ -87,6 +89,7 @@ export async function getOrdersNearby(
       proposalCount: t.proposalCount || 0,
       city: {
         name: t.cityName,
+        slug: t.citySlug,
       },
       category: {
         name: t.categoryName,

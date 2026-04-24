@@ -38,7 +38,6 @@ interface Option {
 
 interface OrderWizardLightProps {
   categories: Option[];
-  cities: Option[];
   defaultCityId?: string;
 }
 
@@ -94,7 +93,6 @@ type PreviewImage = { file: File; url: string };
 
 export function OrderWizardLight({
   categories,
-  cities,
   defaultCityId,
 }: OrderWizardLightProps) {
   const router = useRouter();
@@ -210,10 +208,10 @@ export function OrderWizardLight({
           }}
         >
           {step.key === "category" && (
-            <StepCategory form={form} categories={categories} cities={cities} />
+            <StepCategory form={form} categories={categories} />
           )}
           {step.key === "details" && <StepDetails form={form} />}
-          {step.key === "budget" && <StepBudget form={form} cities={cities} />}
+          {step.key === "budget" && <StepBudget form={form} />}
           {step.key === "photos" && (
             <StepPhotos previews={previews} setPreviews={setPreviews} />
           )}
@@ -324,11 +322,9 @@ function Stepper({ currentIndex }: { currentIndex: number }) {
 function StepCategory({
   form,
   categories,
-  cities,
 }: {
   form: UseFormReturn<OrderFormValues>;
   categories: Option[];
-  cities: Option[];
 }) {
   const {
     register,
@@ -409,7 +405,7 @@ function StepDetails({ form }: { form: UseFormReturn<OrderFormValues> }) {
   );
 }
 
-function StepBudget({ form, cities }: { form: UseFormReturn<OrderFormValues>, cities: Option[] }) {
+function StepBudget({ form }: { form: UseFormReturn<OrderFormValues> }) {
   const {
     register,
     setValue,

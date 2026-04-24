@@ -33,10 +33,9 @@ interface Props {
   orderId: string;
   defaultValues: FormValues;
   categories: { id: string; name: string }[];
-  cities: { id: string; name: string }[];
 }
 
-export function OrderEditFormLight({ orderId, defaultValues, categories, cities }: Props) {
+export function OrderEditFormLight({ orderId, defaultValues, categories }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 

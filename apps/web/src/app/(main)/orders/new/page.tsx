@@ -17,18 +17,11 @@ export default async function NewOrderPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
 
-  const [categories, cities] = await Promise.all([
-    db.category.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    db.city.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const categories = await db.category.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -51,7 +44,6 @@ export default async function NewOrderPage() {
 
       <OrderWizardLight
         categories={categories}
-        cities={cities}
         defaultCityId={user.cityId ?? undefined}
       />
     </div>

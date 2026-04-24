@@ -26,7 +26,7 @@ export default async function OrderEditPage({ params }: PageProps) {
   const user = await getCurrentUser();
   if (!user) redirect("/");
 
-  const [order, categories, cities] = await Promise.all([
+  const [order, categories] = await Promise.all([
     db.order.findFirst({
       where: { OR: [{ slug: orderSlug }, { id: orderSlug }] },
       select: {
@@ -45,11 +45,6 @@ export default async function OrderEditPage({ params }: PageProps) {
       },
     }),
     db.category.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    db.city.findMany({
       where: { isActive: true },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
@@ -88,7 +83,6 @@ export default async function OrderEditPage({ params }: PageProps) {
         <OrderEditFormLight
           orderId={order.id}
           categories={categories}
-          cities={cities}
           defaultValues={{
             title: order.title,
             description: order.description,

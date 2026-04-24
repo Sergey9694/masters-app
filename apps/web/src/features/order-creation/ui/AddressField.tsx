@@ -11,10 +11,9 @@ import { ensureCityAction } from "../api/ensure-city-action";
 
 interface AddressFieldProps {
   form: UseFormReturn<OrderFormValues>;
-  cities: { id: string; name: string }[];
 }
 
-export function AddressField({ form, cities }: AddressFieldProps) {
+export function AddressField({ form }: AddressFieldProps) {
   const [suggestions, setSuggestions] = useState<DadataSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [inputRect, setInputRect] = useState<DOMRect | null>(null);

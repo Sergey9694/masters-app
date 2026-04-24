@@ -47,11 +47,10 @@ import { AddressField } from "./AddressField";
 
 interface OrderCreateFormProps {
   categories: { id: string; name: string }[];
-  cities: { id: string; name: string }[];
   defaultCityId?: string;
 }
 
-export function OrderCreateForm({ categories, cities, defaultCityId }: OrderCreateFormProps) {
+export function OrderCreateForm({ categories, defaultCityId }: OrderCreateFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
@@ -214,7 +213,7 @@ export function OrderCreateForm({ categories, cities, defaultCityId }: OrderCrea
             />
 
             {/* Address Field Extracted */}
-            <AddressField form={form} cities={cities} />
+            <AddressField form={form} />
           </div>
 
           <motion.button
