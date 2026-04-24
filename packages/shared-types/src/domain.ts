@@ -3,7 +3,7 @@ export interface OrderCard {
   orderNumber?: number;
   slug?: string | null;
   title: string;
-  description: string;
+  description?: string;
   budget: number | null;
   address: string | null;
   status: string;
@@ -12,7 +12,7 @@ export interface OrderCard {
     name: string;
     slug: string;
   };
-  client: {
+  client?: {
     firstName: string;
     avatar: string | null;
   };
@@ -20,7 +20,7 @@ export interface OrderCard {
     name: string;
     slug: string;
   };
-  images: string[];
+  images?: string[];
   proposalCount: number;
   distance?: number;
 }

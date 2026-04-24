@@ -24,7 +24,7 @@ export function OrderCard({ order }: OrderCardProps) {
   const router = useRouter();
 
   const truncatedTitle = title.length > 35 ? title.substring(0, 32) + "..." : title;
-  const truncatedDesc = description.length > 50 ? description.substring(0, 47) + "..." : description;
+  const truncatedDesc = (description?.length ?? 0) > 50 ? description!.substring(0, 47) + "..." : (description ?? "");
 
   return (
     <OrderCardBase
@@ -32,14 +32,14 @@ export function OrderCard({ order }: OrderCardProps) {
       user={
         <div className="flex items-center gap-3">
           <Avatar className="w-9 h-9 rounded-full border border-white/10 overflow-hidden bg-slate-800">
-            <AvatarImage src={client.avatar || ""} alt={client.firstName} className="object-cover" />
+            <AvatarImage src={client?.avatar || ""} alt={client?.firstName ?? ""} className="object-cover" />
             <AvatarFallback className="bg-gradient-to-tr from-blue-500/20 to-indigo-500/20 text-blue-500 font-bold text-[10px] uppercase">
-              {client.firstName[0]}
+              {client?.firstName[0]}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1">
-              {client.firstName}
+              {client?.firstName}
             </p>
             <div className="flex items-center gap-1.5 opacity-60">
               <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />

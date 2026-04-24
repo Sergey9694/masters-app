@@ -5,7 +5,7 @@ import { MessageSquare, Briefcase } from "lucide-react";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { cn } from "@/shared/lib/cn";
-import { MyOrderRow } from "@/entities/order";
+import { OrderFeedCard } from "@/entities/order";
 import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +84,7 @@ export default async function MyProposalsPage({
             assignedProviderId: true,
             createdAt: true,
             category: { select: { name: true, slug: true } },
-            city: { select: { slug: true } },
+            city: { select: { name: true, slug: true } },
           },
         },
       },
@@ -132,20 +132,23 @@ export default async function MyProposalsPage({
       ) : (
         <div className="flex flex-col gap-3">
           {proposals.map((p) => (
-            <MyOrderRow
+            <OrderFeedCard
               key={p.id}
-              data={{
-                id: p.id,
+              variant="my"
+              price={p.price}
+              isChosen={p.order.assignedProviderId === providerId}
+              order={{
+                id: p.order.id,
                 orderNumber: p.order.orderNumber,
-                href: `/orders/${p.order.city.slug}/${p.order.category.slug}/${p.order.slug || p.order.id}`,
+                slug: p.order.slug,
                 title: p.order.title,
-                category: p.order.category.name,
                 status: p.order.status,
                 budget: p.order.budget,
-                price: p.price,
                 address: p.order.address,
                 createdAt: p.createdAt,
-                isChosen: p.order.assignedProviderId === providerId,
+                category: p.order.category,
+                city: p.order.city,
+                proposalCount: 0,
               }}
             />
           ))}

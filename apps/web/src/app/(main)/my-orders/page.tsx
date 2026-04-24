@@ -5,7 +5,7 @@ import { Plus, Inbox } from "lucide-react";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { cn } from "@/shared/lib/cn";
-import { MyOrderRow } from "@/entities/order";
+import { OrderFeedCard } from "@/entities/order";
 import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -55,7 +55,7 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
         address: true,
         createdAt: true,
         category: { select: { name: true, slug: true } },
-        city: { select: { slug: true } },
+        city: { select: { name: true, slug: true } },
         _count: { select: { proposals: true } },
       },
     }),
@@ -137,19 +137,21 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
       ) : (
         <div className="flex flex-col gap-3">
           {orders.map((o) => (
-            <MyOrderRow
+            <OrderFeedCard
               key={o.id}
-              data={{
+              variant="my"
+              order={{
                 id: o.id,
                 orderNumber: o.orderNumber,
-                href: `/orders/${o.city.slug}/${o.category.slug}/${o.slug || o.id}`,
+                slug: o.slug,
                 title: o.title,
-                category: o.category.name,
                 status: o.status,
                 budget: o.budget,
                 address: o.address,
                 createdAt: o.createdAt,
-                proposalsCount: o._count.proposals,
+                category: o.category,
+                city: o.city,
+                proposalCount: o._count.proposals,
               }}
             />
           ))}
