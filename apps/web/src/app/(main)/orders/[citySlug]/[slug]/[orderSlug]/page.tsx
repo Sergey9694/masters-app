@@ -105,7 +105,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
       status: true,
       category: { select: { name: true, slug: true } },
       client: { select: { firstName: true, avatar: true } },
-      city: { select: { name: true } },
+      city: { select: { name: true, slug: true } },
       _count: { select: { proposals: true } },
     },
     orderBy: { createdAt: "desc" },

@@ -18,6 +18,7 @@ export interface OrderCard {
   };
   city: {
     name: string;
+    slug: string;
   };
   images: string[];
   proposalCount: number;
