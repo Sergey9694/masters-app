@@ -8,7 +8,7 @@ import { Motion } from "@/shared/lib/motion";
 
 export default function VerifySuccessPage() {
   const router = useRouter();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(2);
 
   useEffect(() => {
     const timer = setInterval(() => {
