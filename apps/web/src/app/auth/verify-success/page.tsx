@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
-import { Motion } from "@/shared/lib/motion";
+import { motion } from "framer-motion";
+import { SLIDE_UP } from "@/shared/lib/motion";
 
 export default function VerifySuccessPage() {
   const router = useRouter();
@@ -27,10 +28,10 @@ export default function VerifySuccessPage() {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
-      <Motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+      <motion.div
+        variants={SLIDE_UP}
+        initial="initial"
+        animate="animate"
         className="max-w-md w-full bg-background border border-border/60 rounded-3xl p-8 text-center shadow-xl shadow-primary/5"
       >
         <div className="flex justify-center mb-6">
@@ -57,7 +58,7 @@ export default function VerifySuccessPage() {
             Перенаправление в личный кабинет через {countdown} сек...
           </p>
         </div>
-      </Motion.div>
+      </motion.div>
     </div>
   );
 }
