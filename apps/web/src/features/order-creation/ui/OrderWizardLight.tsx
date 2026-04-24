@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useTransition, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { transition } from "@/shared/lib/motion";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -98,6 +100,7 @@ export function OrderWizardLight({
 }: OrderWizardLightProps) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
+  const dirRef = useRef(1);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const [previews, setPreviews] = useState<PreviewImage[]>([]);
@@ -136,10 +139,12 @@ export function OrderWizardLight({
 
       if (!ok) return;
     }
+    dirRef.current = 1;
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   };
 
   const goBack = () => {
+    dirRef.current = -1;
     setStepIndex((i) => Math.max(i - 1, 0));
   };
 
@@ -208,21 +213,33 @@ export function OrderWizardLight({
             }
           }}
         >
-          {step.key === "category" && (
-            <StepCategory form={form} categories={categories} />
-          )}
-          {step.key === "details" && <StepDetails form={form} />}
-          {step.key === "budget" && <StepBudget form={form} />}
-          {step.key === "photos" && (
-            <StepPhotos previews={previews} setPreviews={setPreviews} />
-          )}
-          {step.key === "review" && (
-            <StepReview
-              form={form}
-              categories={categories}
-              previews={previews}
-            />
-          )}
+          <div className="overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={stepIndex}
+                initial={{ opacity: 0, x: dirRef.current * 28 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: dirRef.current * -28 }}
+                transition={transition.base}
+              >
+                {step.key === "category" && (
+                  <StepCategory form={form} categories={categories} />
+                )}
+                {step.key === "details" && <StepDetails form={form} />}
+                {step.key === "budget" && <StepBudget form={form} />}
+                {step.key === "photos" && (
+                  <StepPhotos previews={previews} setPreviews={setPreviews} />
+                )}
+                {step.key === "review" && (
+                  <StepReview
+                    form={form}
+                    categories={categories}
+                    previews={previews}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           <div className={cn(
             "mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:items-center",

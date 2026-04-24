@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/shared/ui/dialog";
+import { transition } from "@/shared/lib/motion";
 import { LoginForm } from "./LoginForm";
 import { RegisterForm } from "./RegisterForm";
 
@@ -35,13 +37,25 @@ export function AuthModal({ open, onOpenChange, botId }: AuthModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <Suspense>
-          {view === "login" ? (
-            <LoginForm botId={botId} onSwitchToRegister={() => setView("register")} />
-          ) : (
-            <RegisterForm botId={botId} onSwitchToLogin={() => setView("login")} />
-          )}
-        </Suspense>
+        <div className="overflow-hidden">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={view}
+              initial={{ opacity: 0, x: view === "register" ? 24 : -24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: view === "register" ? -24 : 24 }}
+              transition={transition.base}
+            >
+              <Suspense>
+                {view === "login" ? (
+                  <LoginForm botId={botId} onSwitchToRegister={() => setView("register")} />
+                ) : (
+                  <RegisterForm botId={botId} onSwitchToLogin={() => setView("login")} />
+                )}
+              </Suspense>
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
           Продолжая, вы соглашаетесь с{" "}
