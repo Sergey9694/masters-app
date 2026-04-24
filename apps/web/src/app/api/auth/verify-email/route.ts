@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
       redirect: false,
     });
 
-    return NextResponse.redirect(new URL("/orders", request.url));
+    const baseUrl = process.env.AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || request.url;
+    return NextResponse.redirect(new URL("/orders", baseUrl));
   } catch (error: unknown) {
     console.error("[verify-email] error:", error);
     return NextResponse.redirect(new URL("/auth/verify?error=invalid_token", request.url));

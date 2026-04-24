@@ -28,7 +28,9 @@ export default async function VerifyPage({
     return <VerifyLayout title="Ошибка" message="Токен подтверждения отсутствует." />;
   }
 
-  redirect(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+  const baseUrl = process.env.AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "";
+  const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+  redirect(verifyUrl || `/api/auth/verify-email?token=${encodeURIComponent(token)}`);
 }
 
 function VerifyLayout({ title, message }: { title: string; message: string }) {
