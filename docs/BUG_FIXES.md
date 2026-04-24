@@ -285,12 +285,13 @@
 3. **Protocol Mismatch**: Попытка форсировать HTTPS на внутреннем адресе `0.0.0.0` приводила к ошибке «Страница недоступна».
 
 ### Решение
-1. **Forced Base URL**: В критических точках редиректа (страница верификации и API-маршрут подтверждения email) логика изменена на использование переменной окружения `AUTH_URL` (или `NEXT_PUBLIC_APP_URL`) в качестве базы.
-   - Теперь `new URL("/orders", process.env.AUTH_URL)` гарантированно ведет на внешний домен `https://local-masters.duckdns.org`.
-2. **Environment Validation**: Обновлен `.env.example` — добавлены обязательные переменные `AUTH_URL` и `AUTH_TRUST_HOST=true` для корректной работы Auth.js v5 за реверс-прокси.
-3. **Nginx Best Practices**: В документацию и рекомендации добавлена необходимость передачи заголовков `Host`, `X-Forwarded-For` и `X-Forwarded-Proto` в конфигурации Nginx.
-
-### Файлы
-- **Маршруты**: `apps/web/src/app/api/auth/verify-email/route.ts`.
-- **Страницы**: `apps/web/src/app/auth/verify/page.tsx`.
-- **Конфиг**: `.env.example`.
+288: 1. **Forced Base URL**: В критических точках редиректа (страница верификации и API-маршрут подтверждения email) логика изменена на использование переменной окружения `AUTH_URL` (или `NEXT_PUBLIC_APP_URL`) в качестве базы.
+289:    - Теперь `new URL("/orders", process.env.AUTH_URL)` гарантированно ведет на внешний домен `https://local-masters.duckdns.org`.
+290: 2. **UX Improvement (Success Page)**: Внедрена промежуточная страница `/auth/verify-success`. Вместо мгновенного редиректа в личный кабинет, пользователь видит подтверждение успеха и таймер обратного отсчета (5 сек), после чего происходит автоматический переход.
+291: 3. **Environment Validation**: Обновлен `.env.example` — добавлены обязательные переменные `AUTH_URL` и `AUTH_TRUST_HOST=true` для корректной работы Auth.js v5 за реверс-прокси.
+292: 4. **Nginx Best Practices**: В документацию и рекомендации добавлена необходимость передачи заголовков `Host`, `X-Forwarded-For` и `X-Forwarded-Proto` в конфигурации Nginx.
+293: 
+294: ### Файлы
+295: - **Маршруты**: `apps/web/src/app/api/auth/verify-email/route.ts`.
+296: - **Страницы**: `apps/web/src/app/auth/verify/page.tsx`, `apps/web/src/app/auth/verify-success/page.tsx`.
+297: - **Конфиг**: `.env.example`.
