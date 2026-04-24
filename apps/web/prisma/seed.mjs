@@ -1,22 +1,25 @@
 import { PrismaClient } from "@prisma/client";
+import { createRequire } from "module";
 
 const prisma = new PrismaClient();
+const require = createRequire(import.meta.url);
 
 // Настройки админа из окружения или дефолты
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@test.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // Обычный пароль из ENV
 const DEFAULT_HASH = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU."; // для "password123"
 
-// Динамический импорт bcrypt для надежности в Docker
+// createRequire использует CJS-резолвинг, который поддерживает NODE_PATH — в отличие от ESM import()
 let ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || DEFAULT_HASH;
 
 if (ADMIN_PASSWORD) {
   try {
-    const bcrypt = await import("bcryptjs");
-    ADMIN_PASSWORD_HASH = bcrypt.default.hashSync(ADMIN_PASSWORD, 10);
+    const bcrypt = require("bcryptjs");
+    ADMIN_PASSWORD_HASH = bcrypt.hashSync(ADMIN_PASSWORD, 10);
+    console.log("[SEED] bcryptjs загружен, хеш пароля сгенерирован.");
   } catch (e) {
-    console.warn("⚠️ [SEED] bcryptjs не найден, используем дефолтный хеш или пароль без хеша.");
-    ADMIN_PASSWORD_HASH = ADMIN_PASSWORD; // Fallback
+    console.warn("⚠️ [SEED] bcryptjs не найден, используем дефолтный хеш.");
+    // Не используем plaintext как fallback — лучше оставить дефолтный хеш
   }
 }
 

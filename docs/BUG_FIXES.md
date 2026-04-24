@@ -165,3 +165,17 @@
 - Обновлен `Dockerfile`: добавлена глобальная установка `bcryptjs` на этапе production, так как Next.js standalone сборка обрезает зависимости, и скрипт сидинга падал при попытке сгенерировать хэш.
 - Теперь изменение `ADMIN_PASSWORD` в `.env` и перезапуск контейнеров гарантированно обновляют доступ к админке.
 - **Ручное исправление:** На VPS `212.193.18.192` пароль администратора `admin@mail.ru` был принудительно обновлен до `z8ha3f4x` через прямой SQL-запрос к базе данных для мгновенного восстановления доступа.
+
+---
+
+## [2026-04-25] ESM import() vs createRequire — bcryptjs не найден в seed.mjs
+
+### Root Cause
+**Проблема:** На каждом запуске контейнера seed.mjs выбрасывал `⚠️ bcryptjs не найден`, из-за чего в поле `passwordHash` записывался **plaintext пароль** вместо bcrypt-хеша. Это приводило к тому, что `bcrypt.compare(password, hash)` в `admin-login.ts` всегда возвращал `false` — вход в админку был заблокирован.
+
+**Причина:** `seed.mjs` использовал `await import("bcryptjs")` (ESM dynamic import). Node.js ES Module resolution **не использует `NODE_PATH`** — только CJS `require` его поддерживает. В Dockerfile bcryptjs устанавливался глобально (`npm install -g bcryptjs`), путь `/usr/local/lib/node_modules` прописывался в `NODE_PATH`. Для `require()` это работает, но для ESM `import()` — нет.
+
+### Решение
+- В `apps/web/prisma/seed.mjs`: заменено `await import("bcryptjs")` на `createRequire` из встроенного модуля `"module"`. CJS `require`, созданный через `createRequire`, поддерживает `NODE_PATH` и находит глобально установленный `bcryptjs`.
+- Убран опасный fallback `ADMIN_PASSWORD_HASH = ADMIN_PASSWORD` (plaintext), который хранил пароль без хеширования.
+- **Ручной фикс на VPS:** пароль `admin@mail.ru` восстановлен корректным bcrypt-хешем через прямой SQL, без перестройки образа.
