@@ -7,8 +7,6 @@ import Link from "next/link";
 import {
   Mail,
   Loader2,
-  Lock,
-  UserPlus,
   ArrowLeft,
   Eye,
   EyeOff,
@@ -16,29 +14,28 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/shared/lib/cn";
-import { registerWithEmail, requestPasswordReset } from "../model/actions";
+import { requestPasswordReset } from "../model/actions";
 import { TelegramLoginButton } from "./TelegramLoginButton";
 
-type Mode = "social" | "email" | "register" | "forgot-password";
+type Mode = "social" | "email" | "forgot-password";
 
 interface LoginFormProps {
   botId?: string;
-  initialMode?: Mode;
+  onSwitchToRegister?: () => void;
 }
 
-export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
+export function LoginForm({ botId, onSwitchToRegister }: LoginFormProps) {
   const searchParams = useSearchParams();
   const verified = searchParams.get("verified") === "1";
   const errorParam = searchParams.get("error");
 
-  const [mode, setMode] = useState<Mode>(initialMode);
+  const [mode, setMode] = useState<Mode>("social");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
 
   useEffect(() => {
     if (errorParam === "CredentialsSignin") {
@@ -49,23 +46,6 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    if (mode === "register") {
-      const res = await registerWithEmail({ email, password, name });
-      setLoading(false);
-      if (res?.validationErrors) {
-        toast.error("Пароль должен быть не менее 8 символов");
-        return;
-      }
-      if (res?.serverError) {
-        toast.error(res.serverError);
-        return;
-      }
-      toast.success("Аккаунт создан! Проверьте почту для подтверждения.");
-      setMode("email");
-      setPassword("");
-      return;
-    }
 
     const res = await signIn("email", {
       email,
@@ -100,7 +80,6 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {/* Email verified banner */}
       {verified && (
         <div className="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">
           <CheckCircle2 className="size-5 shrink-0 text-success" />
@@ -113,18 +92,14 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
       {/* Mode: social */}
       {mode === "social" && (
         <div className="flex flex-col gap-3">
-          <TelegramLoginButton
-            botId={botId}
-            disabled={loading}
-            label={initialMode === "register" ? "Регистрация через Telegram" : "Войти через Telegram"}
-          />
+          <TelegramLoginButton botId={botId} disabled={loading} />
 
           <div className="relative my-1">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-surface px-3 text-xs text-muted-foreground uppercase tracking-widest">
+              <span className="bg-surface px-3 text-xs uppercase tracking-widest text-muted-foreground">
                 или
               </span>
             </div>
@@ -137,26 +112,26 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
             className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background text-sm font-semibold transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-50"
           >
             <Mail className="size-4" />
-            {initialMode === "register" ? "Регистрация через Email" : "Войти через Email"}
+            Войти через Email
           </button>
 
-          {initialMode !== "register" && (
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Ещё нет аккаунта?{" "}
-              <button
-                type="button"
-                onClick={() => setMode("register")}
-                className="font-semibold text-primary hover:underline"
-              >
+          <p className="mt-1 text-center text-sm text-muted-foreground">
+            Нет аккаунта?{" "}
+            {onSwitchToRegister ? (
+              <button type="button" onClick={onSwitchToRegister} className="font-semibold text-primary hover:underline">
                 Зарегистрироваться
               </button>
-            </p>
-          )}
+            ) : (
+              <Link href="/auth/register" className="font-semibold text-primary hover:underline">
+                Зарегистрироваться
+              </Link>
+            )}
+          </p>
         </div>
       )}
 
-      {/* Mode: email login or register */}
-      {(mode === "email" || mode === "register") && (
+      {/* Mode: email login */}
+      {mode === "email" && (
         <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4">
           <button
             type="button"
@@ -166,20 +141,6 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
             <ArrowLeft className="size-4" />
             Назад
           </button>
-
-          {mode === "register" && (
-            <Field label="Имя и фамилия">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Иван Иванов"
-                required
-                autoComplete="name"
-                className={inputCls}
-              />
-            </Field>
-          )}
 
           <Field label="Email">
             <input
@@ -201,8 +162,7 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={mode === "register" ? 8 : 1}
-                autoComplete={mode === "register" ? "new-password" : "current-password"}
+                autoComplete="current-password"
                 className={cn(inputCls, "pr-10")}
               />
               <button
@@ -216,17 +176,15 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
             </div>
           </Field>
 
-          {mode === "email" && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setMode("forgot-password")}
-                className="text-xs text-muted-foreground transition-colors hover:text-primary"
-              >
-                Забыли пароль?
-              </button>
-            </div>
-          )}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setMode("forgot-password")}
+              className="text-xs text-muted-foreground transition-colors hover:text-primary"
+            >
+              Забыли пароль?
+            </button>
+          </div>
 
           <button
             type="submit"
@@ -234,33 +192,14 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
             className="mt-1 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:brightness-110 disabled:opacity-50"
           >
             {loading && <Loader2 className="size-4 animate-spin" />}
-            {mode === "email" ? "Войти" : "Создать аккаунт"}
+            Войти
           </button>
 
           <p className="text-center text-sm text-muted-foreground">
-            {mode === "email" ? (
-              <>
-                Нет аккаунта?{" "}
-                <button
-                  type="button"
-                  onClick={() => setMode("register")}
-                  className="font-semibold text-primary hover:underline"
-                >
-                  Зарегистрироваться
-                </button>
-              </>
-            ) : (
-              <>
-                Уже есть аккаунт?{" "}
-                <button
-                  type="button"
-                  onClick={() => setMode("email")}
-                  className="font-semibold text-primary hover:underline"
-                >
-                  Войти
-                </button>
-              </>
-            )}
+            Нет аккаунта?{" "}
+            <Link href="/auth/register" className="font-semibold text-primary hover:underline">
+              Зарегистрироваться
+            </Link>
           </p>
         </form>
       )}
@@ -277,11 +216,9 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
             Назад
           </button>
 
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Введите email — пришлём ссылку для восстановления пароля.
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Введите email — пришлём ссылку для восстановления пароля.
+          </p>
 
           {resetSent ? (
             <div className="flex items-center gap-3 rounded-xl border border-success/30 bg-success/10 px-4 py-3">

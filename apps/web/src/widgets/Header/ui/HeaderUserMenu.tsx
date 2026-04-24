@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { User } from "lucide-react";
@@ -21,32 +22,28 @@ interface HeaderUserMenuProps {
 
 export function HeaderUserMenu({ user, botId }: HeaderUserMenuProps) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"social" | "register">("social");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (!user && searchParams.get("verified") === "1") {
+      setModalOpen(true);
+    }
+  }, [user, searchParams]);
 
   if (!user) {
     return (
       <>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => { setModalMode("social"); setModalOpen(true); }}
-            className="hidden sm:inline-flex h-9 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-subtle hover:text-foreground"
-          >
-            Войти
-          </button>
-          <button
-            type="button"
-            onClick={() => { setModalMode("register"); setModalOpen(true); }}
-            className="inline-flex h-9 items-center rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
-          >
-            Регистрация
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="inline-flex h-9 items-center rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
+        >
+          Войти
+        </button>
 
         <AuthModal
           open={modalOpen}
           onOpenChange={setModalOpen}
-          initialMode={modalMode}
           botId={botId}
         />
       </>

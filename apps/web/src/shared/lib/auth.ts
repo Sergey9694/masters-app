@@ -8,10 +8,10 @@ import crypto from "crypto";
  * Получение секретного ключа (Lazy Evaluation по Правилу 6)
  */
 function getSecretKey() {
-  const secret = process.env.AUTH_SECRET || process.env.JWT_SECRET;
+  const secret = process.env.AUTH_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error("JWT_SECRET is not defined in production environment");
+      throw new Error("AUTH_SECRET is not defined in production environment");
     }
     return new TextEncoder().encode("dev_fallback_secret_keep_it_safe");
   }
@@ -235,3 +235,5 @@ export async function getSessionFromRequest(request: NextRequest): Promise<Sessi
 
   return null;
 }
+
+

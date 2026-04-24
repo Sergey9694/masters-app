@@ -93,6 +93,23 @@ export default {
       }
     }),
     Credentials({
+      id: "server-verify",
+      name: "Server Verify",
+      credentials: {},
+      async authorize(_, request) {
+        const body = await request.json();
+        const serverSecret = process.env.AUTH_SERVER_SECRET;
+        // Принимает только вызовы с правильным серверным секретом
+        if (!serverSecret || body?.secret !== serverSecret) return null;
+        const user = await db.user.findUnique({
+          where: { id: body?.userId ?? "" },
+          select: { id: true, firstName: true, email: true, role: true, emailVerified: true },
+        });
+        if (!user?.emailVerified) return null;
+        return { id: user.id, name: user.firstName, email: user.email, role: user.role };
+      },
+    }),
+    Credentials({
       id: "email",
       name: "Email",
       credentials: {

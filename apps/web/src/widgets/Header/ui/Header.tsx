@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 
@@ -34,19 +35,21 @@ export async function Header() {
           {/* Правый блок */}
           <div className="ml-auto flex items-center gap-1">
             <ThemeToggle />
-            <HeaderUserMenu
-              botId={botId}
-              user={
-                user
-                  ? {
-                      id: user.id,
-                      firstName: user.firstName,
-                      avatar: user.avatar,
-                      role: user.role,
-                    }
-                  : null
-              }
-            />
+            <Suspense fallback={null}>
+              <HeaderUserMenu
+                botId={botId}
+                user={
+                  user
+                    ? {
+                        id: user.id,
+                        firstName: user.firstName,
+                        avatar: user.avatar,
+                        role: user.role,
+                      }
+                    : null
+                }
+              />
+            </Suspense>
           </div>
         </div>
       </Container>
