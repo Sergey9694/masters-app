@@ -10,7 +10,7 @@ import { HeaderUserMenu } from "./HeaderUserMenu";
 
 export async function Header() {
   const user = await getCurrentUser();
-  const botId = process.env.TELEGRAM_BOT_ID || process.env.NEXT_PUBLIC_BOT_ID;
+  const botId = process.env.TELEGRAM_BOT_ID;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-lg backdrop-saturate-150">
