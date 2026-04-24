@@ -9,6 +9,7 @@ import {
   Home,
   Plus,
   Compass,
+  Star,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -52,6 +53,13 @@ export const NAV_USER: NavItem[] = [
     href: "/my-listings",
     label: "Мои объявления",
     icon: Compass,
+    authRequired: true,
+    providerOnly: true,
+  },
+  {
+    href: "/my-reviews",
+    label: "Мои отзывы",
+    icon: Star,
     authRequired: true,
     providerOnly: true,
   },
