@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { CheckCircle2, AlertCircle, Info, Bell } from "lucide-react";
-import { TOAST_VARIANTS } from "@/shared/lib/motion";
+import { toastVariants } from "@/shared/lib/motion";
 import { ReactNode } from "react";
 import { cn } from "@/shared/lib/cn";
 
@@ -35,7 +35,7 @@ export function MotionToast({ children, className, type = 'default' }: MotionToa
 
   return (
     <motion.div
-      variants={TOAST_VARIANTS}
+      variants={toastVariants}
       initial="initial"
       animate="animate"
       exit="exit"

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { motion } from "framer-motion";
-import { SLIDE_UP } from "@/shared/lib/motion";
+import { slideUp } from "@/shared/lib/motion";
 
 export default function VerifySuccessPage() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function VerifySuccessPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-4">
       <motion.div
-        variants={SLIDE_UP}
+        variants={slideUp}
         initial="initial"
         animate="animate"
         className="max-w-md w-full bg-background border border-border/60 rounded-3xl p-8 text-center shadow-xl shadow-primary/5"

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Card } from "@/shared/ui/card";
-import { STAGGER_ITEM } from "@/shared/lib/motion";
+import { staggerItem } from "@/shared/lib/motion";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 import { cn } from "@/shared/lib/cn";
 import { ReactNode } from "react";
@@ -103,7 +103,9 @@ export function OrderCardBase({
 
   return (
     <motion.div
-      variants={STAGGER_ITEM}
+      initial="initial"
+      animate="animate"
+      variants={staggerItem}
       whileHover={{ y: -4, scale: 1.005 }}
       whileTap={{ scale: 0.99 }}
       onClick={() => {

@@ -3,7 +3,7 @@
 import * as Icons from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/shared/lib/cn";
-import { STAGGER_CONTAINER, STAGGER_ITEM } from "@/shared/lib/motion";
+import { staggerContainer, staggerItem } from "@/shared/lib/motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
@@ -42,8 +42,10 @@ export function CategoryGrid({
 
   return (
     <div className={cn("w-full relative py-0", className)}>
-      <motion.div 
-        variants={STAGGER_CONTAINER}
+      <motion.div
+        initial="initial"
+        animate="animate"
+        variants={staggerContainer}
         className="flex items-center gap-3 overflow-x-auto no-scrollbar px-4 -mx-4 sm:px-6 sm:-mx-6 lg:px-8 lg:-mx-8 py-4 scroll-smooth"
       >
         {categoriesToRender.map((cat) => {
@@ -53,7 +55,7 @@ export function CategoryGrid({
            return (
              <motion.button
                key={cat.id} 
-               variants={STAGGER_ITEM}
+               variants={staggerItem}
                whileHover={{ scale: 1.02 }}
                whileTap={{ scale: 0.95 }}
                onClick={() => onCategoryClick(cat.id)}

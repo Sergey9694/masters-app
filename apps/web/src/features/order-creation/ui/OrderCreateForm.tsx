@@ -13,11 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import {
-  SLIDE_UP,
-  HOVER_GLOW,
-  CLICK_SCALE,
-} from "@/shared/lib/motion";
+import { slideUp, hoverLift, tapScale } from "@/shared/lib/motion";
 
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { MotionToast } from "@/shared/ui/motion-toast";
@@ -117,7 +113,7 @@ export function OrderCreateForm({ categories, defaultCityId }: OrderCreateFormPr
       <motion.form
         initial="initial"
         animate="animate"
-        variants={SLIDE_UP}
+        variants={slideUp}
         onSubmit={form.handleSubmit(onSubmit, (errors) => {
           console.error("[OrderCreateForm] Validation errors:", errors);
           toast.error("Проверьте правильность заполнения формы");
@@ -219,8 +215,8 @@ export function OrderCreateForm({ categories, defaultCityId }: OrderCreateFormPr
           <motion.button
             type="submit"
             disabled={isPending || isUploading}
-            whileHover={!isPending && !isUploading ? HOVER_GLOW : undefined}
-            whileTap={!isPending && !isUploading ? CLICK_SCALE : undefined}
+            whileHover={!isPending && !isUploading ? hoverLift : undefined}
+            whileTap={!isPending && !isUploading ? tapScale : undefined}
             className={buttonVariants({ variant: "premium", size: "xl", className: "w-full relative group rounded-(--ui-radius-premium) mt-6" })}
           >
             {isPending || isUploading ? (

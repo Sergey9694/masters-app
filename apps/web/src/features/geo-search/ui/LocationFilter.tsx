@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Loader2, Navigation } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { BLUR_IN, CLICK_SCALE } from "@/shared/lib/motion";
+import { scaleIn, tapScale } from "@/shared/lib/motion";
 import { toast } from "sonner";
 import { useHaptics } from "@/shared/lib/telegram/use-haptics";
 import { useLocation } from "@/shared/lib/hooks/use-location";
@@ -50,10 +50,10 @@ export function LocationFilter() {
     <motion.div 
       initial="initial"
       animate="animate"
-      variants={BLUR_IN}
+      variants={scaleIn}
       className="flex flex-col sm:flex-row items-center gap-4 w-full"
     >
-      <motion.div whileTap={CLICK_SCALE} className="flex-1 w-full">
+      <motion.div whileTap={tapScale} className="flex-1 w-full">
         <Button 
           onClick={handleGeoSearch}
           disabled={isLocating}
