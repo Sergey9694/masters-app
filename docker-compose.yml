@@ -39,13 +39,14 @@ services:
         environment:
             DATABASE_URL: "postgresql://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-admin_pass}@${DB_CONTAINER_NAME:-uslugi_db}:5432/${POSTGRES_DB:-uslugi_db}?schema=public"
             NODE_ENV: production
-            JWT_SECRET: ${JWT_SECRET}
             AUTH_SECRET: ${AUTH_SECRET}
+            AUTH_SERVER_SECRET: ${AUTH_SERVER_SECRET}
             AUTH_URL: ${AUTH_URL}
             AUTH_TRUST_HOST: "true"
-            NEXT_PUBLIC_BOT_ID: ${NEXT_PUBLIC_BOT_ID}
-            NEXT_PUBLIC_BOT_NAME: ${NEXT_PUBLIC_BOT_NAME}
+            NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
             TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+            TELEGRAM_BOT_ID: ${TELEGRAM_BOT_ID}
+            DADATA_API_KEY: ${DADATA_API_KEY}
             ADMIN_EMAIL: ${ADMIN_EMAIL}
             ADMIN_PASSWORD: ${ADMIN_PASSWORD}
         volumes:

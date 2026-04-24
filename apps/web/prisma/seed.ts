@@ -14,11 +14,19 @@ async function main() {
 
   for (const city of PROJECT_CITIES) {
     const { lat, lng, ...cityData } = city;
-    const createdCity = await prisma.city.upsert({
-      where: { slug: city.slug },
-      update: { ...cityData, lat, lng, isActive: true },
-      create: { ...cityData, lat, lng, isActive: true },
+    // upsert по slug не учитывает unique constraint на name —
+    // ищем по slug ИЛИ name чтобы не упасть при дублях
+    const existing = await prisma.city.findFirst({
+      where: { OR: [{ slug: city.slug }, { name: cityData.name }] },
     });
+    const createdCity = existing
+      ? await prisma.city.update({
+          where: { id: existing.id },
+          data: { ...cityData, lat, lng, isActive: true },
+        })
+      : await prisma.city.create({
+          data: { ...cityData, lat, lng, isActive: true },
+        });
 
     if (lat && lng) {
       try {

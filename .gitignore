@@ -29,6 +29,10 @@ brain/
 *.db
 *.sqlite
 
+# scratch / временные файлы разработки
+apps/web/scratch/
+scratch/
+
 # misc
 .DS_Store
 *.pem
