@@ -27,7 +27,7 @@ export function HeaderSearch() {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Поиск заказов и услуг..."
-        className="h-10 w-full rounded-md border border-transparent bg-muted pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors focus:border-ring focus:bg-background focus:outline-none"
+        className="h-10 w-full rounded-xl border border-border/40 bg-muted pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-border hover:bg-muted/80 focus:border-primary/40 focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/10"
       />
     </form>
   );

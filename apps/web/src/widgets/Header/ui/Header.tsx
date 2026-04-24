@@ -28,7 +28,7 @@ export async function Header() {
           </Link>
 
           {/* Поиск — только на md+ */}
-          <div className="ml-4 hidden flex-1 md:block max-w-xl">
+          <div className="ml-4 hidden flex-1 md:block">
             <HeaderSearch />
           </div>
 
