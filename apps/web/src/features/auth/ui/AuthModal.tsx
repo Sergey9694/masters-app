@@ -38,7 +38,7 @@ export function AuthModal({ open, onOpenChange, initialMode = "social", botId }:
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
+        <DialogHeader className="items-center text-center">
           <DialogTitle>{titles[initialMode]}</DialogTitle>
           <DialogDescription>{subtitles[initialMode]}</DialogDescription>
         </DialogHeader>

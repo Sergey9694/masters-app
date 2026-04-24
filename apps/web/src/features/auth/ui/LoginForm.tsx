@@ -113,7 +113,11 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
       {/* Mode: social */}
       {mode === "social" && (
         <div className="flex flex-col gap-3">
-          <TelegramLoginButton botId={botId} disabled={loading} />
+          <TelegramLoginButton
+            botId={botId}
+            disabled={loading}
+            label={initialMode === "register" ? "Регистрация через Telegram" : "Войти через Telegram"}
+          />
 
           <div className="relative my-1">
             <div className="absolute inset-0 flex items-center">
@@ -133,19 +137,21 @@ export function LoginForm({ botId, initialMode = "social" }: LoginFormProps) {
             className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background text-sm font-semibold transition-colors hover:border-primary/60 hover:text-primary disabled:opacity-50"
           >
             <Mail className="size-4" />
-            Войти через Email
+            {initialMode === "register" ? "Регистрация через Email" : "Войти через Email"}
           </button>
 
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Ещё нет аккаунта?{" "}
-            <button
-              type="button"
-              onClick={() => setMode("register")}
-              className="font-semibold text-primary hover:underline"
-            >
-              Зарегистрироваться
-            </button>
-          </p>
+          {initialMode !== "register" && (
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              Ещё нет аккаунта?{" "}
+              <button
+                type="button"
+                onClick={() => setMode("register")}
+                className="font-semibold text-primary hover:underline"
+              >
+                Зарегистрироваться
+              </button>
+            </p>
+          )}
         </div>
       )}
 
