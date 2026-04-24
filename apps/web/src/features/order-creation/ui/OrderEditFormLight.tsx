@@ -54,7 +54,7 @@ export function OrderEditFormLight({ orderId, defaultValues, categories, cities 
       const res = await updateOrderAction({ id: orderId, ...vals });
       if (res?.data?.success) {
         toast.success("Заказ обновлён");
-        router.push(`/orders`);
+        router.push(res.data.redirect);
         router.refresh();
         return;
       }

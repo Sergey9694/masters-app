@@ -116,30 +116,6 @@ export const requestPasswordReset = actionClient
   });
 
 /**
- * Подтверждение Email
- */
-export const verifyEmailAction = actionClient
-  .schema(z.object({ token: z.string() }))
-  .action(async ({ parsedInput: { token } }) => {
-    try {
-      const user = await authService.verifyEmail(token);
-      const secret = process.env.AUTH_SERVER_SECRET;
-      if (!secret) throw new Error("AUTH_SERVER_SECRET is not configured");
-      // signIn бросает NEXT_REDIRECT — клиент никогда не видит никаких токенов
-      await signIn("server-verify", {
-        userId: user.id,
-        secret,
-        redirectTo: "/orders",
-      });
-    } catch (error: unknown) {
-      // NEXT_REDIRECT — штатная ситуация, пробрасываем выше
-      if (error instanceof Error && error.message === "NEXT_REDIRECT") throw error;
-      console.error("[verifyEmailAction] error:", error);
-      throw error;
-    }
-  });
-
-/**
  * Сброс пароля на новый
  */
 export const resetPasswordAction = actionClient

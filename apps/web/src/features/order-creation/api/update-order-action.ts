@@ -24,10 +24,11 @@ export const updateOrderAction = authActionClient
   .schema(updateOrderSchema)
   .action(async ({ parsedInput: { id, ...data }, ctx }) => {
     const order = await orderService.update(id, data, ctx.userId);
+    const orderUrl = `/orders/${order.category.slug}/${order.slug || order.id}`;
 
     revalidatePath(`/orders`);
     revalidatePath(`/my-orders`);
-    revalidatePath(`/orders/${id}`);
+    revalidatePath(orderUrl);
 
-    return { success: true, orderId: order.id };
+    return { success: true, redirect: orderUrl };
   });

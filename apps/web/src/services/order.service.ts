@@ -282,6 +282,7 @@ export const orderService = {
         ...(data.address !== undefined && { address: data.address }),
         ...(data.images !== undefined && { images: data.images }),
       },
+      include: { category: { select: { slug: true } } },
     });
   },
 
