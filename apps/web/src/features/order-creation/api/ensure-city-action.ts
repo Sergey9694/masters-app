@@ -64,7 +64,7 @@ export async function ensureCityAction(data: z.infer<typeof citySchema>) {
 
   // Универсальная привязка: привязываем все активные категории к новому городу
   const categories = await db.category.findMany({
-    where: { isActive: true, parentId: null } // Только корневые или все? Привяжем все активные.
+    where: { isActive: true } // Привязываем все активные категории (и родителей, и подкатегории)
   });
 
   if (categories.length > 0) {
