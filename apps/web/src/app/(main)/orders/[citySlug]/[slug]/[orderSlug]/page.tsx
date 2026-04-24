@@ -33,7 +33,7 @@ import type { OrderCardData } from "@/shared/types/domain";
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: Promise<{ slug: string; orderSlug: string }>;
+  params: Promise<{ citySlug: string; slug: string; orderSlug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function OrderDetailPage({ params }: PageProps) {
-  const { slug: categorySlug, orderSlug } = await params;
+  const { citySlug, slug: categorySlug, orderSlug } = await params;
   const user = await getCurrentUser();
   if (!user) redirect("/");
 
@@ -68,14 +68,13 @@ export default async function OrderDetailPage({ params }: PageProps) {
 
   if (!order) notFound();
 
-  // Canonical SEO Redirect: Ensure category slug in URL matches actual category
-  if (order.category.slug !== categorySlug) {
-    redirect(`/orders/${order.category.slug}/${order.slug || order.id}`);
-  }
+  // Canonical SEO Redirect: Ensure city and category slugs in URL match actual data
+  const correctCitySlug = order.city.slug;
+  const correctCategorySlug = order.category.slug;
+  const correctOrderSlug = order.slug || order.id;
 
-  // SEO Redirect: If accessed by ID but slug exists, redirect to slug version
-  if (orderSlug === order.id && order.slug) {
-    redirect(`/orders/${order.category.slug}/${order.slug}`);
+  if (citySlug !== correctCitySlug || categorySlug !== correctCategorySlug || (orderSlug === order.id && order.slug)) {
+    redirect(`/orders/${correctCitySlug}/${correctCategorySlug}/${correctOrderSlug}`);
   }
 
   const isOwner = order.clientId === user.id;
@@ -138,8 +137,12 @@ export default async function OrderDetailPage({ params }: PageProps) {
           Заказы
         </Link>
         <ChevronRight className="size-3.5" />
+        <Link href={`/orders/${order.city.slug}`} className="hover:text-foreground">
+          {order.city.name}
+        </Link>
+        <ChevronRight className="size-3.5" />
         <Link
-          href={`/orders?categoryId=${order.categoryId}`}
+          href={`/orders/${order.city.slug}/${order.category.slug}`}
           className="hover:text-foreground"
         >
           {order.category.name}
@@ -166,14 +169,20 @@ export default async function OrderDetailPage({ params }: PageProps) {
               {
                 "@type": "ListItem",
                 "position": 3,
-                "name": order.category.name,
-                "item": `${appUrl}/orders?categoryId=${order.categoryId}`
+                "name": order.city.name,
+                "item": `${appUrl}/orders/${order.city.slug}`
               },
               {
                 "@type": "ListItem",
                 "position": 4,
+                "name": order.category.name,
+                "item": `${appUrl}/orders/${order.city.slug}/${order.category.slug}`
+              },
+              {
+                "@type": "ListItem",
+                "position": 5,
                 "name": order.title,
-                "item": `${appUrl}/orders/${order.category.slug}/${order.slug || order.id}`
+                "item": `${appUrl}/orders/${order.city.slug}/${order.category.slug}/${order.slug || order.id}`
               }
             ]
           })}
@@ -203,7 +212,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                 )}
                 {isOwner && order.status === "OPEN" && (
                   <Link
-                    href={`/orders/${order.category.slug}/${order.slug ?? order.id}/edit`}
+                    href={`/orders/${order.city.slug}/${order.category.slug}/${order.slug ?? order.id}/edit`}
                     className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                   >
                     <Pencil className="size-3.5" />
@@ -466,7 +475,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                   <OrderFeedCard
                     key={o.id}
                     order={o}
-                    href={`/orders/${o.category.slug}/${o.slug || o.id}`}
+                    href={`/orders/${o.city.slug}/${o.category.slug}/${o.slug || o.id}`}
                   />
                 ))}
               </div>

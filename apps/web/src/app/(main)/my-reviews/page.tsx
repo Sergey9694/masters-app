@@ -52,7 +52,13 @@ export default async function MyReviewsPage() {
         select: { firstName: true, lastName: true, avatar: true },
       },
       order: {
-        select: { id: true, title: true, slug: true, category: { select: { slug: true } } },
+        select: { 
+          id: true, 
+          title: true, 
+          slug: true, 
+          category: { select: { slug: true } },
+          city: { select: { slug: true } }
+        },
       },
     },
   });
@@ -64,6 +70,7 @@ export default async function MyReviewsPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
+      {/* ... header stuff ... */}
       <div>
         <Link
           href="/profile"
@@ -112,8 +119,8 @@ export default async function MyReviewsPage() {
         <div className="flex flex-col gap-3">
           {reviews.map((review) => {
             const orderHref =
-              review.order.category?.slug && review.order.slug
-                ? `/orders/${review.order.category.slug}/${review.order.slug}`
+              review.order.city?.slug && review.order.category?.slug && review.order.slug
+                ? `/orders/${review.order.city.slug}/${review.order.category.slug}/${review.order.slug}`
                 : `/orders`;
 
             return (

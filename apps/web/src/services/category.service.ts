@@ -22,6 +22,16 @@ export const categoryService = {
   },
 
   /**
+   * Get category by slug
+   */
+  async getBySlug(slug: string) {
+    return db.category.findUnique({
+      where: { slug },
+      include: { children: { orderBy: { sortOrder: "asc" } } }
+    });
+  },
+
+  /**
    * List all categories in a flat tree
    */
   async getTree() {

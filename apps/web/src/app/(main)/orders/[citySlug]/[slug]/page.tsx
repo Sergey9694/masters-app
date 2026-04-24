@@ -1,30 +1,49 @@
 import { Suspense } from "react";
-
+import { notFound } from "next/navigation";
 import { db } from "@/shared/lib/db";
 import { OrderFeed } from "@/widgets/OrderFeed/ui/OrderFeed";
 import { OrdersFilters } from "@/widgets/OrdersFilters";
+import { cityService } from "@/services/city.service";
+import { categoryService } from "@/services/category.service";
 import type { OrderSort } from "@/services/order.service";
-
 import { getCurrentUser } from "@/shared/lib/get-user";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Заказы — УслугиРядом",
-  description: "Лента активных заказов. Найдите подходящую работу рядом с вами.",
-};
-
-interface OrdersPageProps {
+interface CategoryCityPageProps {
+  params: Promise<{ citySlug: string; slug: string }>;
   searchParams: Promise<{
-    categoryId?: string;
-    cityId?: string;
     search?: string;
     sort?: string;
   }>;
 }
 
-export default async function OrdersPage({ searchParams }: OrdersPageProps) {
-  const { categoryId, cityId, search, sort } = await searchParams;
+export async function generateMetadata({ params }: CategoryCityPageProps) {
+  const { citySlug, slug } = await params;
+  const [city, category] = await Promise.all([
+    cityService.getBySlug(citySlug),
+    categoryService.getBySlug(slug),
+  ]);
+
+  if (!city || !category) return { title: "Страница не найдена | УслугиРядом" };
+
+  return {
+    title: `${category.name} в г. ${city.name} — Заказы на УслугиРядом`,
+    description: `Актуальные заказы в категории «${category.name}» в городе ${city.name}. Найдите работу или разместите свой заказ.`,
+  };
+}
+
+export default async function CategoryCityPage({ params, searchParams }: CategoryCityPageProps) {
+  const { citySlug, slug } = await params;
+  const { search, sort } = await searchParams;
+  
+  const [city, category] = await Promise.all([
+    cityService.getBySlug(citySlug),
+    categoryService.getBySlug(slug),
+  ]);
+
+  if (!city || !category) notFound();
+
   const user = await getCurrentUser();
 
   const [categories, cities] = await Promise.all([
@@ -47,10 +66,10 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Лента заказов
+          {category.name} в г. {city.name}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Выберите задачу по вашей специализации — откликайтесь и зарабатывайте
+          Список активных заказов по направлению {category.name.toLowerCase()} в вашем городе.
         </p>
       </div>
 
@@ -58,10 +77,12 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         categories={categories}
         cities={cities}
         isProvider={!!user?.providerProfile}
+        initialCityId={city.id}
+        initialCategoryId={category.id}
       />
 
       <Suspense
-        key={`${categoryId ?? ""}-${cityId ?? ""}-${search ?? ""}-${sort ?? ""}`}
+        key={`${city.id}-${category.id}-${search ?? ""}-${sort ?? ""}`}
         fallback={
           <div className="flex flex-col gap-4">
             {[0, 1, 2].map((i) => (
@@ -74,8 +95,8 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         }
       >
         <OrderFeed
-          categoryId={categoryId}
-          cityId={cityId}
+          categoryId={category.id}
+          cityId={city.id}
           search={search}
           sort={normalizedSort}
         />

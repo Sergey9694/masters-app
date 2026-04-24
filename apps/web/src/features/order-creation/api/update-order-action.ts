@@ -24,7 +24,7 @@ export const updateOrderAction = authActionClient
   .schema(updateOrderSchema)
   .action(async ({ parsedInput: { id, ...data }, ctx }) => {
     const order = await orderService.update(id, data, ctx.userId);
-    const orderUrl = `/orders/${order.category.slug}/${order.slug || order.id}`;
+    const orderUrl = `/orders/${order.city.slug}/${order.category.slug}/${order.slug || order.id}`;
 
     revalidatePath(`/orders`);
     revalidatePath(`/my-orders`);

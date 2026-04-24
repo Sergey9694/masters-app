@@ -29,7 +29,7 @@ export const createOrderAction = authActionClient
       revalidatePath("/orders");
       revalidatePath("/my-orders");
 
-      return { success: true, redirect: `/orders/${order.category.slug}/${order.slug || order.id}`, orderId: order.id };
+      return { success: true, redirect: `/orders/${order.city.slug}/${order.category.slug}/${order.slug || order.id}`, orderId: order.id };
     } catch (error: unknown) {
       console.error("FATAL: Error in createOrderAction:", error);
       throw new Error(error instanceof Error ? error.message : "Не удалось создать заказ. Попробуйте позже.");

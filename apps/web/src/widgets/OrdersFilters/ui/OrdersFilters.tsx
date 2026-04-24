@@ -9,12 +9,15 @@ import { cn } from "@/shared/lib/cn";
 interface Option {
   id: string;
   name: string;
+  slug: string;
 }
 
 interface OrdersFiltersProps {
   categories: Option[];
   cities: Option[];
   isProvider?: boolean;
+  initialCityId?: string;
+  initialCategoryId?: string;
 }
 
 const SORT_OPTIONS = [
@@ -23,20 +26,21 @@ const SORT_OPTIONS = [
   { value: "budget_asc", label: "Бюджет: по возрастанию" },
 ];
 
-/**
- * Фильтры ленты заказов с синхронизацией в URL (searchParams).
- * Изменение фильтра → router.replace с обновлёнными параметрами,
- * лента перерендеривается благодаря RSC.
- */
-export function OrdersFilters({ categories, cities, isProvider }: OrdersFiltersProps) {
+export function OrdersFilters({ 
+  categories, 
+  cities, 
+  isProvider,
+  initialCityId,
+  initialCategoryId 
+}: OrdersFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
 
-  const currentCategory = searchParams.get("categoryId") ?? "";
-  const currentCity = searchParams.get("cityId") ?? "";
-  const currentSort = searchParams.get("sort") ?? "new";
-  const currentSearch = searchParams.get("search") ?? "";
+  const currentCategory = initialCategoryId || searchParams.get("categoryId") || "";
+  const currentCity = initialCityId || searchParams.get("cityId") || "";
+  const currentSort = searchParams.get("sort") || "new";
+  const currentSearch = searchParams.get("search") || "";
 
   const [searchDraft, setSearchDraft] = useState(currentSearch);
 
@@ -46,11 +50,47 @@ export function OrdersFilters({ categories, cities, isProvider }: OrdersFiltersP
 
   const updateParam = (key: string, value: string | null) => {
     const params = new URLSearchParams(searchParams.toString());
+    
+    // Handle path-based navigation for SEO
+    if (key === "cityId" || key === "categoryId") {
+      const cityId = key === "cityId" ? value : currentCity;
+      const categoryId = key === "categoryId" ? value : currentCategory;
+      
+      const city = cities.find(c => c.id === cityId);
+      const category = categories.find(c => c.id === categoryId);
+      
+      let newPath = "/orders";
+      if (city) {
+        newPath += `/${city.slug}`;
+        if (category) {
+          newPath += `/${category.slug}`;
+        }
+      } else if (category) {
+        // If no city but category, we use query param for category in global feed
+        // OR we could do /orders/all/[categorySlug] but let's keep it simple
+        params.set("categoryId", category.id);
+      }
+      
+      // Keep search and sort in query params
+      const finalParams = new URLSearchParams();
+      if (params.get("search")) finalParams.set("search", params.get("search")!);
+      if (params.get("sort")) finalParams.set("sort", params.get("sort")!);
+      
+      const queryString = finalParams.toString();
+      const url = queryString ? `${newPath}?${queryString}` : newPath;
+      
+      startTransition(() => {
+        router.push(url);
+      });
+      return;
+    }
+
     if (value !== null && value !== undefined) {
       params.set(key, value);
     } else {
       params.delete(key);
     }
+    
     startTransition(() => {
       router.replace(`?${params.toString()}`, { scroll: false });
     });
@@ -66,7 +106,7 @@ export function OrdersFilters({ categories, cities, isProvider }: OrdersFiltersP
 
   const resetAll = () => {
     startTransition(() => {
-      router.replace("?", { scroll: false });
+      router.push("/orders");
     });
   };
 

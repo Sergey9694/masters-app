@@ -21,6 +21,15 @@ export const cityService = {
   },
 
   /**
+   * Get city by slug
+   */
+  async getBySlug(slug: string) {
+    return db.city.findUnique({
+      where: { slug }
+    });
+  },
+
+  /**
    * Find cities by name (search)
    */
   async search(query: string) {

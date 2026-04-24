@@ -9,7 +9,7 @@ import { OrderEditFormLight } from "@/features/order-creation/ui/OrderEditFormLi
 export const dynamic = "force-dynamic";
 
 interface PageProps {
-  params: Promise<{ slug: string; orderSlug: string }>;
+  params: Promise<{ citySlug: string; slug: string; orderSlug: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function OrderEditPage({ params }: PageProps) {
-  const { slug: categorySlug, orderSlug } = await params;
+  const { citySlug, slug: categorySlug, orderSlug } = await params;
   const user = await getCurrentUser();
   if (!user) redirect("/");
 
@@ -41,6 +41,7 @@ export default async function OrderEditPage({ params }: PageProps) {
         clientId: true,
         status: true,
         category: { select: { slug: true } },
+        city: { select: { slug: true } },
       },
     }),
     db.category.findMany({
@@ -56,10 +57,14 @@ export default async function OrderEditPage({ params }: PageProps) {
   ]);
 
   if (!order) notFound();
-  if (order.clientId !== user.id) redirect(`/orders/${categorySlug}/${orderSlug}`);
-  if (order.status !== "OPEN") redirect(`/orders/${categorySlug}/${orderSlug}`);
+  
+  const currentOrderSlug = order.slug || order.id;
+  const canonicalUrl = `/orders/${order.city.slug}/${order.category.slug}/${currentOrderSlug}`;
 
-  const backHref = `/orders/${order.category.slug}/${order.slug ?? order.id}`;
+  if (order.clientId !== user.id) redirect(canonicalUrl);
+  if (order.status !== "OPEN") redirect(canonicalUrl);
+
+  const backHref = canonicalUrl;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">

@@ -10,7 +10,7 @@ export type OrderWithDetails = Prisma.OrderGetPayload<{
   include: {
     category: { select: { id: true; name: true; slug: true } };
     client: { select: { id: true; firstName: true; lastName: true; avatar: true } };
-    city: { select: { id: true; name: true } };
+    city: { select: { id: true; name: true; slug: true } };
     assignedProvider: {
       select: {
         id: true;
@@ -82,7 +82,7 @@ export const orderService = {
       data: { slug },
       include: {
         category: { select: { id: true, name: true, slug: true } },
-        city: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true, slug: true } },
       }
     });
 
@@ -159,7 +159,7 @@ export const orderService = {
         status: true,
         category: { select: { name: true, slug: true } },
         client: { select: { firstName: true, avatar: true } },
-        city: { select: { name: true } },
+        city: { select: { name: true, slug: true } },
         _count: { select: { proposals: true } },
       },
       orderBy,
@@ -208,7 +208,7 @@ export const orderService = {
         client: {
           select: { id: true, firstName: true, lastName: true, avatar: true },
         },
-        city: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true, slug: true } },
         assignedProvider: {
           select: {
             id: true,
@@ -243,7 +243,7 @@ export const orderService = {
       where: { clientId: userId },
       include: {
         category: { select: { id: true, name: true, slug: true } },
-        city: { select: { id: true, name: true } },
+        city: { select: { id: true, name: true, slug: true } },
         _count: { select: { proposals: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -282,7 +282,10 @@ export const orderService = {
         ...(data.address !== undefined && { address: data.address }),
         ...(data.images !== undefined && { images: data.images }),
       },
-      include: { category: { select: { slug: true } } },
+      include: { 
+        category: { select: { slug: true } },
+        city: { select: { slug: true } }
+      },
     });
   },
 
