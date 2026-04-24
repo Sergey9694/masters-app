@@ -274,3 +274,23 @@
 ### 4. Центровка заголовка модалки
 **Проблема:** Заголовок/подзаголовок в `AuthModal` выравнивались по левому краю — асимметрично в узком диалоге.
 **Решение:** Добавлен `text-center items-center` на `DialogHeader` в `AuthModal.tsx`.
+
+---
+
+## [2026-04-24] Исправление редиректов на 0.0.0.0 при деплое на VPS
+
+### Проблема
+1. **Broken Redirects**: После подтверждения email или входа в аккаунт на VPS, браузер пытался перейти по адресу `https://0.0.0.0:3000/orders`. 
+2. **Root Cause**: Next.js внутри Docker-контейнера «видит» свой адрес как `0.0.0.0:3000`. При использовании стандартного `NextResponse.redirect(new URL("/path", request.url))`, базовый URL брался из заголовков запроса, которые Nginx передавал некорректно (без Host или с внутренним IP).
+3. **Protocol Mismatch**: Попытка форсировать HTTPS на внутреннем адресе `0.0.0.0` приводила к ошибке «Страница недоступна».
+
+### Решение
+1. **Forced Base URL**: В критических точках редиректа (страница верификации и API-маршрут подтверждения email) логика изменена на использование переменной окружения `AUTH_URL` (или `NEXT_PUBLIC_APP_URL`) в качестве базы.
+   - Теперь `new URL("/orders", process.env.AUTH_URL)` гарантированно ведет на внешний домен `https://local-masters.duckdns.org`.
+2. **Environment Validation**: Обновлен `.env.example` — добавлены обязательные переменные `AUTH_URL` и `AUTH_TRUST_HOST=true` для корректной работы Auth.js v5 за реверс-прокси.
+3. **Nginx Best Practices**: В документацию и рекомендации добавлена необходимость передачи заголовков `Host`, `X-Forwarded-For` и `X-Forwarded-Proto` в конфигурации Nginx.
+
+### Файлы
+- **Маршруты**: `apps/web/src/app/api/auth/verify-email/route.ts`.
+- **Страницы**: `apps/web/src/app/auth/verify/page.tsx`.
+- **Конфиг**: `.env.example`.
