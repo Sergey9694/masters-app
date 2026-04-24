@@ -25,7 +25,7 @@ export async function adminLogin(_prev: unknown, formData: FormData) {
 
   const user = await db.user.findFirst({
     where: {
-      firstName: { equals: username, mode: "insensitive" },
+      email: { equals: username, mode: "insensitive" },
       role: "ADMIN",
     },
     select: { id: true, role: true, passwordHash: true },
