@@ -221,7 +221,6 @@ export function OrderWizardLight({
             <StepReview
               form={form}
               categories={categories}
-              cities={cities}
               previews={previews}
             />
           )}
@@ -645,12 +644,10 @@ function StepPhotos({
 function StepReview({
   form,
   categories,
-  cities,
   previews,
 }: {
   form: UseFormReturn<OrderFormValues>;
   categories: Option[];
-  cities: Option[];
   previews: PreviewImage[];
 }) {
   const vals = form.watch();
@@ -658,15 +655,10 @@ function StepReview({
     () => categories.find((c) => c.id === vals.categoryId)?.name ?? "—",
     [categories, vals.categoryId]
   );
-  const city = useMemo(
-    () => cities.find((c) => c.id === vals.cityId)?.name ?? "—",
-    [cities, vals.cityId]
-  );
 
   return (
     <div className="flex flex-col gap-4">
       <Summary label="Категория" value={category} icon={<Tag className="size-4" />} />
-      <Summary label="Город" value={city} icon={<MapPin className="size-4" />} />
       <Summary
         label="Заголовок"
         value={vals.title || "—"}
