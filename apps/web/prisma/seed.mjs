@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { createRequire } from "module";
+import { PROJECT_CITIES, PROJECT_CATEGORIES } from "./seed-data.mjs";
 
 const prisma = new PrismaClient();
 const require = createRequire(import.meta.url);
@@ -9,7 +10,6 @@ const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@test.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // Обычный пароль из ENV
 const DEFAULT_HASH = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU."; // для "password123"
 
-// createRequire использует CJS-резолвинг, который поддерживает NODE_PATH — в отличие от ESM import()
 let ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || DEFAULT_HASH;
 
 if (ADMIN_PASSWORD) {
@@ -19,24 +19,14 @@ if (ADMIN_PASSWORD) {
     console.log("[SEED] bcryptjs загружен, хеш пароля сгенерирован.");
   } catch (e) {
     console.warn("⚠️ [SEED] bcryptjs не найден, используем дефолтный хеш.");
-    // Не используем plaintext как fallback — лучше оставить дефолтный хеш
   }
 }
-
-const PROJECT_CITIES = [
-  { name: 'Ростов-на-Дону', slug: 'rostov-na-donu', region: 'Ростовская область', fiasId: 'c1cfe4b9-f7c2-423c-abfa-6ed1c05a15c5', lat: 47.2313, lng: 39.7233 },
-  { name: 'Аксай', slug: 'aksay', region: 'Ростовская область', fiasId: '9bebf626-3ee7-4e1b-9e91-569c9d402152', lat: 47.2700, lng: 39.8700 },
-  { name: 'Новочеркасск', slug: 'novocherkassk', region: 'Ростовская область', fiasId: '28bafcb3-92b2-445b-9443-a341be73fdb9', lat: 47.4167, lng: 40.0933 },
-  { name: 'Азов', slug: 'azov', region: 'Ростовская область', fiasId: 'a216cad5-7027-40b8-b1a1-d64abefbd5cd', lat: 47.1111, lng: 39.4233 },
-  { name: 'Шахты', slug: 'shakhty', region: 'Ростовская область', fiasId: 'dee2e80e-f2e1-4a68-93b0-b7b89b6f3e74', lat: 47.7083, lng: 40.2167 },
-  { name: 'Новошахтинск', slug: 'novoshakhtinsk', region: 'Ростовская область', fiasId: 'bce1a4f2-7576-4427-8bd8-8d8b4e35ad11', lat: 47.7500, lng: 39.9333 },
-  { name: 'Батайск', slug: 'bataysk', region: 'Ростовская область', fiasId: '772c6c2e-4b68-4f81-8b2b-0f81a7d6560b', lat: 47.1397, lng: 39.7523 }
-];
 
 async function main() {
   console.log("[SEED] Запуск процесса сидинга...");
 
   // 1. Города
+  console.log("[SEED] 🏙️ Синхронизация городов...");
   const activeSlugs = PROJECT_CITIES.map(c => c.slug);
   for (const city of PROJECT_CITIES) {
     const { lat, lng, ...cityData } = city;
@@ -64,9 +54,45 @@ async function main() {
     data: { isActive: false }
   });
 
-  // 2. Дефолтный администратор
-  // Пароль ставится только при ПЕРВОМ создании.
-  // Если админ уже есть, мы обновляем только роль и провайдер.
+  // 2. Категории
+  console.log("[SEED] 🌱 Синхронизация категорий...");
+  for (const parent of PROJECT_CATEGORIES) {
+    const { children, ...parentData } = parent;
+    const parentCategory = await prisma.category.upsert({
+      where: { slug: parent.slug },
+      update: parentData,
+      create: parentData,
+    });
+
+    if (children) {
+      for (const child of children) {
+        await prisma.category.upsert({
+          where: { slug: child.slug },
+          update: { ...child, parentId: parentCategory.id },
+          create: { ...child, parentId: parentCategory.id },
+        });
+      }
+    }
+  }
+  console.log("[SEED] Категории синхронизированы.");
+
+  // 3. Привязка категорий к городам (Universal linking)
+  console.log("[SEED] 🔗 Привязка категорий ко всем городам...");
+  const activeCities = await prisma.city.findMany({ where: { isActive: true } });
+  const allParentCategories = await prisma.category.findMany({ where: { parentId: null } });
+
+  for (const city of activeCities) {
+    for (const cat of allParentCategories) {
+      await prisma.cityCategory.upsert({
+        where: { cityId_categoryId: { cityId: city.id, categoryId: cat.id } },
+        update: {},
+        create: { cityId: city.id, categoryId: cat.id, sortOrder: cat.sortOrder },
+      });
+    }
+  }
+
+  // 4. Дефолтный администратор
+  console.log("[SEED] 👤 Синхронизация администратора...");
   await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {

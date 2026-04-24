@@ -1,61 +1,9 @@
 import "dotenv/config";
-import { PrismaClient, Role, ListingStatus, PriceUnit, OrderStatus } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
+import { PROJECT_CITIES } from "./cities.config";
+import { PROJECT_CATEGORIES } from "./seed-data.mjs";
 
 const prisma = new PrismaClient();
-
-import { PROJECT_CITIES } from "./cities.config";
-
-const categories = [
-  {
-    name: 'Ремонт и строительство',
-    slug: 'remont-stroitelstvo',
-    icon: 'hammer',
-    sortOrder: 10,
-    children: [
-      { name: 'Сантехника', slug: 'santehnika', sortOrder: 1 },
-      { name: 'Электрика', slug: 'elektrika', sortOrder: 2 },
-      { name: 'Отделочные работы', slug: 'otdelochnye-raboty', sortOrder: 3 },
-      { name: 'Мебель на заказ', slug: 'mebel-na-zakaz', sortOrder: 4 },
-      { name: 'Кондиционеры', slug: 'kondicionery', sortOrder: 5 }
-    ]
-  },
-  {
-    name: 'Уборка',
-    slug: 'uborka',
-    icon: 'sparkles',
-    sortOrder: 20,
-    children: [
-      { name: 'Квартиры', slug: 'uborka-kvartir', sortOrder: 1 },
-      { name: 'Офисы', slug: 'uborka-ofisov', sortOrder: 2 },
-      { name: 'После ремонта', slug: 'uborka-posle-remonta', sortOrder: 3 },
-      { name: 'Химчистка мебели', slug: 'himchistka-mebeli', sortOrder: 4 }
-    ]
-  },
-  {
-    name: 'Красота и здоровье',
-    slug: 'krasota-zdorove',
-    icon: 'heart',
-    sortOrder: 30,
-    children: [
-      { name: 'Парикмахер', slug: 'parikmaher', sortOrder: 1 },
-      { name: 'Маникюр/педикюр', slug: 'manikyur-pedikyur', sortOrder: 2 },
-      { name: 'Массаж', slug: 'massazh', sortOrder: 3 },
-      { name: 'Косметолог', slug: 'kosmetolog', sortOrder: 4 }
-    ]
-  },
-  {
-    name: 'Репетиторы и обучение',
-    slug: 'repetitory-obuchenie',
-    icon: 'book-open',
-    sortOrder: 40,
-    children: [
-      { name: 'Математика', slug: 'matematika', sortOrder: 1 },
-      { name: 'Английский', slug: 'anglijskij', sortOrder: 2 },
-      { name: 'Программирование', slug: 'programmirovanie', sortOrder: 3 },
-      { name: 'Музыка', slug: 'muzyka', sortOrder: 4 }
-    ]
-  }
-];
 
 async function main() {
   console.log("🌱 Starting seeding process...");
@@ -91,7 +39,7 @@ async function main() {
 
   // 2. Seed Categories
   console.log("🌱 Seeding categories...");
-  for (const parent of categories) {
+  for (const parent of PROJECT_CATEGORIES) {
     const { children, ...parentData } = parent;
     const parentCategory = await prisma.category.upsert({
       where: { slug: parent.slug },
@@ -110,7 +58,7 @@ async function main() {
     }
   }
 
-  // 3. Link Categories to Cities (Universal linking for ALL active cities)
+  // 3. Link Categories to Cities
   console.log("🔗 Universal linking of categories to ALL cities...");
   const activeCities = await prisma.city.findMany({ where: { isActive: true } });
   const allParentCategories = await prisma.category.findMany({ where: { parentId: null } });
@@ -125,19 +73,31 @@ async function main() {
     }
   }
 
-  // 4. Test Data (Users, Listings, Orders)
-  console.log("👤 Creating test users...");
+  // 4. Admin User
+  console.log("👤 Creating/Updating admin user...");
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@test.com';
+  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
   const bcrypt = await import("bcryptjs");
-  const passwordHash = await bcrypt.hash("password123", 10);
+  
+  let passwordHash = "$2b$10$IYDZNIRKpdyS3CYVH3Sk8eFQfy.ftYL0/IVRqswFrYmfuCV8f4lU."; // password123
+  if (ADMIN_PASSWORD) {
+    passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  }
 
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@test.com' },
-    update: {},
-    create: { email: 'admin@test.com', passwordHash, firstName: 'Admin', role: Role.ADMIN, emailVerified: new Date() }
+  await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: { role: Role.ADMIN, passwordHash },
+    create: { 
+      email: ADMIN_EMAIL, 
+      passwordHash, 
+      firstName: 'Admin', 
+      role: Role.ADMIN, 
+      emailVerified: new Date(),
+      authProvider: 'EMAIL'
+    }
   });
 
-  console.log("🌿 Seeding finished.");
-  console.log("Admin: admin@test.com / password123");
+  console.log("🌿 Seeding finished successfully.");
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

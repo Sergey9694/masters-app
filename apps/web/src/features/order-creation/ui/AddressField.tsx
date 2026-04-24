@@ -8,6 +8,7 @@ import { Input } from "@/shared/ui/input";
 import type { DadataSuggestion } from "@/shared/lib/dadata";
 import type { OrderFormValues } from "../model/order-schema";
 import { ensureCityAction } from "../api/ensure-city-action";
+import { GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
 
 interface AddressFieldProps {
   form: UseFormReturn<OrderFormValues>;
@@ -126,7 +127,7 @@ export function AddressField({ form }: AddressFieldProps) {
                           console.error("[CITY_ERROR]", error);
                           form.setError("address", { 
                             type: "manual", 
-                            message: "Мы работаем только в Ростовской области. Выберите другой адрес." 
+                            message: GEO_LIMIT_MESSAGE
                           });
                         }
                       }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { db } from "@/shared/lib/db";
 import { suggestAddress } from "@/shared/lib/dadata";
+import { SUPPORTED_REGIONS } from "@/shared/config/geo";
 
 const querySchema = z.object({
   q: z.string().trim().min(3).max(200),
@@ -21,20 +22,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const locations = [
-      { region: "Адыгея" },
-      { region: "Калмыкия" },
-      { region: "Крым" },
-      { region: "Краснодарский" },
-      { region: "Астраханская" },
-      { region: "Волгоградская" },
-      { region: "Ростовская" },
-      { region: "Севастополь" },
-      { region: "Донецкая" },
-      { region: "Луганская" },
-      { region: "Херсонская" },
-      { region: "Запорожская" },
-    ];
+    const locations = SUPPORTED_REGIONS.map(region => ({ region }));
     const data = await suggestAddress(parsed.data.q, locations);
     return NextResponse.json({ suggestions: data });
   } catch (e) {

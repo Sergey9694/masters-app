@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ensureCityAction } from "../api/ensure-city-action";
+import { GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
 import {
   ArrowLeft,
   ArrowRight,
@@ -468,7 +469,7 @@ function StepBudget({ form }: { form: UseFormReturn<OrderFormValues> }) {
                 console.error("[CITY_ERROR]", error);
                 setError("address", { 
                   type: "manual", 
-                  message: "Мы работаем только в Ростовской области. Выберите другой адрес." 
+                  message: GEO_LIMIT_MESSAGE
                 });
               }
             }

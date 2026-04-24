@@ -2,6 +2,7 @@
 
 import { db } from "@/shared/lib/db";
 import { z } from "zod";
+import { isRegionSupported, GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
 
 const citySchema = z.object({
   name: z.string(),
@@ -17,17 +18,8 @@ const citySchema = z.object({
  * Автоматически привязывает все активные категории к новому пункту.
  */
 export async function ensureCityAction(data: z.infer<typeof citySchema>) {
-  const sfoRegions = [
-    "ростовская", "краснодарский", "волгоградская", 
-    "астраханская", "адыгея", "калмыкия", "крым", "севастополь",
-    "донецкая", "луганская", "херсонская", "запорожская"
-  ];
-
-  const regionLower = data.region?.toLowerCase() || "";
-  const isSfoRegion = sfoRegions.some(reg => regionLower.includes(reg));
-
-  if (!isSfoRegion) {
-    throw new Error("На данный момент сервис работает только в ЮФО и новых регионах РФ");
+  if (!isRegionSupported(data.region)) {
+    throw new Error(GEO_LIMIT_MESSAGE);
   }
 
   const slug = generateSlug(data.name);
@@ -43,6 +35,17 @@ export async function ensureCityAction(data: z.infer<typeof citySchema>) {
   });
 
   if (existingCity) {
+    // Если город найден, но у него не было fiasId или координат - обновляем (обогащаем данные)
+    if ((!existingCity.fiasId && data.fiasId) || (!existingCity.lat && data.lat)) {
+      await db.city.update({
+        where: { id: existingCity.id },
+        data: {
+          fiasId: existingCity.fiasId || data.fiasId,
+          lat: existingCity.lat || data.lat,
+          lng: existingCity.lng || data.lng,
+        }
+      });
+    }
     return { id: existingCity.id };
   }
 
