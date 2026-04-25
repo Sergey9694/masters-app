@@ -137,7 +137,7 @@
 | 3. Модель данных | ✅ завершена | Все модели (City, Category tree, ServiceListing, Order, Proposal) полностью синхронизированы, PostGIS настроен, сиды исправлены. |
 | 4. REST API | ✅ завершена | Сервисный слой (`src/services/`) реализован. Все эндпоинты `app/api/v1/*` (auth, orders, listings, proposals, providers, categories, cities, notifications, reviews, upload) покрывают план 4.2.1. |
 | 5. Desktop UI | ✅ завершена | **5.1–5.10 готовы.** Все основные страницы мигрированы на `(main)/*`. Legacy TWA-компоненты удалены. TypeScript clean. |
-| 6. Объявления | ❌ | Feature `listing/` не создан, страниц каталога нет. Admin-модерация listings — нет. |
+| 6. Объявления | 🟡 частично | **6.1–6.3 готовы** (каталог, создание, управление). Осталось: редактирование `/my-listings/[slug]/edit`, модерация в `/admin/listings`. |
 | 7. Чат | ❌ | Моделей `Conversation`, `ConversationParticipant`, `Message` нет. |
 | 8. Тесты/CI | ❌ | Vitest/Playwright не установлены. `.github/workflows/*` — требуют проверки. |
 | 9. React Native | ❌ | `apps/mobile/src` — пустой. Expo не инициализирован. |
@@ -145,7 +145,8 @@
 | 11. Полировка | ❌ | SEO, sitemap, Sentry, PWA-manifest — не сделано. |
 
 ### Критичный следующий шаг
-**Фаза 6 — Объявления от исполнителей.** Feature `listing/` (ServiceListing CRUD), каталог `/services`, страница объявления `/services/[slug]`, модерация в /admin. Подробнее — в разделе Фаза 6 ниже.
+**Фаза 6 (доделка)** — страница редактирования `/my-listings/[slug]/edit` + модерация `/admin/listings`.
+**После** — Фаза 7 (Чат и real-time инфраструктура).
 
 ### Принятые архитектурные решения (фиксация)
 - **Auth.js v5 (next-auth@beta)** вместо кастомного JWT-слоя. Session-стратегия: JWT (для Edge-совместимости). Схема БД — расширенная стандартная (`Account`, `Session`, `VerificationToken`).
@@ -1460,91 +1461,79 @@ Web-приложение продолжает использовать Server Ac
 
 ## Фаза 6 — Объявления от исполнителей (1.5 недели)
 
-### 6.1 — Создание объявления
+> **Статус: 🟡 частично завершена (2026-04-25)**
+> 6.1–6.3 готовы. Осталось: редактирование объявления + модерация в /admin.
+
+### 6.1 — Создание объявления ✅
 
 ```
-6.1.1  Создать features/listing/api/create-listing-action.ts:
-       
-       Server Action: createListingAction(data)
-       - Валидация: Zod (title 5-100, description 20-2000, categoryId, cityId)
-       - Проверка: пользователь должен быть PROVIDER
-       - Rate-limit: 3 объявления в час
-       - Создание ServiceListing в БД
-       - Статус: MODERATION (если включена модерация) или ACTIVE
-       - Уведомление администраторов о новом объявлении
-       
-6.1.2  Создать features/listing/model/listing-schema.ts:
-       - createListingSchema (Zod)
-       - updateListingSchema (partial)
+✅ 6.1.1  features/listing-management/api/actions.ts:
+          - createListingAction (Zod + authActionClient, проверка ProviderProfile)
+          - updateListingAction, deleteListingAction, toggleListingStatusAction
+          - slug генерируется при создании: slugify(title) + id.slice(0,8)
 
-6.1.3  Создать features/listing/ui/ListingForm.tsx:
-       - Форма создания/редактирования объявления
-       - Поля: категория, заголовок, описание, фото, цена (от/до/единица)
-       - Адрес (опционально)
-       - Preview перед публикацией
+✅ 6.1.2  features/listing-management/model/schema.ts:
+          - createListingSchema, updateListingSchema, toggleListingSchema, deleteListingSchema
+
+✅ 6.1.3  app/(main)/my-listings/new/ListingForm.tsx:
+          - Форма создания: категория, заголовок, описание, город, адрес, цена (от/до/единица)
+          - React Hook Form + zodResolver, sonner-тосты
+
+❌ 6.1.4  (не реализовано) Rate-limit 3 объявления/час
+❌ 6.1.5  (не реализовано) Уведомление администраторов о новом объявлении
 ```
 
-### 6.2 — Каталог объявлений
+### 6.2 — Каталог объявлений ✅
 
 ```
-6.2.1  Создать app/(main)/services/page.tsx:
-       
-       ┌─────────────────────────────────────────────┐
-       │  Каталог услуг в [Москва ▾]                 │
-       ├────────────┬────────────────────────────────┤
-       │            │                                │
-       │ Категории  │  Карточки объявлений (grid)    │
-       │ (дерево)   │                                │
-       │            │  ┌──────┐ ┌──────┐ ┌──────┐   │
-       │ ▶ Ремонт   │  │ Фото │ │ Фото │ │ Фото │   │
-       │   Сантехника│  │ Назв.│ │ Назв.│ │ Назв.│   │
-       │   Электрика │  │ Цена │ │ Цена │ │ Цена │   │
-       │ ▶ Уборка    │  │ ★4.8 │ │ ★4.9 │ │ ★4.7 │   │
-       │ ▶ Красота   │  └──────┘ └──────┘ └──────┘   │
-       │            │                                │
-       │            │  Пагинация                     │
-       └────────────┴────────────────────────────────┘
+✅ 6.2.1  app/(main)/listings/page.tsx:
+          - Фильтры: чипы по категории и городу (searchParams-driven)
+          - Server-side пагинация (← Назад / Далее →)
+          - Suspense + skeleton при загрузке
 
-6.2.2  Создать entities/listing/ui/ListingCard.tsx:
-       - Карточка объявления (фото, название, цена, рейтинг, город)
-       
-6.2.3  Создать widgets/ListingCatalog/:
-       - api/load-listings.ts (server action с фильтрами)
-       - ui/ListingCatalog.tsx (server component)
-       - ui/ListingCatalogClient.tsx (pagination, filters)
+✅ 6.2.2  entities/listing/ui/ListingCard.tsx:
+          - Карточка: фото, название, цена (от/до + единица), рейтинг, верификация
+          - showStatus prop для my-listings (значок статуса)
 
-6.2.4  Создать app/(main)/services/[id]/page.tsx:
-       - Детальная страница объявления
-       - Фото, описание, цена, провайдер (карточка с рейтингом)
-       - Кнопка "Связаться" → создание чата или показ контактов
-       - Отзывы об этом исполнителе
-       - Похожие услуги (sidebar)
+✅ 6.2.3  app/(main)/listings/[slug]/page.tsx:
+          - getById по id или slug (SEO-friendly URLs)
+          - Фото-галерея, описание, детали провайдера
+          - Кнопка "Разместить заказ" → /orders/new?providerId=...
+
+❌ 6.2.4  (не реализовано) Отзывы об исполнителе на странице объявления
+❌ 6.2.5  (не реализовано) Похожие объявления (sidebar)
 ```
 
-### 6.3 — Управление объявлениями
+### 6.3 — Управление объявлениями ✅
 
 ```
-6.3.1  Создать app/(main)/my/listings/page.tsx:
-       - Список объявлений исполнителя
-       - Статусы: Активно / На паузе / На модерации / Отклонено
-       - Статистика: просмотры
-       - Действия: Редактировать, Приостановить, Удалить
+✅ 6.3.1  app/(main)/my-listings/page.tsx:
+          - Табы: Активные / Приостановлены / Архив
+          - Счётчики по статусам
+          - Кнопки Редактировать / Приостановить-Возобновить / Удалить
 
-6.3.2  Создать features/listing/api/update-listing-action.ts
-6.3.3  Создать features/listing/api/delete-listing-action.ts
-6.3.4  Создать features/listing/api/toggle-listing-status.ts
+✅ 6.3.2  app/(main)/my-listings/ListingActions.tsx:
+          - Client component: toggle статус и delete через Server Actions
+          - Confirm-диалог перед удалением
+
+❌ 6.3.3  (не реализовано) /my-listings/[slug]/edit — страница редактирования
 ```
 
-### 6.4 — Модерация объявлений (Админка)
+### 6.4 — Модерация объявлений (Админка) ❌
 
 ```
-6.4.1  Создать app/admin/listings/page.tsx:
-       - Таблица объявлений на модерации
-       - Действия: Одобрить / Отклонить / Скрыть
-       - Фильтры: по статусу, категории, городу
-       
-6.4.2  Создать features/admin/api/moderate-listing.ts
+❌ 6.4.1  app/admin/listings/page.tsx — таблица объявлений на модерации
+❌ 6.4.2  Server Action: одобрить / отклонить (смена статуса + уведомление исполнителю)
 ```
+
+### Принятые решения Фазы 6
+
+- **Путь каталога:** `/listings` (не `/services`) — так уже было в `navigation.ts`
+- **Slug:** генерируется при создании двухшагово (create → update), как у Order
+- **Модерация отключена:** новые объявления сразу ACTIVE (упрощено для MVP)
+- **Cursor-пагинация** в `listingService.search()` и `getByUser()`, offset-пагинация на странице каталога (простой ← / →)
+- **listing.service.ts** обновлён: все методы используют явный `select` (no over-fetching)
+- **Исправлен** `20260423_full_geo_fix/migration.sql` — был UTF-16 full-dump, заменён на корректный delta (добавление fiasId, lat, lng в City)
 
 ---
 
