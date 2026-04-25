@@ -129,7 +129,7 @@ export function OrderFeedClient({
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...transition.base, delay: (i % DEFAULT_PAGE_SIZE) * 0.06 }}
           >
-            <OrderFeedCard order={order} />
+            <OrderFeedCard order={order} hasProposal={order.hasProposal} />
           </motion.div>
         ))}
       </div>

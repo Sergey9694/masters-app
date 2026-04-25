@@ -15,9 +15,11 @@ interface OrderFeedCardProps {
   price?: number | null;
   /** Показать бейдж «Вас выбрали» (только для variant="my") */
   isChosen?: boolean;
+  /** Текущий пользователь уже откликнулся (только для variant="feed") */
+  hasProposal?: boolean;
 }
 
-export function OrderFeedCard({ order, href, variant = "feed", price, isChosen }: OrderFeedCardProps) {
+export function OrderFeedCard({ order, href, variant = "feed", price, isChosen, hasProposal }: OrderFeedCardProps) {
   const target = href ?? `/orders/${order.city.slug}/${order.category.slug}/${order.slug || order.id}`;
   const isMy = variant === "my";
   const amount = isMy ? (price ?? order.budget) : order.budget;
@@ -67,7 +69,7 @@ export function OrderFeedCard({ order, href, variant = "feed", price, isChosen }
             </span>
           </div>
 
-          {isMy && (
+          {isMy ? (
             <div className="flex shrink-0 flex-col items-end gap-1.5">
               <OrderStatusPill status={order.status} />
               {isChosen && (
@@ -77,7 +79,12 @@ export function OrderFeedCard({ order, href, variant = "feed", price, isChosen }
                 </span>
               )}
             </div>
-          )}
+          ) : hasProposal ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
+              <CheckCircle2 className="size-3" />
+              Вы откликнулись
+            </span>
+          ) : null}
         </div>
 
         <div>

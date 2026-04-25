@@ -23,6 +23,7 @@ export interface OrderCard {
   images?: string[];
   proposalCount: number;
   distance?: number;
+  hasProposal?: boolean;
 }
 
 export type OrderCardData = OrderCard;

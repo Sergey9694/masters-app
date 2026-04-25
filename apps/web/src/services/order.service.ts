@@ -169,7 +169,26 @@ export const orderService = {
 
     const hasMore = ordersRaw.length > pageSize;
     const pageRaw = hasMore ? ordersRaw.slice(0, pageSize) : ordersRaw;
-    
+
+    // Один батч-запрос: какие заказы этой страницы уже имеют отклик от текущего исполнителя
+    let proposedOrderIds = new Set<string>();
+    if (userId) {
+      const providerProfile = await db.providerProfile.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      if (providerProfile) {
+        const existing = await db.proposal.findMany({
+          where: {
+            providerId: providerProfile.id,
+            orderId: { in: pageRaw.map(o => o.id) },
+          },
+          select: { orderId: true },
+        });
+        proposedOrderIds = new Set(existing.map(p => p.orderId));
+      }
+    }
+
     const orders: OrderCardData[] = pageRaw.map(o => ({
       id: o.id,
       orderNumber: o.orderNumber,
@@ -185,6 +204,7 @@ export const orderService = {
       client: o.client,
       city: o.city || { name: 'Неизвестно' },
       proposalCount: o._count.proposals,
+      hasProposal: proposedOrderIds.has(o.id),
     }));
 
     const nextCursor = hasMore ? orders[orders.length - 1].id : null;
