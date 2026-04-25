@@ -131,26 +131,27 @@ export default async function MyProposalsPage({
         <EmptyProposals tab={activeTab} />
       ) : (
         <div className="page-section flex flex-col gap-3">
-          {proposals.map((p) => (
-            <OrderFeedCard
-              key={p.id}
-              variant="my"
-              price={p.price}
-              isChosen={p.order.assignedProviderId === providerId}
-              order={{
-                id: p.order.id,
-                orderNumber: p.order.orderNumber,
-                slug: p.order.slug,
-                title: p.order.title,
-                status: p.order.status,
-                budget: p.order.budget,
-                address: p.order.address,
-                createdAt: p.createdAt,
-                category: p.order.category,
-                city: p.order.city,
-                proposalCount: 0,
-              }}
-            />
+          {proposals.map((p, i) => (
+            <div key={p.id} className="list-card" style={{ animationDelay: `${i * 0.06}s` }}>
+              <OrderFeedCard
+                variant="my"
+                price={p.price}
+                isChosen={p.order.assignedProviderId === providerId}
+                order={{
+                  id: p.order.id,
+                  orderNumber: p.order.orderNumber,
+                  slug: p.order.slug,
+                  title: p.order.title,
+                  status: p.order.status,
+                  budget: p.order.budget,
+                  address: p.order.address,
+                  createdAt: p.createdAt,
+                  category: p.order.category,
+                  city: p.order.city,
+                  proposalCount: 0,
+                }}
+              />
+            </div>
           ))}
         </div>
       )}

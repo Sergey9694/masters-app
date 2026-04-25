@@ -136,24 +136,25 @@ export default async function MyOrdersPage({ searchParams }: MyOrdersPageProps) 
         <EmptyState tab={activeTab} />
       ) : (
         <div className="page-section flex flex-col gap-3">
-          {orders.map((o) => (
-            <OrderFeedCard
-              key={o.id}
-              variant="my"
-              order={{
-                id: o.id,
-                orderNumber: o.orderNumber,
-                slug: o.slug,
-                title: o.title,
-                status: o.status,
-                budget: o.budget,
-                address: o.address,
-                createdAt: o.createdAt,
-                category: o.category,
-                city: o.city,
-                proposalCount: o._count.proposals,
-              }}
-            />
+          {orders.map((o, i) => (
+            <div key={o.id} className="list-card" style={{ animationDelay: `${i * 0.06}s` }}>
+              <OrderFeedCard
+                variant="my"
+                order={{
+                  id: o.id,
+                  orderNumber: o.orderNumber,
+                  slug: o.slug,
+                  title: o.title,
+                  status: o.status,
+                  budget: o.budget,
+                  address: o.address,
+                  createdAt: o.createdAt,
+                  category: o.category,
+                  city: o.city,
+                  proposalCount: o._count.proposals,
+                }}
+              />
+            </div>
           ))}
         </div>
       )}

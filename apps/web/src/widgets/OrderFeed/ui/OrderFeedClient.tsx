@@ -3,9 +3,12 @@
 import { useState, useTransition, useEffect, useRef } from "react";
 import { Loader2, SearchX, Zap } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 import { OrderFeedCard } from "@/entities/order";
 import { loadOrdersAction } from "../api/load-orders";
+import { transition } from "@/shared/lib/motion";
+import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
 import type { OrderCardData } from "@/shared/types/domain";
 import type { OrderSort } from "@/services/order.service";
 
@@ -119,8 +122,15 @@ export function OrderFeedClient({
       </div>
 
       <div className="flex flex-col gap-4">
-        {orders.map((order) => (
-          <OrderFeedCard key={order.id} order={order} />
+        {orders.map((order, i) => (
+          <motion.div
+            key={order.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ ...transition.base, delay: (i % DEFAULT_PAGE_SIZE) * 0.06 }}
+          >
+            <OrderFeedCard order={order} />
+          </motion.div>
         ))}
       </div>
 
