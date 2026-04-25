@@ -213,13 +213,13 @@ export function OrderWizardLight({
             }
           }}
         >
-          <div className="overflow-hidden">
+          <div>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={stepIndex}
-                initial={{ opacity: 0, x: dirRef.current * 28 }}
+                initial={{ opacity: 0, x: dirRef.current * 10 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: dirRef.current * -28 }}
+                exit={{ opacity: 0, x: dirRef.current * -10 }}
                 transition={transition.base}
               >
                 {step.key === "category" && (

@@ -97,13 +97,13 @@ export function LoginForm({ botId, onSwitchToRegister }: LoginFormProps) {
         </div>
       )}
 
-      <div className="overflow-hidden">
+      <div>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={mode}
-            initial={{ opacity: 0, x: dirRef.current * 24 }}
+            initial={{ opacity: 0, x: dirRef.current * 10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: dirRef.current * -24 }}
+            exit={{ opacity: 0, x: dirRef.current * -10 }}
             transition={transition.base}
           >
             {/* Mode: social */}

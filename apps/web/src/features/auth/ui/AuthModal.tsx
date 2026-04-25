@@ -37,13 +37,13 @@ export function AuthModal({ open, onOpenChange, botId }: AuthModalProps) {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="overflow-hidden">
+        <div>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={view}
-              initial={{ opacity: 0, x: view === "register" ? 24 : -24 }}
+              initial={{ opacity: 0, x: view === "register" ? 10 : -10 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: view === "register" ? -24 : 24 }}
+              exit={{ opacity: 0, x: view === "register" ? -10 : 10 }}
               transition={transition.base}
             >
               <Suspense>
