@@ -19,6 +19,7 @@ export function SidebarNav({ isAuth, isProvider }: SidebarNavProps) {
   const userItems = NAV_USER.filter((item) => {
     if (item.authRequired && !isAuth) return false;
     if (item.providerOnly && !isProvider) return false;
+    if (item.nonProviderOnly && isProvider) return false;
     return true;
   });
 

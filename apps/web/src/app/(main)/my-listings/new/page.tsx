@@ -15,7 +15,7 @@ export const metadata = {
 export default async function NewListingPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
-  if (!user.providerProfile) redirect("/provider/register");
+  if (!user.providerProfile) redirect("/become-provider");
 
   const [categories, cities] = await Promise.all([
     db.category.findMany({

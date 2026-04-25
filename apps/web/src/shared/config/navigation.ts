@@ -10,6 +10,7 @@ import {
   Plus,
   Compass,
   Star,
+  UserCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -21,6 +22,8 @@ export interface NavItem {
   authRequired?: boolean;
   /** Видно только исполнителям (PROVIDER) */
   providerOnly?: boolean;
+  /** Видно только тем, у кого НЕТ профиля исполнителя */
+  nonProviderOnly?: boolean;
 }
 
 /**
@@ -41,6 +44,13 @@ export const NAV_USER: NavItem[] = [
     label: "Мои заказы",
     icon: Briefcase,
     authRequired: true,
+  },
+  {
+    href: "/become-provider",
+    label: "Стать исполнителем",
+    icon: UserCheck,
+    authRequired: true,
+    nonProviderOnly: true,
   },
   {
     href: "/my-proposals",

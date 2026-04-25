@@ -31,7 +31,7 @@ export default async function MyListingsPage({ searchParams }: MyListingsPagePro
   const { tab: tabParam } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect("/auth/login");
-  if (!user.providerProfile) redirect("/provider/register");
+  if (!user.providerProfile) redirect("/become-provider");
 
   const activeTab: Tab =
     tabParam === "paused" || tabParam === "archived" ? tabParam : "active";
