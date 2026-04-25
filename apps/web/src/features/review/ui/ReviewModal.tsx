@@ -23,7 +23,7 @@ export function ReviewModal({ referenceId }: Props) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-warning/40 bg-warning/5 px-5 py-4 text-sm font-semibold text-warning transition-colors hover:bg-warning/10"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-warning/40 bg-warning/5 px-5 py-3.5 text-sm font-semibold text-warning transition-colors hover:bg-warning/10"
       >
         <Star className="size-4 fill-warning text-warning" />
         Оставить отзыв об исполнителе
