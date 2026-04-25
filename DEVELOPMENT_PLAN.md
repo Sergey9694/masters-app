@@ -1550,6 +1550,154 @@ Web-приложение продолжает использовать Server Ac
 
 ## Фаза 7 — Чат и уведомления (2 недели)
 
+### 7.0 — Real-time инфраструктура (Redis Pub/Sub + SSE)
+
+> Строится ПЕРВОЙ, до UI чата. Все real-time фичи (чат, уведомления, обновления ленты)
+> работают через один слой. Не строить дважды.
+
+#### Почему Redis + SSE, а не WebSocket
+
+| | SSE + Redis | WebSocket |
+|---|---|---|
+| Протокол | HTTP (однонаправленный: сервер → клиент) | TCP (двунаправленный) |
+| Next.js Route Handler | ✅ Нативно | ⚠️ Требует отдельного сервера |
+| Горизонтальное масштабирование | ✅ Redis синхронизирует инстансы | ⚠️ Sticky sessions или отдельный WS-сервер |
+| Отправка сообщений (клиент → сервер) | Server Action (обычный POST) | по WS-каналу |
+| Сложность | Низкая | Высокая |
+
+**Вывод:** SSE достаточно для нашей модели — сервер пушит события, клиент отправляет через Server Actions. WebSocket нужен только для typing indicators и подобного — это не приоритет MVP.
+
+#### Архитектура
+
+```
+Клиент А (браузер)                 Сервер                    Клиент Б (браузер)
+        │                              │                              │
+        │   Server Action              │                              │
+        │─── sendMessage() ──────────▶│                              │
+        │                              │── Redis PUBLISH ────────────▶│ (Pub/Sub)
+        │                              │   "user:Б:chat:convId"       │
+        │                              │                              │── router.refresh()
+        │                              │                              │   или SSE-обновление
+        │◀── optimistic update ────────│                              │
+```
+
+#### Каналы Redis
+
+```
+feed:orders              — новый заказ в ленте (все авторизованные)
+user:{id}:notifications  — личные уведомления (новый отклик, статус заказа, сообщение)
+user:{id}:chat:{convId}  — новое сообщение в конкретном диалоге
+order:{id}:proposals     — новый отклик на заказ (для владельца заказа)
+```
+
+#### Что реализовать
+
+```
+7.0.1  Добавить Redis в инфраструктуру:
+       - docker-compose.yml: добавить сервис redis:7-alpine
+       - npm install ioredis (в apps/web)
+       - apps/web/src/shared/lib/redis.ts — singleton клиент:
+
+         import Redis from "ioredis";
+         function getRedis() {
+           // lazy singleton — не в top-level scope (Docker build)
+           if (!global._redis) {
+             global._redis = new Redis(process.env.REDIS_URL!);
+           }
+           return global._redis;
+         }
+         export { getRedis };
+
+       - .env: REDIS_URL=redis://localhost:6379
+
+7.0.2  Создать apps/web/src/shared/lib/pubsub.ts:
+       
+       Публикация события:
+         export async function publish(channel: string, payload: unknown) {
+           await getRedis().publish(channel, JSON.stringify(payload));
+         }
+       
+       Типы событий:
+         type RealtimeEvent =
+           | { type: "NEW_ORDER"; orderId: string }
+           | { type: "NEW_PROPOSAL"; orderId: string; proposalId: string }
+           | { type: "NEW_MESSAGE"; conversationId: string; messageId: string }
+           | { type: "NOTIFICATION"; notificationId: string }
+           | { type: "ORDER_STATUS"; orderId: string; status: string };
+
+7.0.3  Создать SSE endpoint:
+       apps/web/src/app/api/events/route.ts
+       
+       - GET /api/events?channels=user:{id}:notifications,feed:orders
+       - Аутентификация: читать сессию из cookie
+       - Возвращает ReadableStream с SSE-событиями
+       - Подписывается на Redis-каналы через отдельный subscriber-клиент
+       - При получении Redis-события → пишет в SSE-поток
+       - При disconnect → отписывается от Redis
+       
+       Формат SSE:
+         data: {"type":"NEW_ORDER","orderId":"abc123"}\n\n
+         data: {"type":"NEW_MESSAGE","conversationId":"xyz"}\n\n
+
+       Важно:
+       - Каждое соединение = отдельный Redis subscriber (не шарить!)
+       - Timeout: 30 секунд heartbeat (ping) чтобы не рвалось через прокси
+       - Edge Runtime совместим с SSE, но ioredis требует Node.js runtime
+
+7.0.4  Создать клиентский хук:
+       apps/web/src/shared/hooks/use-realtime.ts
+       
+         "use client";
+         import { useEffect } from "react";
+         import { useRouter } from "next/navigation";
+         
+         export function useRealtime(channels: string[], onEvent?: (e: RealtimeEvent) => void) {
+           const router = useRouter();
+           useEffect(() => {
+             const params = channels.map(c => `channels=${c}`).join("&");
+             const es = new EventSource(`/api/events?${params}`);
+             
+             es.onmessage = (e) => {
+               const event = JSON.parse(e.data) as RealtimeEvent;
+               onEvent?.(event);
+               router.refresh(); // перерендерить server components
+             };
+             
+             return () => es.close();
+           }, [channels.join(",")]);
+         }
+
+7.0.5  Встроить publish() в существующие Server Actions:
+       
+       createOrderAction        → publish("feed:orders", { type: "NEW_ORDER", orderId })
+       submitProposalAction     → publish(`order:${orderId}:proposals`, { type: "NEW_PROPOSAL", ... })
+                                → publish(`user:${order.clientId}:notifications`, { type: "NOTIFICATION", ... })
+       sendMessageAction        → publish(`user:${recipientId}:chat:${convId}`, { type: "NEW_MESSAGE", ... })
+       acceptProposalAction     → publish(`user:${providerId}:notifications`, { type: "ORDER_STATUS", ... })
+       completeOrderAction      → publish(`user:${providerId}:notifications`, { type: "ORDER_STATUS", ... })
+
+7.0.6  Применить useRealtime() в клиентских компонентах:
+       
+       OrderFeedClient:
+         useRealtime(["feed:orders"]) // новые заказы в ленте
+       
+       Страница заказа (детальная):
+         useRealtime([`order:${orderId}:proposals`]) // новые отклики
+       
+       NotificationBell (в Header):
+         useRealtime([`user:${userId}:notifications`]) // бейдж
+       
+       ChatWindow:
+         useRealtime([`user:${userId}:chat:${convId}`]) // сообщения
+
+7.0.7  Graceful degradation:
+       - Если Redis недоступен — publish() логирует ошибку, не падает
+       - Если SSE-соединение рвётся — EventSource автоматически переподключается
+       - Без real-time фичи работают как раньше (данные актуальны при навигации)
+```
+
+---
+
 ### 7.1 — Модель чата
 
 ```
@@ -1658,15 +1806,15 @@ Web-приложение продолжает использовать Server Ac
        - MessageInput.tsx — поле ввода + загрузка файлов
        - ChatEmpty.tsx — заглушка "Нет сообщений"
 
-7.3.3  Real-time:
-       Вариант A (проще): Polling каждые 3-5 секунд
-       Вариант B (лучше): Server-Sent Events (SSE)
-       Вариант C (лучшее): WebSocket (Socket.io или ws)
+7.3.3  Real-time для чата:
+       → Реализовано в п. 7.0 (Redis Pub/Sub + SSE).
        
-       Рекомендация: Начать с SSE (встроено в Web API, работает с Next.js):
-       - Создать app/api/v1/conversations/[id]/stream/route.ts
-       - ReadableStream с SSE events
-       - На клиенте: EventSource API
+       Для ChatWindow:
+       - useRealtime([`user:${userId}:chat:${convId}`])
+       - При NEW_MESSAGE событии → router.refresh() обновляет список сообщений
+       - Оптимистичный update: добавить сообщение в локальный state сразу после отправки,
+         не ждать SSE (для отправителя)
+       - Typing indicator — опционально, не приоритет MVP
 ```
 
 ### 7.4 — Уведомления (расширение)
@@ -1685,7 +1833,9 @@ Web-приложение продолжает использовать Server Ac
        
 7.4.4  Бейдж непрочитанных:
        - В Header: кол-во непрочитанных уведомлений + сообщений
-       - Polling каждые 30 секунд (или SSE)
+       - Реализовать как client component NotificationBell
+       - useRealtime([`user:${userId}:notifications`]) из п. 7.0
+       - При событии → router.refresh() → сервер возвращает актуальный счётчик
 ```
 
 ---

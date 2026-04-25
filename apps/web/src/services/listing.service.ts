@@ -1,5 +1,7 @@
 import { db } from "@/shared/lib/db";
-import { ListingStatus, PriceUnit } from "@prisma/client";
+import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
+import { slugify } from "@/shared/lib/slugify";
+import { type ListingStatus, type PriceUnit } from "@prisma/client";
 
 export interface CreateListingInput {
   providerId: string;
@@ -14,119 +16,158 @@ export interface CreateListingInput {
   address?: string;
 }
 
+export interface ListingSearchParams {
+  cityId?: string;
+  categoryId?: string;
+  status?: ListingStatus;
+  cursor?: string;
+  pageSize?: number;
+}
+
 export const listingService = {
-  /**
-   * Search listings with filters
-   */
-  async search(filters: {
-    cityId?: string;
-    categoryId?: string;
-    status?: ListingStatus;
-    limit?: number;
-    offset?: number;
-  }) {
-    return db.serviceListing.findMany({
+  async search(params: ListingSearchParams) {
+    const { cityId, categoryId, status, cursor, pageSize = DEFAULT_PAGE_SIZE } = params;
+
+    const items = await db.serviceListing.findMany({
       where: {
-        cityId: filters.cityId,
-        categoryId: filters.categoryId,
-        status: filters.status || "ACTIVE",
+        ...(cityId ? { cityId } : {}),
+        ...(categoryId && categoryId !== "all" ? { categoryId } : {}),
+        status: status ?? "ACTIVE",
       },
-      include: {
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        images: true,
+        priceFrom: true,
+        priceTo: true,
+        priceUnit: true,
+        address: true,
+        views: true,
+        createdAt: true,
+        status: true,
         provider: {
           select: {
             id: true,
-            bio: true,
             rating: true,
             isVerified: true,
-            user: { select: { id: true, firstName: true, displayName: true, avatar: true } },
+            user: { select: { firstName: true, displayName: true, avatar: true } },
           },
         },
-        category: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: filters.limit || 20,
-      skip: filters.offset || 0,
-    });
-  },
-
-  /**
-   * List listings owned by a user (via ProviderProfile)
-   */
-  async getByUser(userId: string, pageSize = 20, cursor?: string) {
-    const provider = await db.providerProfile.findUnique({
-      where: { userId },
-      select: { id: true },
-    });
-
-    if (!provider) {
-      return { listings: [], nextCursor: null };
-    }
-
-    const listings = await db.serviceListing.findMany({
-      where: { providerId: provider.id },
-      include: {
-        category: { select: { id: true, name: true } },
-        city: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        city: { select: { id: true, name: true, slug: true } },
       },
       orderBy: { createdAt: "desc" },
       take: pageSize + 1,
       ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     });
 
-    const hasMore = listings.length > pageSize;
-    const page = hasMore ? listings.slice(0, pageSize) : listings;
+    const hasMore = items.length > pageSize;
+    const page = hasMore ? items.slice(0, pageSize) : items;
     const nextCursor = hasMore ? page[page.length - 1].id : null;
 
     return { listings: page, nextCursor };
   },
 
-  /**
-   * Get listing by ID
-   */
-  async getById(id: string) {
-    return db.serviceListing.findUnique({
-      where: { id },
+  async getByUser(userId: string, pageSize = DEFAULT_PAGE_SIZE, cursor?: string) {
+    const provider = await db.providerProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!provider) return { listings: [], nextCursor: null };
+
+    const items = await db.serviceListing.findMany({
+      where: { providerId: provider.id },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        images: true,
+        priceFrom: true,
+        priceTo: true,
+        priceUnit: true,
+        address: true,
+        views: true,
+        status: true,
+        createdAt: true,
+        category: { select: { id: true, name: true, slug: true } },
+        city: { select: { id: true, name: true, slug: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: pageSize + 1,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
+    });
+
+    const hasMore = items.length > pageSize;
+    const page = hasMore ? items.slice(0, pageSize) : items;
+    const nextCursor = hasMore ? page[page.length - 1].id : null;
+
+    return { listings: page, nextCursor };
+  },
+
+  async getById(idOrSlug: string) {
+    return db.serviceListing.findFirst({
+      where: {
+        OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+      },
       include: {
         provider: {
           include: {
             user: { select: { id: true, firstName: true, lastName: true, displayName: true, avatar: true } },
           },
         },
-        category: { select: { id: true, name: true } },
-        city: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        city: { select: { id: true, name: true, slug: true } },
       },
     });
   },
 
-  /**
-   * Create new listing
-   */
   async create(data: CreateListingInput) {
-    return db.serviceListing.create({
+    const listing = await db.serviceListing.create({
       data: {
         ...data,
         status: "ACTIVE",
       },
     });
+
+    const slug = `${slugify(data.title)}-${listing.id.slice(0, 8)}`;
+
+    return db.serviceListing.update({
+      where: { id: listing.id },
+      data: { slug },
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        city: { select: { id: true, name: true, slug: true } },
+      },
+    });
   },
 
-  /**
-   * Update listing
-   */
   async update(id: string, data: Partial<CreateListingInput> & { status?: ListingStatus }) {
     return db.serviceListing.update({
       where: { id },
       data,
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        city: { select: { id: true, name: true, slug: true } },
+      },
     });
   },
 
-  /**
-   * Delete listing (soft delete via ARCHIVED status preferred)
-   */
+  async toggleStatus(id: string, currentStatus: ListingStatus) {
+    const next: ListingStatus = currentStatus === "ACTIVE" ? "PAUSED" : "ACTIVE";
+    return db.serviceListing.update({
+      where: { id },
+      data: { status: next },
+    });
+  },
+
   async delete(id: string) {
     return db.serviceListing.update({
       where: { id },
       data: { status: "ARCHIVED" },
     });
-  }
+  },
 };

@@ -12,19 +12,19 @@ import { ListingStatus } from "@prisma/client";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = request.nextUrl;
-    const limit = searchParams.get("pageSize") ? parseInt(searchParams.get("pageSize")!) : 20;
-    const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : 0;
+    const pageSize = searchParams.get("pageSize") ? parseInt(searchParams.get("pageSize")!) : 20;
+    const cursor = searchParams.get("cursor") || undefined;
     const statusParam = searchParams.get("status") as ListingStatus | null;
 
-    const listings = await listingService.search({
+    const result = await listingService.search({
       cityId: searchParams.get("cityId") || undefined,
       categoryId: searchParams.get("categoryId") || undefined,
       status: statusParam || undefined,
-      limit,
-      offset,
+      pageSize,
+      cursor,
     });
 
-    return apiSuccess({ listings });
+    return apiSuccess(result);
   } catch (error) {
     console.error("[API/LISTINGS/GET] Error:", error);
     return apiError("Failed to fetch listings", 500);

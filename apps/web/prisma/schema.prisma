@@ -166,6 +166,7 @@ model ServiceListing {
   city   City   @relation(fields: [cityId], references: [id])
 
   title       String
+  slug        String?       @unique
   description String
 
   status    ListingStatus @default(ACTIVE)
