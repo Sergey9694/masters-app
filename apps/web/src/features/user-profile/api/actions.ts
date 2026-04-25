@@ -28,6 +28,16 @@ export const updateBasicProfileAction = authActionClient
     });
 
     if (parsedInput.phone !== undefined) {
+      if (parsedInput.phone) {
+        const taken = await db.user.findUnique({
+          where: { phone: parsedInput.phone },
+          select: { id: true },
+        });
+        if (taken && taken.id !== userId) {
+          throw new Error("Этот номер телефона уже привязан к другому аккаунту");
+        }
+      }
+
       await db.user.update({
         where: { id: userId },
         data: { phone: parsedInput.phone || null },
