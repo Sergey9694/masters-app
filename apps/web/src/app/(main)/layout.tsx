@@ -19,16 +19,14 @@ export default function MainLayout({
     <div className="flex min-h-screen flex-col bg-background">
       <Header />
 
-      <div className="flex flex-1">
-        <Sidebar />
-        <main className="min-w-0 flex-1 pb-20 lg:pb-0">
-          <Container size="2xl" className="py-6 lg:py-10">
-            {children}
-          </Container>
-        </main>
-      </div>
+      <Sidebar />
+      <main className="min-w-0 flex-1 pb-20 lg:pl-60 lg:pb-0">
+        <Container size="2xl" className="py-6 lg:py-10">
+          {children}
+        </Container>
+      </main>
 
-      <div className="hidden lg:block">
+      <div className="hidden lg:block lg:pl-60">
         <Footer />
       </div>
 

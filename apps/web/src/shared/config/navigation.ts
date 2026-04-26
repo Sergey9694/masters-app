@@ -4,12 +4,10 @@ import {
   Briefcase,
   Bell,
   MessageSquare,
-  Heart,
   User,
   Home,
   Plus,
   Compass,
-  Users,
   Star,
   UserCheck,
 } from "lucide-react";
@@ -35,7 +33,6 @@ export interface NavItem {
 export const NAV_MAIN: NavItem[] = [
   { href: "/", label: "Главная", icon: Home },
   { href: "/orders", label: "Лента заказов", icon: ClipboardList },
-  { href: "/providers", label: "Специалисты", icon: Users },
   { href: "/categories", label: "Категории", icon: LayoutGrid },
 ];
 
@@ -73,18 +70,6 @@ export const NAV_USER: NavItem[] = [
     icon: Star,
     authRequired: true,
     providerOnly: true,
-  },
-  {
-    href: "/notifications",
-    label: "Уведомления",
-    icon: Bell,
-    authRequired: true,
-  },
-  {
-    href: "/favorites",
-    label: "Избранное",
-    icon: Heart,
-    authRequired: true,
   },
 ];
 
