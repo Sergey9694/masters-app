@@ -108,6 +108,30 @@ export const listingService = {
     return { listings: page, nextCursor };
   },
 
+  async getByProvider(providerId: string, limit = 12) {
+    return db.serviceListing.findMany({
+      where: { providerId, status: "ACTIVE" },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        images: true,
+        priceFrom: true,
+        priceTo: true,
+        priceUnit: true,
+        address: true,
+        views: true,
+        createdAt: true,
+        status: true,
+        category: { select: { id: true, name: true, slug: true } },
+        city: { select: { id: true, name: true, slug: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+  },
+
   async getById(idOrSlug: string) {
     return db.serviceListing.findFirst({
       where: {

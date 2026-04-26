@@ -133,6 +133,7 @@ export const providerService = {
           },
         },
         categories: { select: { category: { select: { id: true, name: true } } } },
+        _count: { select: { reviews: true } },
       },
       orderBy: { rating: "desc" },
       take: pageSize + 1,

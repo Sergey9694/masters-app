@@ -9,6 +9,7 @@ import {
   Home,
   Plus,
   Compass,
+  Users,
   Star,
   UserCheck,
 } from "lucide-react";
@@ -34,7 +35,7 @@ export interface NavItem {
 export const NAV_MAIN: NavItem[] = [
   { href: "/", label: "Главная", icon: Home },
   { href: "/orders", label: "Лента заказов", icon: ClipboardList },
-  { href: "/listings", label: "Каталог услуг", icon: Compass },
+  { href: "/providers", label: "Специалисты", icon: Users },
   { href: "/categories", label: "Категории", icon: LayoutGrid },
 ];
 
