@@ -1,4 +1,3 @@
-import { db } from "@/shared/lib/db";
 import { orderService, type OrderSort } from "@/services/order.service";
 import { getCurrentUser } from "@/shared/lib/get-user";
 
@@ -14,31 +13,23 @@ interface OrderFeedProps {
 export async function OrderFeed({ categoryId, cityId, search, sort }: OrderFeedProps) {
   const user = await getCurrentUser();
 
-  const { orders, nextCursor } = await orderService.list(
+  const { orders, nextCursor, totalCount } = await orderService.list(
     { categoryId, cityId, search, sort },
     user?.id
   );
-
-  const total = await db.order.count({
-    where: {
-      status: "OPEN",
-      ...(categoryId && categoryId !== "all" ? { categoryId } : {}),
-      ...(cityId ? { cityId } : {}),
-    },
-  });
 
   const isDefaultFilter = !categoryId && !cityId && !!user?.providerProfile;
 
   return (
     <OrderFeedClient
-      key={`${categoryId ?? "all"}-${cityId ?? ""}-${search ?? ""}-${sort ?? "new"}-${total}`}
+      key={`${categoryId ?? "all"}-${cityId ?? ""}-${search ?? ""}-${sort ?? "new"}-${totalCount}`}
       initialTasks={orders}
       initialCursor={nextCursor}
       categoryId={categoryId}
       cityId={cityId}
       search={search}
       sort={sort}
-      totalLabel={`${total} ${pluralize(total, ["заказ", "заказа", "заказов"])}`}
+      totalLabel={`${totalCount} ${pluralize(totalCount, ["заказ", "заказа", "заказов"])}`}
       isDefaultFilter={isDefaultFilter}
     />
   );

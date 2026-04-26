@@ -60,21 +60,27 @@ export function OrdersFilters({
       const category = categories.find(c => c.id === categoryId);
       
       let newPath = "/orders";
+      const finalParams = new URLSearchParams();
+
+      // Preservation of search and sort
+      if (params.get("search")) finalParams.set("search", params.get("search")!);
+      if (params.get("sort")) finalParams.set("sort", params.get("sort")!);
+      
       if (city) {
         newPath += `/${city.slug}`;
         if (category) {
           newPath += `/${category.slug}`;
+        } else if (categoryId === "all") {
+          finalParams.set("categoryId", "all");
         }
-      } else if (category) {
-        // If no city but category, we use query param for category in global feed
-        // OR we could do /orders/all/[categorySlug] but let's keep it simple
-        params.set("categoryId", category.id);
+      } else {
+        // If no city, we must use query params for categories
+        if (categoryId === "all") {
+          finalParams.set("categoryId", "all");
+        } else if (category) {
+          finalParams.set("categoryId", category.id);
+        }
       }
-      
-      // Keep search and sort in query params
-      const finalParams = new URLSearchParams();
-      if (params.get("search")) finalParams.set("search", params.get("search")!);
-      if (params.get("sort")) finalParams.set("sort", params.get("sort")!);
       
       const queryString = finalParams.toString();
       const url = queryString ? `${newPath}?${queryString}` : newPath;

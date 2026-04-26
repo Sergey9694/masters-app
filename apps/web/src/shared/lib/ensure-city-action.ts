@@ -24,18 +24,16 @@ export async function ensureCityAction(data: z.infer<typeof citySchema>) {
 
   const slug = generateSlug(data.name);
 
-  // Ищем по fiasId или по имени в этом регионе
   const existingCity = await db.city.findFirst({
     where: {
       OR: [
-        { fiasId: data.fiasId ?? undefined },
-        { name: data.name, region: data.region }
+        ...(data.fiasId ? [{ fiasId: data.fiasId }] : []),
+        { name: data.name },
       ]
     }
   });
 
   if (existingCity) {
-    // Если город найден, но у него не было fiasId или координат - обновляем (обогащаем данные)
     if ((!existingCity.fiasId && data.fiasId) || (!existingCity.lat && data.lat)) {
       await db.city.update({
         where: { id: existingCity.id },
@@ -49,7 +47,6 @@ export async function ensureCityAction(data: z.infer<typeof citySchema>) {
     return { id: existingCity.id };
   }
 
-  // Создаем новый населенный пункт
   const newCity = await db.city.create({
     data: {
       name: data.name,
@@ -62,9 +59,8 @@ export async function ensureCityAction(data: z.infer<typeof citySchema>) {
     }
   });
 
-  // Универсальная привязка: привязываем все активные категории к новому городу
   const categories = await db.category.findMany({
-    where: { isActive: true } // Привязываем все активные категории (и родителей, и подкатегории)
+    where: { isActive: true }
   });
 
   if (categories.length > 0) {
@@ -88,7 +84,7 @@ function generateSlug(text: string): string {
     'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
     'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
   };
-  
+
   return text
     .toLowerCase()
     .split('')

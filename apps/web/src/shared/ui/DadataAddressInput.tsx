@@ -8,12 +8,14 @@ import { type DadataSuggestion } from "@/shared/lib/dadata";
 interface Props {
   value: string;
   onChange: (value: string) => void;
-  onSelect?: (suggestion: DadataSuggestion) => void;
+  onSelect?: (suggestion: DadataSuggestion) => void | Promise<void>;
   onBlur?: () => void;
   hasError?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
 }
 
-export function DadataAddressInput({ value, onChange, onBlur, hasError, onSelect }: Props) {
+export function DadataAddressInput({ value, onChange, onBlur, hasError, onSelect, placeholder, disabled }: Props) {
   const [suggestions, setSuggestions] = useState<DadataSuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -90,12 +92,14 @@ export function DadataAddressInput({ value, onChange, onBlur, hasError, onSelect
             setTimeout(() => setIsOpen(false), 150);
             onBlur?.();
           }}
-          placeholder="Начните вводить адрес..."
+          placeholder={placeholder ?? "Начните вводить адрес..."}
           autoComplete="off"
+          disabled={disabled}
           className={cn(
             "h-11 w-full rounded-xl border bg-background pl-10 pr-10 text-sm",
             "focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10",
-            hasError ? "border-destructive" : "border-border"
+            hasError ? "border-destructive" : "border-border",
+            disabled && "opacity-60 cursor-not-allowed"
           )}
         />
         {isLoading && (

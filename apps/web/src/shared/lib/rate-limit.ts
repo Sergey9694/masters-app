@@ -9,15 +9,23 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-const store = new Map<string, RateLimitEntry>();
+// Singleton store to survive HMR in development
+const globalForRateLimit = global as unknown as { rateLimitStore: Map<string, RateLimitEntry> };
+const store = globalForRateLimit.rateLimitStore || new Map<string, RateLimitEntry>();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForRateLimit.rateLimitStore = store;
+}
 
 // Очистка протухших записей раз в 5 минут
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (entry.resetAt < now) store.delete(key);
-  }
-}, 5 * 60 * 1000);
+if (!(global as any)._rateLimitInterval) {
+  (global as any)._rateLimitInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of store) {
+      if (entry.resetAt < now) store.delete(key);
+    }
+  }, 5 * 60 * 1000);
+}
 
 interface RateLimitOptions {
   /** Ключ лимита (namespace:userId). */
@@ -26,6 +34,8 @@ interface RateLimitOptions {
   limit?: number;
   /** Длина окна в секундах. Default 60. */
   windowSec?: number;
+  /** Если true, не увеличивает счетчик. */
+  peek?: boolean;
 }
 
 interface RateLimitResult {
@@ -38,12 +48,15 @@ export function checkRateLimit({
   key,
   limit = 10,
   windowSec = 60,
+  peek = false,
 }: RateLimitOptions): RateLimitResult {
   const now = Date.now();
   const entry = store.get(key);
 
   if (!entry || entry.resetAt < now) {
-    store.set(key, { count: 1, resetAt: now + windowSec * 1000 });
+    if (!peek) {
+      store.set(key, { count: 1, resetAt: now + windowSec * 1000 });
+    }
     return { allowed: true, remaining: limit - 1, retryAfterSec: 0 };
   }
 
@@ -52,6 +65,13 @@ export function checkRateLimit({
     return { allowed: false, remaining: 0, retryAfterSec };
   }
 
-  entry.count++;
+  if (!peek) {
+    entry.count++;
+  }
+  
   return { allowed: true, remaining: limit - entry.count, retryAfterSec: 0 };
+}
+
+export function getRateLimitInfo(options: RateLimitOptions): RateLimitResult {
+  return checkRateLimit({ ...options, peek: true });
 }

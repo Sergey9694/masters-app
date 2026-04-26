@@ -130,6 +130,9 @@ export const orderService = {
       }
     }
 
+    // Get total count for the SAME where clause
+    const totalCount = await db.order.count({ where });
+
     if (search && search.trim().length >= 2) {
       where.OR = [
         { title: { contains: search.trim(), mode: "insensitive" } },
@@ -209,7 +212,7 @@ export const orderService = {
 
     const nextCursor = hasMore ? orders[orders.length - 1].id : null;
 
-    return { orders, nextCursor };
+    return { orders, nextCursor, totalCount };
   },
 
   /**

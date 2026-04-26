@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { authActionClient } from "@/shared/lib/safe-action";
 import { listingService } from "@/services/listing.service";
 import { db } from "@/shared/lib/db";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 import {
   createListingSchema,
   updateListingSchema,
@@ -23,6 +24,11 @@ async function getProviderIdOrThrow(userId: string) {
 export const createListingAction = authActionClient
   .schema(createListingSchema)
   .action(async ({ parsedInput, ctx }) => {
+    const rl = checkRateLimit({ key: `listing:create:${ctx.userId}`, limit: 3, windowSec: 3600 });
+    if (!rl.allowed) {
+      throw new Error(`Лимит создания объявлений (3 в час). Попробуйте через ${Math.ceil(rl.retryAfterSec / 60)} мин.`);
+    }
+
     const providerId = await getProviderIdOrThrow(ctx.userId);
 
     const listing = await listingService.create({

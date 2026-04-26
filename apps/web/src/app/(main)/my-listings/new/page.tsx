@@ -17,18 +17,14 @@ export default async function NewListingPage() {
   if (!user) redirect("/auth/login");
   if (!user.providerProfile) redirect("/become-provider");
 
-  const [categories, cities] = await Promise.all([
-    db.category.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-    db.city.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const categories = await db.category.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
+  const { getRateLimitInfo } = await import("@/shared/lib/rate-limit");
+  const rl = getRateLimitInfo({ key: `listing:create:${user.id}`, limit: 3, windowSec: 3600 });
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,8 +44,19 @@ export default async function NewListingPage() {
         </p>
       </div>
 
+      {!rl.allowed && (
+        <div className="page-section max-w-2xl">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-amber-600 dark:text-amber-400">
+            <p className="text-sm font-medium">
+              ⚠️ Лимит создания объявлений исчерпан (3 в час). 
+              Вы сможете опубликовать новое объявление через <strong>{Math.ceil(rl.retryAfterSec / 60)} мин.</strong>
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="page-section max-w-2xl">
-        <ListingForm categories={categories} cities={cities} />
+        <ListingForm categories={categories} isLimited={!rl.allowed} />
       </div>
     </div>
   );
