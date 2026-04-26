@@ -11,11 +11,16 @@
 Фаза 7 добавляет real-time коммуникацию между клиентами и исполнителями внутри платформы. Чат привязан к контексту (заказ или объявление), что позволяет разрешать споры и модерировать переписку.
 
 **Ключевые решения:**
-- Redis + SSE (не WebSocket) — нативно в Next.js, масштабируется горизонтально
-- PostgreSQL — единственное хранилище сообщений (Redis только транспорт)
+- **Socket.io** (WebSocket) — единая система для сообщений, типинг-индикатора и уведомлений. Нативно работает в React Native (`socket.io-client`). Redis синхронизирует несколько инстансов через `@socket.io/redis-adapter`.
+- PostgreSQL — единственное хранилище сообщений (Redis только транспорт/pub-sub)
 - AES-256-GCM — шифрование поля `Message.text` на уровне приложения
 - Чат открывается через заказ (после отклика) или через объявление (кнопка на странице)
 - Полная модерация в админке: чтение, удаление, блокировка, экспорт
+- Типинг-индикатор «печатает...» через Socket.io (нет HTTP-оверхеда)
+- Infinite scroll с курсорной пагинацией (подгрузка предыдущих сообщений)
+- Datetime-разделители между сообщениями (сегодня / вчера / дата)
+- Read receipts (прочитано / не прочитано)
+- Nginx: добавить заголовки `Upgrade` и `Connection` для WebSocket
 
 ---
 
@@ -134,103 +139,138 @@ ENCRYPTION_KEY=<64 hex символа, генерировать: node -e "consol
 
 ---
 
-## 4. Real-time инфраструктура (Трек 1)
+## 4. Real-time инфраструктура — Socket.io (Трек 1)
 
-### 4.1 Redis singleton
-**Файл:** `apps/web/src/shared/lib/redis.ts`
+### 4.1 Зависимости
+
+```bash
+# apps/web
+npm install socket.io socket.io-client @socket.io/redis-adapter ioredis
+```
+
+### 4.2 Custom Next.js сервер
+**Файл:** `apps/web/server.ts`
 
 ```typescript
-import Redis from "ioredis";
+import { createServer } from "http";
+import next from "next";
+import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { getRedis } from "@/shared/lib/redis";
+import { registerSocketHandlers } from "@/shared/lib/socket-handlers";
 
-declare global { var _redis: Redis | undefined; }
+const app = next({ dev: process.env.NODE_ENV !== "production" });
+const handler = app.getRequestHandler();
 
-function getRedis(): Redis {
-  if (!global._redis) {
-    global._redis = new Redis(process.env.REDIS_URL!);
-    global._redis.on("error", (e) => console.error("[REDIS]", e));
-  }
-  return global._redis;
-}
-export { getRedis };
+app.prepare().then(() => {
+  const httpServer = createServer(handler);
+  const io = new Server(httpServer, {
+    cors: { origin: process.env.NEXT_PUBLIC_APP_URL },
+  });
+
+  // Redis adapter — синхронизация между несколькими инстансами
+  const pubClient = getRedis();
+  const subClient = pubClient.duplicate();
+  io.adapter(createAdapter(pubClient, subClient));
+
+  registerSocketHandlers(io);
+
+  httpServer.listen(3000);
+});
 ```
 
-### 4.2 Pub/Sub
-**Файл:** `apps/web/src/shared/lib/pubsub.ts`
+**Docker:** изменить команду запуска с `next start` на `node server.js` (собирается из `server.ts`).
+
+### 4.3 Socket события (типы)
+**Файл:** `apps/web/src/shared/lib/socket-events.ts`
 
 ```typescript
-export type RealtimeEvent =
-  | { type: "NEW_ORDER"; orderId: string }
-  | { type: "NEW_PROPOSAL"; orderId: string; proposalId: string }
-  | { type: "NEW_MESSAGE"; conversationId: string }
-  | { type: "NOTIFICATION"; notificationId: string }
-  | { type: "ORDER_STATUS"; orderId: string; status: string };
+// Сервер → Клиент
+export type ServerToClientEvents = {
+  "new:message":      (data: { conversationId: string; message: MessageDTO }) => void;
+  "new:notification": (data: { notification: NotificationDTO }) => void;
+  "new:proposal":     (data: { orderId: string }) => void;
+  "new:order":        (data: { orderId: string }) => void;
+  "typing:start":     (data: { conversationId: string; userId: string; userName: string }) => void;
+  "typing:stop":      (data: { conversationId: string; userId: string }) => void;
+  "message:deleted":  (data: { conversationId: string; messageId: string }) => void;
+  "user:blocked":     () => void;
+};
 
-export async function publish(channel: string, payload: RealtimeEvent): Promise<void> {
-  try {
-    await getRedis().publish(channel, JSON.stringify(payload));
-  } catch (e) {
-    console.error("[PUBSUB] publish error:", e); // не роняем приложение
-  }
-}
+// Клиент → Сервер
+export type ClientToServerEvents = {
+  "join:conversation":  (conversationId: string) => void;
+  "leave:conversation": (conversationId: string) => void;
+  "typing:start":       (conversationId: string) => void;
+  "typing:stop":        (conversationId: string) => void;
+};
 ```
 
-**Каналы:**
-```
-feed:orders                      — новый заказ в ленте
-user:{id}:notifications          — личные уведомления
-user:{id}:chat:{conversationId}  — новое сообщение в диалоге
-order:{id}:proposals             — новый отклик (для владельца заказа)
-```
+### 4.4 Socket handlers (серверная логика)
+**Файл:** `apps/web/src/shared/lib/socket-handlers.ts`
 
-### 4.3 SSE endpoint
-**Файл:** `apps/web/src/app/api/events/route.ts`
+- Аутентификация при подключении: читать сессию из cookie, отключать анонимов
+- При `join:conversation` — проверить что юзер участник, добавить в Socket.io room
+- При `typing:start/stop` — транслировать другим участникам комнаты
+- Graceful degradation: если Redis недоступен — Socket.io работает в single-instance режиме
 
-- `GET /api/events?channels=user:X:notifications,user:X:chat:Y`
-- Аутентификация через сессию из cookie (отклонять неавторизованных — 401)
-- Каждое соединение создаёт **отдельный** Redis subscriber (не шарить!)
-- Heartbeat каждые 25 сек (`data: ping\n\n`) — предотвращает разрыв через прокси
-- При disconnect → subscriber.quit()
-- Runtime: Node.js (не Edge — ioredis требует Node)
-
-### 4.4 Клиентский хук
-**Файл:** `apps/web/src/shared/hooks/use-realtime.ts`
+### 4.5 Клиентский хук
+**Файл:** `apps/web/src/shared/hooks/use-socket.ts`
 
 ```typescript
 "use client";
-export function useRealtime(channels: string[], onEvent?: (e: RealtimeEvent) => void) {
-  const router = useRouter();
-  useEffect(() => {
-    const qs = channels.map(c => `channels=${encodeURIComponent(c)}`).join("&");
-    const es = new EventSource(`/api/events?${qs}`);
-    es.onmessage = (e) => {
-      if (e.data === "ping") return;
-      const event = JSON.parse(e.data) as RealtimeEvent;
-      onEvent?.(event);
-      router.refresh();
-    };
-    return () => es.close();
-  }, [channels.join(",")]);
+import { useEffect, useRef } from "react";
+import { io, Socket } from "socket.io-client";
+
+let socket: Socket | null = null;
+
+export function useSocket() {
+  // Singleton — одно соединение на всё приложение
+  if (!socket) {
+    socket = io({ path: "/socket.io", autoConnect: true });
+  }
+  return socket;
 }
 ```
 
-### 4.5 Интеграция publish() в существующие Server Actions
+### 4.6 Типинг-индикатор (клиент)
+```typescript
+// В MessageInput.tsx:
+const handleTyping = useMemo(() => debounce(() => {
+  socket.emit("typing:stop", conversationId);
+}, 2000), [conversationId]);
 
-| Action | Канал | Событие |
-|--------|-------|---------|
-| `createOrderAction` | `feed:orders` | `NEW_ORDER` |
-| `submitProposalAction` | `order:{id}:proposals`, `user:{clientId}:notifications` | `NEW_PROPOSAL`, `NOTIFICATION` |
-| `acceptProposalAction` | `user:{providerId}:notifications` | `ORDER_STATUS` |
-| `completeOrderAction` | `user:{providerId}:notifications` | `ORDER_STATUS` |
-| `sendMessageAction` | `user:{recipientId}:chat:{convId}` | `NEW_MESSAGE` |
+const handleChange = (e) => {
+  setText(e.target.value);
+  socket.emit("typing:start", conversationId);
+  handleTyping(); // через 2 сек тишины — typing:stop
+};
+```
 
-### 4.6 Docker
+### 4.7 Интеграция emit() в Server Actions
+
+Server Actions не имеют прямого доступа к Socket.io серверу, поэтому используем Redis для публикации — socket-handlers подписаны на те же каналы:
+
+| Action | Событие на клиенте |
+|--------|--------------------|
+| `sendMessageAction` | `new:message` → участникам комнаты |
+| `submitProposalAction` | `new:proposal` + `new:notification` → владельцу заказа |
+| `createOrderAction` | `new:order` → всем авторизованным в ленте |
+| `acceptProposalAction` | `new:notification` → исполнителю |
+| `deleteMessage` (admin) | `message:deleted` → участникам |
+| `blockUserChat` (admin) | `user:blocked` → заблокированному |
+
+### 4.8 Docker
 ```yaml
-# docker-compose.yml — добавить сервис:
+# docker-compose.yml — добавить:
 redis:
   image: redis:7-alpine
   restart: unless-stopped
-  ports:
-    - "6379:6379"
+
+# Nginx — добавить в location /:
+# proxy_http_version 1.1;
+# proxy_set_header Upgrade $http_upgrade;
+# proxy_set_header Connection "upgrade";
 ```
 
 ---
