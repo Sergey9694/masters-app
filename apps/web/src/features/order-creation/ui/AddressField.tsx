@@ -7,7 +7,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/shar
 import { Input } from "@/shared/ui/input";
 import type { DadataSuggestion } from "@/shared/lib/dadata";
 import type { OrderFormValues } from "../model/order-schema";
-import { ensureCityAction } from "../api/ensure-city-action";
+import { ensureCityAction } from "@/shared/lib/ensure-city-action";
 import { GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
 
 interface AddressFieldProps {

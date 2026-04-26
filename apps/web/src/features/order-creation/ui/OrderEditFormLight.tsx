@@ -10,9 +10,9 @@ import { z } from "zod";
 
 import { cn } from "@/shared/lib/cn";
 import { updateOrderAction } from "../api/update-order-action";
-import { ensureCityAction } from "../api/ensure-city-action";
+import { ensureCityAction } from "@/shared/lib/ensure-city-action";
 import { GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
-import { DadataAddressInput } from "./DadataAddressInput";
+import { DadataAddressInput } from "@/shared/ui/DadataAddressInput";
 
 const schema = z.object({
   title: z.string().min(5, "Не менее 5 символов").max(100, "Слишком длинный"),

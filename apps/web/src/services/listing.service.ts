@@ -93,6 +93,14 @@ export const listingService = {
         views: true,
         status: true,
         createdAt: true,
+        provider: {
+          select: {
+            id: true,
+            rating: true,
+            isVerified: true,
+            user: { select: { firstName: true, displayName: true, avatar: true } },
+          },
+        },
         category: { select: { id: true, name: true, slug: true } },
         city: { select: { id: true, name: true, slug: true } },
       },

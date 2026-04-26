@@ -232,8 +232,14 @@ export default async function ProviderProfilePage({ params, searchParams }: Page
 
           {/* Reviews */}
           <section className="flex flex-col gap-4">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-base font-semibold">Отзывы</h2>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold">Отзывы</h2>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <ShieldCheck className="size-3" />
+                  Только проверенные
+                </span>
+              </div>
               <span className="text-sm text-muted-foreground">{provider.reviews.length}</span>
             </div>
 

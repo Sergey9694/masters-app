@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { db } from "@/shared/lib/db";
+import { getRateLimitInfo } from "@/shared/lib/rate-limit";
 import { ListingForm } from "./ListingForm";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,6 @@ export default async function NewListingPage() {
     orderBy: { name: "asc" },
   });
 
-  const { getRateLimitInfo } = await import("@/shared/lib/rate-limit");
   const rl = getRateLimitInfo({ key: `listing:create:${user.id}`, limit: 3, windowSec: 3600 });
 
   return (

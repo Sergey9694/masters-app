@@ -7,7 +7,7 @@ import { useForm, type UseFormReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ensureCityAction } from "../api/ensure-city-action";
+import { ensureCityAction } from "@/shared/lib/ensure-city-action";
 import { GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
 import {
   ArrowLeft,
@@ -32,7 +32,7 @@ import { convertHeicFiles } from "@/shared/lib/image-convert";
 import { orderSchema, type OrderFormValues } from "../model/order-schema";
 import { createOrderAction } from "../api/create-order-action";
 import { uploadImagesAction } from "../api/upload-action";
-import { DadataAddressInput } from "./DadataAddressInput";
+import { DadataAddressInput } from "@/shared/ui/DadataAddressInput";
 
 interface Option {
   id: string;
