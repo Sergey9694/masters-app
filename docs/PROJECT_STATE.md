@@ -14,7 +14,7 @@
 | Фаза | Название | Статус |
 |------|----------|--------|
 | 1–5 | Фундамент, Auth, БД, API, Desktop UI | ✅ Завершены |
-| 6 | Объявления от исполнителей | 🟡 ~80% — **осталось: edit + модерация** |
+| 6 | Объявления от исполнителей | ✅ Завершена |
 | 7 | Чат и уведомления (Redis + SSE) | ❌ Не начата |
 | 8 | Тесты и CI/CD | ❌ Не начата |
 | 9 | React Native (Expo) | ❌ Не начата |
@@ -25,17 +25,15 @@
 
 ## Фаза 6 — что сделано / что осталось
 
-### ✅ Готово
+### ✅ Всё готово
 - `6.1` Создание объявления (`/my-listings/new`, Server Action, Zod-схема)
+- `6.1.4` Rate-limit: 3 объявления/час на создание
 - `6.2` Каталог `/listings` + страница объявления `/listings/[slug]`
 - `6.3` Управление объявлениями `/my-listings` (список + смена статуса)
-- `6.5` Каталог специалистов `/providers` + профиль `/providers/[id]`
-
-### ❌ Осталось сделать
 - `6.3.3` `/my-listings/[slug]/edit` — страница редактирования объявления
-- `6.4.1` `/admin/listings` — таблица объявлений на модерации
-- `6.4.2` Server Action: одобрить/отклонить объявление + уведомление
-- `6.1.4` Rate-limit: 3 объявления/час на создание
+- `6.4.1` `/admin/listings` — таблица объявлений (фильтр по статусу + пагинация)
+- `6.4.2` Server Actions: одобрить/отклонить/удалить объявление (admin)
+- `6.5` Каталог специалистов `/providers` + профиль `/providers/[id]`
 - `6.5.5` UI-бейдж «Только проверенные отзывы» на `/providers/[id]`
 
 ---
@@ -74,16 +72,20 @@ apps/web/
 
 ## Последние значимые изменения
 
+- **Bugfix (Order Feed)**: Исправлена фильтрация по категориям (сохранение `categoryId=all` в URL) и синхронизация общего количества заказов в ленте через `orderService.list`.
+- **UX (Rate Limit)**: Время ожидания переведено в минуты. Добавлен упреждающий баннер и блокировка формы создания объявления при исчерпании лимита.
+- **Refactoring**: `DadataAddressInput` и `ensureCityAction` перенесены в `shared` для переиспользования между фичами.
+- **Фаза 6 завершена**: edit-страница, admin/listings, rate-limit на создание, бейдж «Проверенные отзывы»
+- `ListingForm` поддерживает `mode="edit"` + `initialData` + `listingId`
+- `features/admin/api/get-all-listings.ts` + `moderate-listing.ts` (approveListing, rejectListing, deleteListingAdminAction)
+- `features/admin/ui/ListingModerationActions.tsx` — компонент действий над объявлением
+- Admin nav: добавлен пункт «Объявления» (`/admin/listings`)
 - Объединён `MyOrderRow` + `OrderFeedCard` в единый компонент (variant="my")
-- Удалены legacy `OrderCard`, `OrderListItem`
-- Поиск в шапке — полная ширина + rounded-xl
 - Единые анимации через `shared/lib/motion.ts`
-- `AuthModal` — directional slide login↔register
-- Добавлен `city.slug` в Prisma select для my-orders/my-proposals (fix 404)
 
 ## Известные TODO / открытые вопросы
 
-- Модерация объявлений отключена: новые сразу `ACTIVE` (упрощено для MVP)
+- ⚠️ **[Фаза 11 / Вариант Б]** Модерация объявлений отключена: новые объявления сразу получают статус `ACTIVE` без проверки администратором. Решение принято осознанно для MVP — меньше трения для первых исполнителей. Когда база вырастет → включить `MODERATION` статус по умолчанию в `createListingAction` + уведомлять админа. `ListingStatus.MODERATION` в схеме уже есть.
 - Email — mock, пишет в `apps/web/email-debug.log`
 - `Прямое приглашение` кнопка «Предложить задачу» — заглушка → `/orders/new?provider=<id>`
 
