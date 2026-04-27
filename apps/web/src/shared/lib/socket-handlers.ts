@@ -20,49 +20,67 @@ async function getUserFromCookie(
     );
 
     let userId: string | null = null;
+    let authSource = "none";
 
-    // 1. Check custom session (Admin/Mobile)
-    const customToken = cookies["session"];
-    if (customToken) {
+    // 1. Try Auth.js session (Main Web/Telegram users) - Higher priority
+    const authJsCookieName = 
+      cookies["authjs.session-token"] ? "authjs.session-token" :
+      cookies["__Secure-authjs.session-token"] ? "__Secure-authjs.session-token" :
+      cookies["next-auth.session-token"] ? "next-auth.session-token" :
+      cookies["__Secure-next-auth.session-token"] ? "__Secure-next-auth.session-token" : 
+      null;
+
+    if (authJsCookieName) {
       try {
-        const payload = await decrypt(customToken);
-        userId = payload.userId;
+        const decoded = await decode({
+          token: cookies[authJsCookieName],
+          secret: process.env.AUTH_SECRET || "",
+          salt: authJsCookieName,
+        });
+        if (decoded?.sub) {
+          userId = decoded.sub;
+          authSource = "authjs";
+        }
       } catch (e) {
-        console.warn("[Socket Auth] Failed to decrypt custom session", e);
+        console.warn("[Socket Auth] Failed to decode Auth.js session", e);
       }
     }
 
-    // 2. Check Auth.js session (Web/Telegram)
+    // 2. Try custom session (Admin panel/Legacy mobile) - Fallback
     if (!userId) {
-      const authJsCookieName = 
-        cookies["authjs.session-token"] ? "authjs.session-token" :
-        cookies["__Secure-authjs.session-token"] ? "__Secure-authjs.session-token" :
-        cookies["next-auth.session-token"] ? "next-auth.session-token" :
-        cookies["__Secure-next-auth.session-token"] ? "__Secure-next-auth.session-token" : 
-        null;
-
-      if (authJsCookieName) {
+      const customToken = cookies["session"];
+      if (customToken) {
         try {
-          const decoded = await decode({
-            token: cookies[authJsCookieName],
-            secret: process.env.AUTH_SECRET || "",
-            salt: authJsCookieName, // Auth.js v5 requires salt, which defaults to cookie name
-          });
-          userId = decoded?.sub || null;
+          const payload = await decrypt(customToken);
+          if (payload?.userId) {
+            userId = payload.userId;
+            authSource = "custom";
+          }
         } catch (e) {
-          console.warn("[Socket Auth] Failed to decode Auth.js session", e);
+          console.warn("[Socket Auth] Failed to decrypt custom session", e);
         }
       }
     }
 
-    if (!userId) return null;
+    if (!userId) {
+      console.warn("[Socket Auth] No valid session found in cookies:", Object.keys(cookies));
+      return null;
+    }
 
     const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, firstName: true },
     });
+
+    if (user) {
+      console.log(`[Socket Auth] Authenticated user ${user.firstName} (${userId}) via ${authSource}`);
+    } else {
+      console.warn(`[Socket Auth] User ${userId} found in session but not in database`);
+    }
+
     return user;
-  } catch {
+  } catch (err) {
+    console.error("[Socket Auth] Unexpected error:", err);
     return null;
   }
 }

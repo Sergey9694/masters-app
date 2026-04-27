@@ -2,7 +2,7 @@
 
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
-> 🕓 Последнее обновление: 2026-04-27
+> 🕓 Последнее обновление: 2026-04-27 (Фикс Фазы 7)
 
 ---
 
@@ -54,7 +54,8 @@
 - `src/features/chat/ui/ConversationList.tsx` — мгновенное обновление (real-time refresh) через события `new:message` и `conversation:update`.
 - `src/features/chat/ui/MessageInput.tsx` — премиальный дизайн, адаптивная высота, анимация кнопки отправки.
 - `src/features/chat/ui/StartChatButton.tsx` — кнопка «Написать» на страницах провайдера
-- `src/features/chat/ui/NotificationBellClient.tsx` — bell с бейджем непрочитанных в хедере
+- `src/features/chat/ui/NotificationBellClient.tsx` — бейдж непрочитанных в хедере (только счетчик)
+- `src/features/chat/ui/ChatNotificationListener.tsx` — глобальные всплывающие уведомления (toasts) для всех страниц, включая админку.
 - `src/features/chat/ui/AdminChatActions.tsx` — block/unblock/export для admin
 - `src/features/chat/ui/AdminDeleteMessageButton.tsx` — удаление сообщения в admin UI
 
@@ -63,6 +64,8 @@
 - **Синхронизация комнат**: Унифицированы имена комнат `conv:${id}` во всех компонентах и экшенах.
 - **Socket Events**: Исправлены имена событий (`new:message` вместо `message:new`) для корректной работы клиента.
 - **Интеграция с откликами**: Исправлено автоматическое создание диалога при отправке предложения (Proposal) — теперь чат обновляется мгновенно.
+- **Приоритет сессий (Socket Auth)**: Исправлен конфликт сессий в WebSocket. Теперь Auth.js сессия имеет приоритет над старой сессией админа. Это решило проблему некорректного отображения имени в индикаторе печати («Ирина» вместо «Админ»).
+- **Глобальные уведомления**: Система уведомлений вынесена в `ChatNotificationListener` в `RootLayout`. Теперь тоасты о новых сообщениях работают во всем приложении, включая админ-панель.
 
 ### ✅ Страницы
 - `src/app/(main)/chat/layout.tsx` — full-height flex контейнер

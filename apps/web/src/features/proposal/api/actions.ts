@@ -59,10 +59,7 @@ export const submitProposalAction = authActionClient
             event: "new:message",
             data: { 
               conversationId: conversation.id, 
-              message: {
-                ...chatMsg,
-                createdAt: chatMsg.createdAt.toISOString()
-              } 
+              message: chatMsg
             }
           }),
 
@@ -72,10 +69,7 @@ export const submitProposalAction = authActionClient
             event: "new:message",
             data: { 
               conversationId: conversation.id, 
-              message: {
-                ...chatMsg,
-                createdAt: chatMsg.createdAt.toISOString()
-              } 
+              message: chatMsg
             }
           }),
 

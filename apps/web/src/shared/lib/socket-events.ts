@@ -1,11 +1,4 @@
-export interface MessageDTO {
-  id: string;
-  text: string;
-  attachments: string[];
-  senderId: string;
-  sender: { id: string; firstName: string; avatar: string | null };
-  createdAt: string; // ISO
-}
+export type { MessageDTO } from "@uslugi/shared-types";
 
 export interface NotificationDTO {
   id: string;

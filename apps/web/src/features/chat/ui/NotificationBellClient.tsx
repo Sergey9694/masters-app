@@ -5,9 +5,8 @@ import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { cn } from "@/shared/lib/cn";
-import { toast } from "sonner";
 import { usePathname } from "next/navigation";
-import type { MessageDTO } from "@/shared/lib/socket-events";
+import type { MessageDTO } from "@uslugi/shared-types";
 
 interface Props {
   initialUnread: number;
@@ -32,7 +31,7 @@ export function NotificationBellClient({ initialUnread, userId }: Props) {
     const handler = (data: { conversationId: string; message: MessageDTO }) => {
       console.log("[NotificationBell] Received new:message", data);
       
-      const convId = data.conversationId || (data.message as any).conversationId;
+      const convId = data.conversationId;
       if (!convId) {
         console.warn("[NotificationBell] No conversationId found in event data", data);
         return;
@@ -43,19 +42,6 @@ export function NotificationBellClient({ initialUnread, userId }: Props) {
       
       if (!isCurrentChat) {
         setCount((c) => c + 1);
-        
-        toast.info(`Новое сообщение от ${data.message.sender.firstName}`, {
-          description: data.message.text.length > 60 
-            ? data.message.text.slice(0, 60) + "..." 
-            : data.message.text,
-          action: {
-            label: "Открыть",
-            onClick: () => {
-              console.log("[NotificationBell] Redirecting to chat:", convId);
-              router.push(`/chat/${convId}`);
-            },
-          },
-        });
       }
     };
 

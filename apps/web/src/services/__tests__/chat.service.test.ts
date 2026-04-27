@@ -84,6 +84,7 @@ describe("chatService.getMessages", () => {
 
 describe("chatService.deleteMessage", () => {
   it("sets deletedAt (soft-delete), does not delete the record", async () => {
+    mockDb.user.findUnique.mockResolvedValue({ id: "admin1", role: "ADMIN" });
     mockDb.message.findUnique.mockResolvedValue({
       id: "msg1", conversationId: "conv1",
     });
@@ -107,5 +108,44 @@ describe("chatService.startConversation", () => {
 
     expect(result).toBe(existing);
     expect(mockDb.conversation.create).not.toHaveBeenCalled();
+  });
+});
+
+describe("chatService.getUnreadCount", () => {
+  it("returns count of conversations with new messages", async () => {
+    const now = new Date();
+    const past = new Date(now.getTime() - 1000);
+    
+    mockDb.conversationParticipant.findMany.mockResolvedValue([
+      { 
+        lastReadAt: past, 
+        conversation: { messages: [{ createdAt: now }] } 
+      },
+      { 
+        lastReadAt: now, 
+        conversation: { messages: [{ createdAt: past }] } 
+      },
+    ]);
+
+    const count = await chatService.getUnreadCount("user1");
+    expect(count).toBe(1); // Only the first one is unread
+  });
+});
+
+describe("chatService.deleteMessage Security", () => {
+  it("throws error if user is not an admin", async () => {
+    mockDb.user.findUnique.mockResolvedValue({ id: "user1", role: "USER" });
+    
+    await expect(
+      chatService.deleteMessage("msg1", "user1")
+    ).rejects.toThrow("Только администратор");
+  });
+
+  it("throws error if admin not found", async () => {
+    mockDb.user.findUnique.mockResolvedValue(null);
+    
+    await expect(
+      chatService.deleteMessage("msg1", "unknown")
+    ).rejects.toThrow("Только администратор");
   });
 });

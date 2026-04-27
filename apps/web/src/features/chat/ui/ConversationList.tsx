@@ -4,7 +4,7 @@ import { cn } from "@/shared/lib/cn";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { ConversationPreview } from "@/services/chat.service";
+import type { ConversationPreview, MessageDTO } from "@uslugi/shared-types";
 
 interface Props {
   conversations: ConversationPreview[];
@@ -12,7 +12,7 @@ interface Props {
   currentUserId: string;
 }
 
-function formatDate(date: Date) {
+function formatDate(date: string | Date) {
   const d = new Date(date);
   const today = new Date();
   if (d.toDateString() === today.toDateString()) {
@@ -33,7 +33,7 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
 
   useEffect(() => {
     if (!socket) return;
-    const handler = (data: any) => {
+    const handler = (data: { conversationId: string; message: MessageDTO }) => {
       // In a real app we would update the list item with the new message
       // and increment unread count if it's not the active conversation.
       // For now, router.refresh() is the "lazy" way, but let's try to be smarter

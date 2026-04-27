@@ -27,3 +27,20 @@ export function formatRelativeTime(date: Date | string | number | undefined | nu
   if (isNaN(d.getTime())) return "неизвестно";
   return formatDistanceToNow(d, { addSuffix: true, locale: ru });
 }
+
+/**
+ * Группирует элементы по дате (без учета времени)
+ */
+export function groupByDate<T extends { createdAt: Date | string }>(items: T[]) {
+  const groups: { date: Date; items: T[] }[] = [];
+  for (const item of items) {
+    const itemDate = new Date(item.createdAt);
+    const last = groups[groups.length - 1];
+    if (!last || last.date.toDateString() !== itemDate.toDateString()) {
+      groups.push({ date: itemDate, items: [item] });
+    } else {
+      last.items.push(item);
+    }
+  }
+  return groups;
+}

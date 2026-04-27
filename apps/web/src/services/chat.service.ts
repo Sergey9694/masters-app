@@ -1,7 +1,9 @@
 import { db } from "@/shared/lib/db";
 import { encryptText, decryptText } from "@/shared/lib/crypto";
+import { MessageDTO, ConversationPreview } from "@uslugi/shared-types";
 
-export interface MessageDTO {
+// Internal Prisma-mapped types with Date objects
+interface InternalMessage {
   id: string;
   text: string;
   attachments: string[];
@@ -12,29 +14,12 @@ export interface MessageDTO {
   deletedBy: string | null;
 }
 
-export interface ConversationPreview {
-  id: string;
-  orderId: string | null;
-  listingId: string | null;
-  lastMessage: MessageDTO | null;
-  unreadCount: number;
-  otherUser: { id: string; firstName: string; avatar: string | null };
-  updatedAt: Date;
-}
-
-function mapMessage(m: {
-  id: string;
-  text: string;
-  attachments: string[];
-  senderId: string;
-  sender: { id: string; firstName: string; avatar: string | null };
-  createdAt: Date;
-  deletedAt: Date | null;
-  deletedBy: string | null;
-}): MessageDTO {
+function mapMessage(m: InternalMessage): MessageDTO {
   return {
     ...m,
     text: m.deletedAt ? "[сообщение удалено]" : decryptText(m.text),
+    createdAt: m.createdAt.toISOString(),
+    deletedAt: m.deletedAt?.toISOString() ?? null,
   };
 }
 
@@ -106,15 +91,15 @@ export const chatService = {
       const other = conversation.participants.find((p) => p.userId !== userId)!.user;
       const last = conversation.messages[0] ?? null;
       const unread = last && (!lastReadAt || lastReadAt < last.createdAt) ? 1 : 0;
-      return {
-        id: conversation.id,
-        orderId: conversation.orderId,
-        listingId: conversation.listingId,
-        lastMessage: last ? mapMessage({ ...last, deletedAt: null, deletedBy: null }) : null,
-        unreadCount: unread,
-        otherUser: other,
-        updatedAt: conversation.updatedAt,
-      };
+        return {
+          id: conversation.id,
+          orderId: conversation.orderId,
+          listingId: conversation.listingId,
+          lastMessage: last ? mapMessage({ ...last, deletedAt: null, deletedBy: null }) : null,
+          unreadCount: unread,
+          otherUser: other,
+          updatedAt: conversation.updatedAt.toISOString(),
+        };
     });
   },
 
@@ -251,8 +236,12 @@ export const chatService = {
   },
 
   async deleteMessage(messageId: string, adminId: string): Promise<void> {
+    const admin = await db.user.findUnique({ where: { id: adminId }, select: { role: true } });
+    if (admin?.role !== "ADMIN") throw new Error("Только администратор может удалять сообщения");
+
     const message = await db.message.findUnique({ where: { id: messageId } });
     if (!message) throw new Error("Сообщение не найдено");
+    
     await db.message.update({
       where: { id: messageId },
       data: { deletedAt: new Date(), deletedBy: adminId },
@@ -268,12 +257,14 @@ export const chatService = {
   },
 
   async getUnreadCount(userId: string): Promise<number> {
+    // Оптимизированный запрос: выбираем только нужные поля для расчета
     const participations = await db.conversationParticipant.findMany({
       where: { userId },
       select: {
         lastReadAt: true,
         conversation: {
           select: {
+            updatedAt: true,
             messages: {
               where: { deletedAt: null, senderId: { not: userId } },
               orderBy: { createdAt: "desc" },
@@ -285,13 +276,10 @@ export const chatService = {
       },
     });
 
-    let count = 0;
-    for (const p of participations) {
+    return participations.filter((p) => {
       const lastMsg = p.conversation.messages[0];
-      if (!lastMsg) continue;
-      if (!p.lastReadAt || p.lastReadAt < lastMsg.createdAt) count++;
-    }
-    return count;
+      return lastMsg && (!p.lastReadAt || p.lastReadAt < lastMsg.createdAt);
+    }).length;
   },
 
   async exportConversation(conversationId: string, format: "json" | "csv"): Promise<Buffer> {
@@ -301,7 +289,7 @@ export const chatService = {
     }
     const header = "id,sender,text,sentAt,deletedAt\n";
     const rows = messages.map((m) =>
-      [m.id, m.sender.firstName, m.text, m.createdAt.toISOString(), m.deletedAt?.toISOString() ?? ""]
+      [m.id, m.sender.firstName, m.text, m.createdAt, m.deletedAt ?? ""]
         .map((field) => `"${String(field).replace(/\r?\n/g, " ").replace(/"/g, '""')}"`)
         .join(",")
     ).join("\n");

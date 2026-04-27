@@ -4,6 +4,7 @@ import { z } from "zod";
 import { authActionClient } from "@/shared/lib/safe-action";
 import { chatService } from "@/services/chat.service";
 import { emitToSocket } from "@/shared/lib/socket-emit";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 
 const schema = z.object({
   conversationId: z.string().uuid(),
@@ -14,6 +15,16 @@ const schema = z.object({
 export const sendMessageAction = authActionClient
   .schema(schema)
   .action(async ({ parsedInput, ctx }) => {
+    const rl = checkRateLimit({
+      key: `chat:send:${ctx.userId}`,
+      limit: 30,
+      windowSec: 60,
+    });
+
+    if (!rl.allowed) {
+      throw new Error(`Слишком много сообщений. Попробуйте через ${rl.retryAfterSec} сек.`);
+    }
+
     const message = await chatService.sendMessage(
       parsedInput.conversationId,
       ctx.userId,
@@ -27,10 +38,7 @@ export const sendMessageAction = authActionClient
       event: "new:message",
       data: {
         conversationId: parsedInput.conversationId,
-        message: {
-          ...message,
-          createdAt: message.createdAt.toISOString(),
-        },
+        message,
       },
     });
 
@@ -44,10 +52,7 @@ export const sendMessageAction = authActionClient
         event: "new:message",
         data: {
           conversationId: parsedInput.conversationId,
-          message: {
-            ...message,
-            createdAt: message.createdAt.toISOString(),
-          },
+          message,
         },
       });
     }

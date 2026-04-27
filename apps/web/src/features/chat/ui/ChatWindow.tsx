@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { sendMessageAction, getMessagesAction, markAsReadAction } from "@/features/chat";
-import type { MessageDTO } from "@/services/chat.service";
-import type { MessageDTO as SocketMessageDTO } from "@/shared/lib/socket-events";
+import type { MessageDTO } from "@uslugi/shared-types";
 import { MessageBubble } from "./MessageBubble";
 import { DateSeparator } from "./DateSeparator";
 import { TypingIndicator } from "./TypingIndicator";
@@ -13,6 +12,8 @@ import { ConversationHeader } from "./ConversationHeader";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { groupByDate } from "@/shared/lib/date";
+import { Virtuoso } from "react-virtuoso";
 
 interface Props {
   conversationId: string;
@@ -23,19 +24,6 @@ interface Props {
   showBack?: boolean;
 }
 
-function groupByDate(messages: MessageDTO[]) {
-  const groups: { date: Date; messages: MessageDTO[] }[] = [];
-  for (const msg of messages) {
-    const msgDate = new Date(msg.createdAt);
-    const last = groups[groups.length - 1];
-    if (!last || last.date.toDateString() !== msgDate.toDateString()) {
-      groups.push({ date: msgDate, messages: [msg] });
-    } else {
-      last.messages.push(msg);
-    }
-  }
-  return groups;
-}
 
 export function ChatWindow({
   conversationId,
@@ -79,23 +67,12 @@ export function ChatWindow({
       message,
     }: {
       conversationId: string;
-      message: SocketMessageDTO;
+      message: MessageDTO;
     }) => {
-      const mapped: MessageDTO = {
-        id: message.id,
-        text: message.text,
-        attachments: message.attachments,
-        senderId: message.senderId,
-        sender: message.sender,
-        createdAt: new Date(message.createdAt),
-        deletedAt: null,
-        deletedBy: null,
-      };
-
       if (cId === conversationId) {
         setMessages((prev) => {
-          if (prev.some((m) => m.id === mapped.id)) return prev;
-          return [...prev, mapped];
+          if (prev.some((m) => m.id === message.id)) return prev;
+          return [...prev, message];
         });
         markAsReadAction({ conversationId });
         // Прокрутка вниз при новом сообщении
@@ -142,7 +119,7 @@ export function ChatWindow({
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId
-            ? { ...m, deletedAt: new Date(), text: "[сообщение удалено]" }
+            ? { ...m, deletedAt: new Date().toISOString(), text: "[сообщение удалено]" }
             : m
         )
       );
@@ -201,7 +178,7 @@ export function ChatWindow({
       attachments: [],
       senderId: currentUserId,
       sender: { id: currentUserId, firstName: "Вы", avatar: null },
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
       deletedAt: null,
       deletedBy: null,
     };
@@ -236,44 +213,56 @@ export function ChatWindow({
         showBack={showBack}
       />
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-2 scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-primary/30 transition-colors">
-        <div ref={topRef} className="h-1 shrink-0" />
-        
-        {loadingMore && (
-          <div className="flex justify-center py-4">
-            <Loader2 className="size-5 animate-spin text-primary/60" />
-          </div>
-        )}
-
-        <div className="flex flex-col gap-6 mt-auto">
-          <AnimatePresence initial={false}>
-            {groups.map(({ date, messages: groupMsgs }) => (
-              <div key={date.toISOString()} className="flex flex-col gap-4">
-                <DateSeparator date={date} />
-                <div className="flex flex-col gap-3">
-                  {groupMsgs.map((msg) => (
-                    <MessageBubble
-                      key={msg.id}
-                      message={msg}
-                      isOwn={msg.senderId === currentUserId}
-                    />
-                  ))}
-                </div>
+      <div className="flex-1 overflow-hidden relative">
+        <Virtuoso
+          data={messages}
+          initialTopMostItemIndex={messages.length - 1}
+          followOutput="smooth"
+          alignToBottom
+          className="scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-primary/30 transition-colors"
+          style={{ height: '100%' }}
+          components={{
+            Header: () => (
+              <div className="flex flex-col">
+                <div ref={topRef} className="h-1 shrink-0" />
+                {loadingMore && (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="size-5 animate-spin text-primary/60" />
+                  </div>
+                )}
               </div>
-            ))}
-          </AnimatePresence>
-        </div>
-
-        {typingUser && (
-          <motion.div 
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-2"
-          >
-            <TypingIndicator userName={typingUser} />
-          </motion.div>
-        )}
-        <div ref={bottomRef} className="h-4 shrink-0" />
+            ),
+            Footer: () => (
+              <div className="flex flex-col">
+                {typingUser && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="px-4 py-2"
+                  >
+                    <TypingIndicator userName={typingUser} />
+                  </motion.div>
+                )}
+                <div ref={bottomRef} className="h-4 shrink-0" />
+              </div>
+            )
+          }}
+          itemContent={(index, msg) => {
+            const prevMsg = messages[index - 1];
+            const showDate = !prevMsg || 
+              new Date(msg.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString();
+            
+            return (
+              <div className="px-4 py-1 flex flex-col gap-4">
+                {showDate && <DateSeparator date={new Date(msg.createdAt)} />}
+                <MessageBubble
+                  message={msg}
+                  isOwn={msg.senderId === currentUserId}
+                />
+              </div>
+            );
+          }}
+        />
       </div>
 
       <div className="p-4 border-t border-border/40 bg-surface/50 backdrop-blur-md">
