@@ -11,7 +11,7 @@ interface Props {
   isOwn: boolean;
 }
 
-function formatTime(date: Date): string {
+function formatTime(date: Date | string): string {
   return new Date(date).toLocaleTimeString("ru-RU", { 
     hour: "2-digit", 
     minute: "2-digit" 
