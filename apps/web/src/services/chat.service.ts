@@ -260,6 +260,33 @@ export const chatService = {
     await db.user.update({ where: { id: userId }, data: { chatBlockedAt: null } });
   },
 
+  async getUnreadCount(userId: string): Promise<number> {
+    const participations = await db.conversationParticipant.findMany({
+      where: { userId },
+      select: {
+        lastReadAt: true,
+        conversation: {
+          select: {
+            messages: {
+              where: { deletedAt: null, senderId: { not: userId } },
+              orderBy: { createdAt: "desc" },
+              take: 1,
+              select: { createdAt: true },
+            },
+          },
+        },
+      },
+    });
+
+    let count = 0;
+    for (const p of participations) {
+      const lastMsg = p.conversation.messages[0];
+      if (!lastMsg) continue;
+      if (!p.lastReadAt || p.lastReadAt < lastMsg.createdAt) count++;
+    }
+    return count;
+  },
+
   async exportConversation(conversationId: string, format: "json" | "csv"): Promise<Buffer> {
     const messages = await this.getMessagesAdmin(conversationId);
     if (format === "json") {
