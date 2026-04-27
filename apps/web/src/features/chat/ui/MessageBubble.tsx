@@ -2,7 +2,7 @@
 
 import { cn } from "@/shared/lib/cn";
 import { motion } from "framer-motion";
-import type { MessageDTO } from "@/services/chat.service";
+import type { MessageDTO } from "@uslugi/shared-types";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
