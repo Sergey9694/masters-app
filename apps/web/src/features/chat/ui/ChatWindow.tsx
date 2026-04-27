@@ -19,7 +19,13 @@ interface Props {
   conversationId: string;
   currentUserId: string;
   otherUser: { id: string; firstName: string; avatar: string | null };
-  context: { orderId: string | null; listingId: string | null };
+  context: { 
+    orderId: string | null; 
+    orderSlug?: string | null;
+    citySlug?: string | null;
+    listingId: string | null; 
+    listingSlug?: string | null;
+  };
   initialMessages: MessageDTO[];
   showBack?: boolean;
 }

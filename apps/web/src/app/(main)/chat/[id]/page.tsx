@@ -25,6 +25,19 @@ export default async function ConversationPage({
         participants: {
           include: { user: { select: { id: true, firstName: true, avatar: true } } },
         },
+        order: {
+          select: {
+            id: true,
+            slug: true,
+            city: { select: { slug: true } },
+          },
+        },
+        listing: {
+          select: {
+            id: true,
+            slug: true,
+          },
+        },
       },
     }),
   ]);
@@ -58,7 +71,10 @@ export default async function ConversationPage({
           otherUser={otherParticipant.user}
           context={{
             orderId: conversation.orderId,
+            orderSlug: conversation.order?.slug || null,
+            citySlug: conversation.order?.city?.slug || null,
             listingId: conversation.listingId,
+            listingSlug: conversation.listing?.slug || null,
           }}
           initialMessages={messages}
           showBack={true}

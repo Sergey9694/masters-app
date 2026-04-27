@@ -4,15 +4,21 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 interface Props {
   otherUser: { id: string; firstName: string; avatar: string | null };
-  context: { orderId: string | null; listingId: string | null };
+  context: { 
+    orderId: string | null; 
+    orderSlug?: string | null;
+    citySlug?: string | null;
+    listingId: string | null; 
+    listingSlug?: string | null;
+  };
   showBack?: boolean;
 }
 
 export function ConversationHeader({ otherUser, context, showBack }: Props) {
-  const contextLink = context.orderId
-    ? { href: `/orders/${context.orderId}`, label: "Перейти к заказу" }
-    : context.listingId
-    ? { href: `/listings/${context.listingId}`, label: "Перейти к объявлению" }
+  const contextLink = (context.orderId && context.orderSlug && context.citySlug)
+    ? { href: `/orders/${context.citySlug}/${context.orderSlug}`, label: "Перейти к заказу" }
+    : (context.listingId && context.listingSlug)
+    ? { href: `/listings/${context.listingSlug}`, label: "Перейти к объявлению" }
     : null;
 
   return (
