@@ -4,6 +4,50 @@
 
 ---
 
+## [2026-04-27] Баги в реализации Фазы 7 (чат)
+
+### 1. AES-GCM: IV 16 байт вместо 16 → 12 байт (нарушение NIST)
+**Причина:** Первоначально `randomBytes(16)` — но NIST SP 800-38D рекомендует 12 байт для AES-GCM (96 бит). 16 байт вызывают дополнительное хэширование IV, что ухудшает производительность и является нестандартным.
+**Решение:** `apps/web/src/shared/lib/crypto.ts` — заменено на `randomBytes(12)`. Валидация ключа: `if (buf.length !== 32) throw`.
+**Файл:** `src/shared/lib/crypto.ts`
+
+### 2. AES-GCM: отсутствовала валидация длины ключа
+**Причина:** `ENCRYPTION_KEY` без проверки — при ключе неправильной длины Node.js бросал невнятную ошибку `Invalid key length`.
+**Решение:** Явная проверка `if (buf.length !== 32) throw new Error("ENCRYPTION_KEY must be 64 hex characters")` в `getKey()`.
+**Файл:** `src/shared/lib/crypto.ts`
+
+### 3. Тест crypto.test.ts: мутация глобального env без try/finally
+**Причина:** Тест изменял `process.env.ENCRYPTION_KEY = undefined` без восстановления — при падении теста следующие тесты получали некорректное окружение.
+**Решение:** Обёрнуто в `try/finally` для восстановления оригинального значения. Затем `ENCRYPTION_KEY` перенесён в `vitest.config.ts` env-блок, что полностью устранило проблему.
+**Файл:** `src/shared/lib/crypto.test.ts`, `vitest.config.ts`
+
+### 4. chat.service.ts: deleteMessage игнорировал отсутствующее сообщение
+**Причина:** Метод делал `update` без предварительной проверки — если сообщение не существовало, Prisma бросала непонятную ошибку `Record to update not found`.
+**Решение:** Добавлена явная проверка `if (!message) throw new Error("Сообщение не найдено")` перед update.
+**Файл:** `src/services/chat.service.ts`
+
+### 5. chat.service.ts: cursor не найден — тихий сбой
+**Причина:** При cursor-based пагинации — если cursor-сообщение не существовало, Prisma делала запрос без `cursor` (silent fallback), возвращая первую страницу вместо ошибки.
+**Решение:** Явная проверка существования cursor-сообщения с `throw` если не найдено.
+**Файл:** `src/services/chat.service.ts`
+
+### 6. chat.service.ts: CSV-инъекция через переносы строк
+**Причина:** Текст сообщений мог содержать `\n` и `"` — при CSV-экспорте это ломало структуру файла.
+**Решение:** Добавлено экранирование: `.replace(/\r?\n/g, " ").replace(/"/g, '""')` для каждого поля.
+**Файл:** `src/services/chat.service.ts`
+
+### 7. Vitest подхватывал Playwright e2e тесты
+**Причина:** `vitest.config.ts` не имел `include` паттерна — Vitest обходил все `*.spec.ts` включая `e2e/chat.spec.ts`. Playwright'овский `test.describe` несовместим с Vitest-раннером, suite падал.
+**Решение:** Добавлено `include: ["src/**/*.test.ts", "src/**/*.spec.ts"]` в `vitest.config.ts`.
+**Файл:** `apps/web/vitest.config.ts`
+
+### 8. ConversationParticipant: отсутствовал индекс по userId
+**Причина:** Запросы `WHERE userId = ?` делали seq scan по всей таблице `ConversationParticipant`.
+**Решение:** Добавлен `@@index([userId])` в Prisma-схему. Зафиксировано отдельным коммитом.
+**Файл:** `apps/web/prisma/schema.prisma`
+
+---
+
 ## [2026-04-26] Баги в форме создания объявления (ListingForm + ensureCityAction)
 
 ### 1. `Cannot read properties of undefined (reading 'user')` на `/my-listings`
