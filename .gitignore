@@ -72,3 +72,4 @@ next-env.d.ts
 
 # misc text files (debug logs, error dumps)
 *.txt
+.worktrees/
