@@ -7,6 +7,8 @@ import { authActionClient } from "@/shared/lib/safe-action";
 import { z } from "zod";
 import { proposalService } from "@/services/proposal.service";
 import { orderService } from "@/services/order.service";
+import { db } from "@/shared/lib/db";
+import { getIO } from "@/shared/lib/get-io";
 
 /**
  * Откликнуться на заявку
@@ -30,6 +32,14 @@ export const submitProposalAction = authActionClient
 
       revalidatePath(`/orders/${orderId}`);
       revalidatePath("/orders");
+
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        select: { clientId: true },
+      });
+      if (order) {
+        getIO()?.to(`user:${order.clientId}`).emit("new:proposal", { orderId });
+      }
 
       return { success: true };
     } catch (error: unknown) {
