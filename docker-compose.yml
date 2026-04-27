@@ -25,6 +25,20 @@ services:
         networks:
             - proxy_network
 
+    # --- REDIS (кэш и адаптер Socket.io) ---
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        networks:
+            - proxy_network
+
     # --- ПРИЛОЖЕНИЕ (Next.js) ---
     app:
         container_name: ${APP_CONTAINER_NAME:-uslugi_web}
@@ -49,12 +63,15 @@ services:
             DADATA_API_KEY: ${DADATA_API_KEY}
             ADMIN_EMAIL: ${ADMIN_EMAIL}
             ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+            REDIS_URL: "redis://redis:6379"
         volumes:
             - ./uploads:/app/uploads
         networks:
             - proxy_network
         depends_on:
             db:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
