@@ -132,7 +132,8 @@ export const chatService = {
     let cursorDate: Date | undefined;
     if (cursor) {
       const cursorMsg = await db.message.findUnique({ where: { id: cursor }, select: { createdAt: true } });
-      cursorDate = cursorMsg?.createdAt;
+      if (!cursorMsg) throw new Error("Сообщение-курсор не найдено");
+      cursorDate = cursorMsg.createdAt;
     }
 
     const messages = await db.message.findMany({
@@ -243,7 +244,8 @@ export const chatService = {
   },
 
   async deleteMessage(messageId: string, adminId: string): Promise<void> {
-    await db.message.findUnique({ where: { id: messageId } });
+    const message = await db.message.findUnique({ where: { id: messageId } });
+    if (!message) throw new Error("Сообщение не найдено");
     await db.message.update({
       where: { id: messageId },
       data: { deletedAt: new Date(), deletedBy: adminId },
@@ -264,12 +266,11 @@ export const chatService = {
       return Buffer.from(JSON.stringify(messages, null, 2), "utf8");
     }
     const header = "id,sender,text,sentAt,deletedAt\n";
-    const rows = messages
-      .map(
-        (m) =>
-          `"${m.id}","${m.sender.firstName}","${m.text.replace(/"/g, '""')}","${m.createdAt.toISOString()}","${m.deletedAt?.toISOString() ?? ""}"`
-      )
-      .join("\n");
+    const rows = messages.map((m) =>
+      [m.id, m.sender.firstName, m.text, m.createdAt.toISOString(), m.deletedAt?.toISOString() ?? ""]
+        .map((field) => `"${String(field).replace(/\r?\n/g, " ").replace(/"/g, '""')}"`)
+        .join(",")
+    ).join("\n");
     return Buffer.from(header + rows, "utf8");
   },
 };
