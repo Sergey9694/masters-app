@@ -4,6 +4,8 @@ import { cn } from "@/shared/lib/cn";
 import { motion } from "framer-motion";
 import type { MessageDTO } from "@/services/chat.service";
 
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
+
 interface Props {
   message: MessageDTO;
   isOwn: boolean;
@@ -30,13 +32,12 @@ export function MessageBubble({ message, isOwn }: Props) {
       )}
     >
       {!isOwn && (
-        <div className="size-8 rounded-full bg-muted shrink-0 overflow-hidden mt-1 ring-2 ring-background">
-          <img
-            src={message.sender.avatar ?? "/default-avatar.png"}
-            alt={message.sender.firstName}
-            className="size-full object-cover"
-          />
-        </div>
+        <Avatar size="default" className="mt-1 ring-2 ring-background">
+          {message.sender.avatar && (
+            <AvatarImage src={message.sender.avatar} alt={message.sender.firstName} />
+          )}
+          <AvatarFallback>{message.sender.firstName[0]}</AvatarFallback>
+        </Avatar>
       )}
       
       <div className="flex flex-col gap-1 min-w-0">

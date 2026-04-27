@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ConversationPreview, MessageDTO } from "@uslugi/shared-types";
 
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
+
 interface Props {
   conversations: ConversationPreview[];
   activeId?: string;
@@ -84,13 +86,16 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
             )}
           >
             <div className="relative shrink-0">
-              <div className="size-11 rounded-full bg-muted overflow-hidden ring-2 ring-background">
-                <img
-                  src={conv.otherUser.avatar ?? "/default-avatar.png"}
-                  alt={conv.otherUser.firstName}
-                  className="size-full object-cover transition group-hover:scale-105"
-                />
-              </div>
+              <Avatar size="lg" className="ring-2 ring-background">
+                {conv.otherUser.avatar && (
+                  <AvatarImage 
+                    src={conv.otherUser.avatar} 
+                    alt={conv.otherUser.firstName} 
+                    className="transition group-hover:scale-105"
+                  />
+                )}
+                <AvatarFallback>{conv.otherUser.firstName[0]}</AvatarFallback>
+              </Avatar>
               {/* Индикатор онлайна (заглушка для красоты) */}
               <div className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-500 border-2 border-background" />
             </div>

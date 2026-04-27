@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 interface Props {
   otherUser: { id: string; firstName: string; avatar: string | null };
@@ -21,11 +22,10 @@ export function ConversationHeader({ otherUser, context, showBack }: Props) {
           <ArrowLeft className="size-5" />
         </Link>
       )}
-      <img
-        src={otherUser.avatar ?? "/default-avatar.png"}
-        alt={otherUser.firstName}
-        className="size-9 rounded-full"
-      />
+      <Avatar size="default">
+        {otherUser.avatar && <AvatarImage src={otherUser.avatar} alt={otherUser.firstName} />}
+        <AvatarFallback>{otherUser.firstName[0]}</AvatarFallback>
+      </Avatar>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate">{otherUser.firstName}</p>
         {contextLink && (
