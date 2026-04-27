@@ -5,12 +5,14 @@ const ALGORITHM = "aes-256-gcm";
 function getKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY;
   if (!key) throw new Error("ENCRYPTION_KEY is not defined");
-  return Buffer.from(key, "hex");
+  const buf = Buffer.from(key, "hex");
+  if (buf.length !== 32) throw new Error("ENCRYPTION_KEY must be 64 hex characters (32 bytes)");
+  return buf;
 }
 
 // Format: "iv:authTag:ciphertext" (all in hex)
 export function encryptText(text: string): string {
-  const iv = randomBytes(16);
+  const iv = randomBytes(12);
   const cipher = createCipheriv(ALGORITHM, getKey(), iv);
   const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);
   const authTag = cipher.getAuthTag();

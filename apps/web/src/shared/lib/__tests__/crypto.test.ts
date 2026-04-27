@@ -1,13 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect } from "vitest";
+import { encryptText, decryptText } from "../crypto";
 
-// Set key before importing module
-const TEST_KEY = "a1b2c3d4".repeat(8); // 64 hex chars = 32 bytes
-
-beforeAll(() => { process.env.ENCRYPTION_KEY = TEST_KEY; });
-afterAll(() => { delete process.env.ENCRYPTION_KEY; });
-
-// Import AFTER setting env
-const { encryptText, decryptText } = await import("../crypto");
+// ENCRYPTION_KEY is set via vitest.config.ts env
 
 describe("crypto", () => {
   it("encrypt → decrypt returns original text", () => {
@@ -28,12 +22,20 @@ describe("crypto", () => {
 
   it("decrypt with wrong key throws error", () => {
     const encrypted = encryptText("secret");
-    process.env.ENCRYPTION_KEY = "f".repeat(64); // different key
-    expect(() => decryptText(encrypted)).toThrow();
-    process.env.ENCRYPTION_KEY = TEST_KEY; // restore
+    const original = process.env.ENCRYPTION_KEY;
+    process.env.ENCRYPTION_KEY = "f".repeat(64);
+    try {
+      expect(() => decryptText(encrypted)).toThrow();
+    } finally {
+      process.env.ENCRYPTION_KEY = original;
+    }
   });
 
-  it("decrypt with corrupted string throws error", () => {
-    expect(() => decryptText("bad:data:here")).toThrow();
+  it("decrypt with wrong segment count throws error", () => {
+    expect(() => decryptText("onlytwoparts:here")).toThrow("Invalid encrypted format");
+  });
+
+  it("decrypt with corrupted ciphertext throws error", () => {
+    expect(() => decryptText("aabb:ccdd:eeff")).toThrow();
   });
 });
