@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx server.ts",
     "dev:full": "powershell -ExecutionPolicy Bypass -File ./scripts/dev.ps1",
     "build": "next build",
-    "start": "next start",
+    "start": "tsx server.ts",
     "lint": "eslint",
     "claude": "powershell -ExecutionPolicy Bypass -File ./scripts/run-claude.ps1",
     "test": "vitest",
