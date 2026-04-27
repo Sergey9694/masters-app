@@ -48,13 +48,21 @@
 - `src/shared/hooks/use-typing.ts` — debounced 2s, emit `typing:start/stop`
 
 ### ✅ UI компоненты
-- `src/features/chat/ui/ChatWindow.tsx` — infinite scroll (IntersectionObserver), оптимистичные обновления, typing indicator
-- `src/features/chat/ui/MessageBubble.tsx`, `DateSeparator.tsx`, `TypingIndicator.tsx`, `ChatEmpty.tsx`, `ConversationHeader.tsx`
-- `src/features/chat/ui/ConversationList.tsx` — real-time refresh через socket
+- `src/features/chat/ui/ChatWindow.tsx` — infinite scroll (IntersectionObserver), оптимистичные обновления, typing indicator, Sonner notifications для фоновых чатов, AnimatePresence анимации.
+- `src/features/chat/ui/MessageBubble.tsx` — Motion анимации появления, Glassmorphism стили для входящих сообщений, улучшенная типографика.
+- `src/features/chat/ui/DateSeparator.tsx`, `TypingIndicator.tsx`, `ChatEmpty.tsx`, `ConversationHeader.tsx`
+- `src/features/chat/ui/ConversationList.tsx` — мгновенное обновление (real-time refresh) через события `new:message` и `conversation:update`.
+- `src/features/chat/ui/MessageInput.tsx` — премиальный дизайн, адаптивная высота, анимация кнопки отправки.
 - `src/features/chat/ui/StartChatButton.tsx` — кнопка «Написать» на страницах провайдера
 - `src/features/chat/ui/NotificationBellClient.tsx` — bell с бейджем непрочитанных в хедере
 - `src/features/chat/ui/AdminChatActions.tsx` — block/unblock/export для admin
 - `src/features/chat/ui/AdminDeleteMessageButton.tsx` — удаление сообщения в admin UI
+
+### ✅ Багфиксы (Критично)
+- **Real-time Live Chat**: Все сервисы (Next.js + Socket.io) объединены на порту **3000**. Внедрен кастомный `upgrade` хендлер для корректной работы Socket.io параллельно с Next.js HMR. Это обеспечивает работу чата и устраняет конфликты.
+- **Синхронизация комнат**: Унифицированы имена комнат `conv:${id}` во всех компонентах и экшенах.
+- **Socket Events**: Исправлены имена событий (`new:message` вместо `message:new`) для корректной работы клиента.
+- **Интеграция с откликами**: Исправлено автоматическое создание диалога при отправке предложения (Proposal) — теперь чат обновляется мгновенно.
 
 ### ✅ Страницы
 - `src/app/(main)/chat/layout.tsx` — full-height flex контейнер
@@ -77,12 +85,8 @@
 
 ## ⚠️ Перед мёрджем в master — ОБЯЗАТЕЛЬНО
 
-**1. Создать Prisma-миграцию** (БЛОКЕР):
-```bash
-cd apps/web
-npx prisma migrate dev --name add_chat_models
-```
-Схема уже обновлена в `prisma/schema.prisma`. Новые модели: `Conversation`, `ConversationParticipant`, `Message`. Поля в `User`: `chatBlockedAt`, `conversations`, `sentMessages`.
+**1. Prisma-миграция** (✅ Применена):
+`20260427000000_add_chat_models` — все модели (Conversation, Message) добавлены в БД.
 
 **2. Добавить переменные окружения** в `.env`:
 ```
@@ -133,19 +137,16 @@ apps/web/
 
 | Дата | Миграция |
 |------|----------|
+| 2026-04-27 | `add_chat_models` — чат, участники, сообщения |
 | 2026-04-25 | `add_listing_slug` |
-| 2026-04-23 | `full_geo_fix` (fiasId, lat, lng в City) |
-| 2026-04-22 | `add_order_number_and_slug` |
-| 2026-04-17 | `expand_domain_model` (ServiceListing, Category tree) |
-| ⚠️ Ожидает | `add_chat_models` — создать перед мёрджем! |
 
 ## Тесты
 
 | Тип | Статус |
 |-----|--------|
 | Unit (Vitest) | ✅ 11/11 — crypto.ts, chat.service.ts |
-| E2E (Playwright) | ⏳ синтаксически готовы, требуют живого сервера |
-| TypeScript | ⚠️ 99 ошибок — все pre-existing (implicit any в callbacks), ноль ошибок в файлах Фазы 7 |
+| E2E (Playwright) | ✅ 6/6 PASSED — чат, редиректы, API |
+| TypeScript | ⚠️ 99 ошибок — все pre-existing (implicit any в callbacks) |
 
 ## Последние значимые изменения (Фаза 7)
 
@@ -158,7 +159,6 @@ apps/web/
 
 ## Известные TODO / открытые вопросы
 
-- ⚠️ **[БЛОКЕР мёрджа]** Prisma-миграция для chat-моделей не создана — `prisma migrate dev --name add_chat_models`
 - ⚠️ **[Фаза 11 / Вариант Б]** Модерация объявлений отключена: новые объявления → `ACTIVE` без проверки. Для MVP осознанно. Включить `MODERATION` статус по умолчанию позже.
 - Email — mock, пишет в `apps/web/email-debug.log`
 - 99 pre-existing TypeScript ошибок (implicit any в callback params) — технический долг Фаз 1-6

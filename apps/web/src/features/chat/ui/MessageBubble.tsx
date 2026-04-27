@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/lib/cn";
+import { motion } from "framer-motion";
 import type { MessageDTO } from "@/services/chat.service";
 
 interface Props {
@@ -9,43 +10,68 @@ interface Props {
 }
 
 function formatTime(date: Date): string {
-  return new Date(date).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  return new Date(date).toLocaleTimeString("ru-RU", { 
+    hour: "2-digit", 
+    minute: "2-digit" 
+  });
 }
 
 export function MessageBubble({ message, isOwn }: Props) {
   const isDeleted = !!message.deletedAt;
 
   return (
-    <div className={cn("flex gap-2 max-w-[75%]", isOwn ? "ml-auto flex-row-reverse" : "")}>
-      {!isOwn && (
-        <img
-          src={message.sender.avatar ?? "/default-avatar.png"}
-          alt={message.sender.firstName}
-          className="size-7 rounded-full shrink-0 mt-1"
-        />
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={cn(
+        "flex gap-3 max-w-[85%] sm:max-w-[75%]", 
+        isOwn ? "ml-auto flex-row-reverse" : "mr-auto"
       )}
-      <div
-        className={cn(
-          "rounded-2xl px-3.5 py-2 text-sm leading-relaxed",
-          isOwn
-            ? "bg-primary text-primary-foreground rounded-tr-sm"
-            : "bg-surface text-foreground rounded-tl-sm",
-          isDeleted && "opacity-50 italic"
-        )}
-      >
-        {!isOwn && !isDeleted && (
-          <p className="text-xs font-medium mb-0.5 text-primary">{message.sender.firstName}</p>
-        )}
-        <p className="whitespace-pre-wrap break-words">{message.text}</p>
-        <p
+    >
+      {!isOwn && (
+        <div className="size-8 rounded-full bg-muted shrink-0 overflow-hidden mt-1 ring-2 ring-background">
+          <img
+            src={message.sender.avatar ?? "/default-avatar.png"}
+            alt={message.sender.firstName}
+            className="size-full object-cover"
+          />
+        </div>
+      )}
+      
+      <div className="flex flex-col gap-1 min-w-0">
+        <div
           className={cn(
-            "text-[10px] mt-0.5",
-            isOwn ? "text-primary-foreground/70 text-right" : "text-muted-foreground"
+            "relative px-4 py-2.5 text-sm shadow-sm transition-all",
+            isOwn
+              ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-sm"
+              : "bg-surface-elevated/80 backdrop-blur-sm border border-border/40 text-foreground rounded-2xl rounded-tl-sm",
+            isDeleted && "opacity-60 grayscale-[0.5]"
           )}
         >
-          {formatTime(message.createdAt)}
-        </p>
+          {!isOwn && !isDeleted && (
+            <span className="block text-[10px] font-bold uppercase tracking-wider text-primary/80 mb-1">
+              {message.sender.firstName}
+            </span>
+          )}
+          
+          <p className={cn(
+            "whitespace-pre-wrap break-words leading-relaxed",
+            isDeleted && "italic text-muted-foreground"
+          )}>
+            {message.text}
+          </p>
+
+          <div className={cn(
+            "flex items-center gap-1 mt-1 justify-end",
+            isOwn ? "text-primary-foreground/60" : "text-muted-foreground/60"
+          )}>
+            <span className="text-[10px] font-medium">
+              {formatTime(message.createdAt)}
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -10,7 +10,12 @@ let _socket: AppSocket | null = null;
 
 function getSocket(): AppSocket {
   if (!_socket) {
-    _socket = io({ path: "/socket.io", autoConnect: true, withCredentials: true });
+    _socket = io({
+      path: "/socket.io",
+      autoConnect: true,
+      withCredentials: true,
+      transports: ["websocket", "polling"],
+    });
   }
   return _socket;
 }

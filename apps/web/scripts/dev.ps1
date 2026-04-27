@@ -3,7 +3,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Cleanup old processes (only on specific ports to avoid killing self)
 Write-Host "--- Cleaning up old processes on ports 3000, 4040 ---" -ForegroundColor Cyan
-$ports = @(3000, 4040)
+$ports = @(3000, 4040, 6379)
 foreach ($port in $ports) {
     $processId = (Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue).OwningProcess
     if ($processId) {
@@ -47,9 +47,9 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "Docker is already running." -ForegroundColor Green
 }
 
-# 2. Start Database
-Write-Host "--- Starting Database ---" -ForegroundColor Cyan
-docker-compose up -d db
+# 2. Start Database & Redis
+Write-Host "--- Starting Database & Redis ---" -ForegroundColor Cyan
+docker-compose up -d db redis
 
 Write-Host "Waiting for Postgres engine to be fully ready..." -ForegroundColor Yellow
 $dbTimeout = 60
@@ -95,18 +95,6 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "WARNING: seed failed (continuing to start server)." -ForegroundColor Yellow
 }
 
-# 5. Start Ngrok (Optional)
-Write-Host "--- Checking Ngrok ---" -ForegroundColor Cyan
-$envFile = if (Test-Path ".env.local") { Get-Content ".env.local" -Raw } else { Get-Content ".env" -Raw }
-if ($envFile -match 'NEXT_PUBLIC_APP_URL="(https://[^"]+ngrok[^"]+)"') {
-    $ngrokUrl = $Matches[1]
-    Write-Host "Auto-starting Ngrok for: $ngrokUrl" -ForegroundColor Green
-    Stop-Process -Name ngrok -Force -ErrorAction SilentlyContinue
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "npx ngrok http 3000 --url=$ngrokUrl" -WindowStyle Normal
-} else {
-    Write-Host "Ngrok URL not found in .env files, skipping auto-start." -ForegroundColor Gray
-}
-
-# 6. Start Server
-Write-Host "--- Starting Next.js Dev Server ---" -ForegroundColor Cyan
-npx next dev
+# 5. Start Custom Socket.io Server
+Write-Host "--- Starting Socket.io + Next.js Server ---" -ForegroundColor Cyan
+npx tsx server.ts

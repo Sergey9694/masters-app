@@ -10,6 +10,8 @@ import { DateSeparator } from "./DateSeparator";
 import { TypingIndicator } from "./TypingIndicator";
 import { MessageInput } from "./MessageInput";
 import { ConversationHeader } from "./ConversationHeader";
+import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 interface Props {
@@ -52,9 +54,11 @@ export function ChatWindow({
   const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    console.log(`[ChatWindow] Emitting join:conversation for ${conversationId}`);
     socket.emit("join:conversation", conversationId);
     markAsReadAction({ conversationId });
     return () => {
+      console.log(`[ChatWindow] Emitting leave:conversation for ${conversationId}`);
       socket.emit("leave:conversation", conversationId);
     };
   }, [socket, conversationId]);
@@ -65,9 +69,8 @@ export function ChatWindow({
       message,
     }: {
       conversationId: string;
-      message: SocketMessageDTO; // createdAt: string (ISO) from socket event
+      message: SocketMessageDTO;
     }) => {
-      if (cId !== conversationId) return;
       const mapped: MessageDTO = {
         id: message.id,
         text: message.text,
@@ -78,8 +81,27 @@ export function ChatWindow({
         deletedAt: null,
         deletedBy: null,
       };
-      setMessages((prev) => [...prev, mapped]);
-      markAsReadAction({ conversationId });
+
+      if (cId === conversationId) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === mapped.id)) return prev;
+          return [...prev, mapped];
+        });
+        markAsReadAction({ conversationId });
+        // Прокрутка вниз при новом сообщении
+        setTimeout(() => {
+          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } else if (message.senderId !== currentUserId) {
+        // Уведомление о сообщении в ДРУГОМ диалоге
+        toast.info(`Новое сообщение от ${message.sender.firstName}`, {
+          description: message.text.length > 50 ? message.text.slice(0, 50) + "..." : message.text,
+          action: {
+            label: "Открыть",
+            onClick: () => (window.location.href = `/chat/${cId}`),
+          },
+        });
+      }
     };
 
     const onTypingStart = ({
@@ -189,39 +211,56 @@ export function ChatWindow({
   const groups = groupByDate(messages);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-background/50 backdrop-blur-sm">
       <ConversationHeader
         otherUser={otherUser}
         context={context}
         showBack={showBack}
       />
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1">
-        <div ref={topRef} className="h-1" />
+      <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-2 scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-primary/30 transition-colors">
+        <div ref={topRef} className="h-1 shrink-0" />
+        
         {loadingMore && (
-          <div className="flex justify-center py-2">
-            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          <div className="flex justify-center py-4">
+            <Loader2 className="size-5 animate-spin text-primary/60" />
           </div>
         )}
 
-        {groups.map(({ date, messages: groupMsgs }) => (
-          <div key={date.toISOString()} className="flex flex-col gap-1">
-            <DateSeparator date={date} />
-            {groupMsgs.map((msg) => (
-              <MessageBubble
-                key={msg.id}
-                message={msg}
-                isOwn={msg.senderId === currentUserId}
-              />
+        <div className="flex flex-col gap-6 mt-auto">
+          <AnimatePresence initial={false}>
+            {groups.map(({ date, messages: groupMsgs }) => (
+              <div key={date.toISOString()} className="flex flex-col gap-4">
+                <DateSeparator date={date} />
+                <div className="flex flex-col gap-3">
+                  {groupMsgs.map((msg) => (
+                    <MessageBubble
+                      key={msg.id}
+                      message={msg}
+                      isOwn={msg.senderId === currentUserId}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
-          </div>
-        ))}
+          </AnimatePresence>
+        </div>
 
-        {typingUser && <TypingIndicator userName={typingUser} />}
-        <div ref={bottomRef} />
+        {typingUser && (
+          <motion.div 
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-2"
+          >
+            <TypingIndicator userName={typingUser} />
+          </motion.div>
+        )}
+        <div ref={bottomRef} className="h-4 shrink-0" />
       </div>
 
-      <MessageInput conversationId={conversationId} onSend={handleSend} />
+      <div className="p-4 border-t border-border/40 bg-surface/50 backdrop-blur-md">
+        <MessageInput conversationId={conversationId} onSend={handleSend} />
+      </div>
     </div>
   );
 }

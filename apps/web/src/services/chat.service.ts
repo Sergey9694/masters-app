@@ -193,6 +193,13 @@ export const chatService = {
       data: { lastReadAt: new Date() },
     });
   },
+  
+  async getConversationParticipants(conversationId: string) {
+    return db.conversationParticipant.findMany({
+      where: { conversationId },
+      select: { userId: true },
+    });
+  },
 
   async getAllConversations(
     filters: { userId?: string; dateFrom?: Date; dateTo?: Date },

@@ -25,6 +25,7 @@ export interface ServerToClientEvents {
   "typing:stop": (data: { conversationId: string; userId: string }) => void;
   "message:deleted": (data: { conversationId: string; messageId: string }) => void;
   "user:blocked": () => void;
+  "conversation:update": (data: { conversationId: string }) => void;
 }
 
 // Client → Server

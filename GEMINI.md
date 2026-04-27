@@ -1,8 +1,7 @@
-# GEMINI.md — UslugiRyadom Project Context
-
 > Проект: **УслугиРядом** — YouDo-конкурент, доска городских услуг
 > Стек: Next.js 16+, TypeScript, Turborepo, Prisma, PostgreSQL + PostGIS
 > Архитектура: Feature-Sliced Design (FSD), Desktop-first
+> Философия: **Доверие (Trust), Локальность (Local), Экспертность (Expert)**
 
 ---
 
@@ -87,11 +86,11 @@ uslugi_ryadom/
     └── agent-reports/      — Отчёты агентов
 ```
 
-## Завершённые фазы
-
 - ✅ Фаза 1–5: Фундамент, Auth, Модель данных, REST API, Desktop UI
-- 🟡 Фаза 6: ServiceListing (объявления от исполнителей) — ~70%
-- ❌ Фазы 7–12: Чат, Тесты, Mobile, Geo, Монетизация
+- ✅ Фаза 6: ServiceListing (объявления от исполнителей)
+- ✅ Фаза 7: Чат и уведомления (Socket.io, Crypto, E2E)
+- ❌ Фазы 8–12: Тесты, Mobile, Geo, Монетизация
+- 🚀 Фаза 13: Социальный капитал и Trust-система (Neighborly Help)
 
 ## Критические правила
 

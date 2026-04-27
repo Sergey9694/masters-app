@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cn } from "@/shared/lib/cn";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ConversationPreview } from "@/services/chat.service";
 
 interface Props {
@@ -23,55 +23,105 @@ function formatDate(date: Date) {
 
 export function ConversationList({ conversations, activeId, currentUserId }: Props) {
   const { socket } = useSocket();
+  const [list, setList] = useState(conversations);
   const router = useRouter();
 
+  // Sync with props if they change (e.g. on manual refresh)
   useEffect(() => {
-    const handler = () => router.refresh();
+    setList(conversations);
+  }, [conversations]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handler = (data: any) => {
+      // In a real app we would update the list item with the new message
+      // and increment unread count if it's not the active conversation.
+      // For now, router.refresh() is the "lazy" way, but let's try to be smarter
+      // Or at least don't refresh if it's just a message in the ACTIVE conversation
+      if (data.conversationId !== activeId) {
+        router.refresh();
+      }
+    };
     socket.on("new:message", handler);
-    return () => { socket.off("new:message", handler); };
-  }, [socket, router]);
+    socket.on("conversation:update", () => router.refresh());
+    return () => { 
+      socket.off("new:message", handler); 
+      socket.off("conversation:update");
+    };
+  }, [socket, router, activeId]);
+
+  const sortedList = [...list].sort((a, b) => {
+    const timeA = a.lastMessage ? new Date(a.lastMessage.createdAt).getTime() : 0;
+    const timeB = b.lastMessage ? new Date(b.lastMessage.createdAt).getTime() : 0;
+    return timeB - timeA;
+  });
 
   if (conversations.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center p-8 text-center">
-        <p className="text-sm text-muted-foreground">Нет диалогов</p>
+      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center animate-in fade-in duration-500">
+        <div className="size-12 rounded-full bg-muted flex items-center justify-center mb-3">
+          <p className="text-xl">💬</p>
+        </div>
+        <p className="text-sm font-medium text-foreground">Нет диалогов</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Откликнитесь на заказ, чтобы начать общение
+        </p>
       </div>
     );
   }
 
   return (
-    <ul className="flex flex-col divide-y divide-border/50">
-      {conversations.map((conv) => (
+    <ul className="flex flex-col gap-1 p-2">
+      {sortedList.map((conv) => (
         <li key={conv.id}>
           <Link
             href={`/chat/${conv.id}`}
             className={cn(
-              "flex items-start gap-3 px-4 py-3 transition hover:bg-muted",
-              activeId === conv.id && "bg-muted"
+              "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+              activeId === conv.id 
+                ? "bg-primary/10 ring-1 ring-primary/20" 
+                : "hover:bg-muted/50"
             )}
           >
-            <img
-              src={conv.otherUser.avatar ?? "/default-avatar.png"}
-              alt={conv.otherUser.firstName}
-              className="size-10 rounded-full shrink-0"
-            />
+            <div className="relative shrink-0">
+              <div className="size-11 rounded-full bg-muted overflow-hidden ring-2 ring-background">
+                <img
+                  src={conv.otherUser.avatar ?? "/default-avatar.png"}
+                  alt={conv.otherUser.firstName}
+                  className="size-full object-cover transition group-hover:scale-105"
+                />
+              </div>
+              {/* Индикатор онлайна (заглушка для красоты) */}
+              <div className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-500 border-2 border-background" />
+            </div>
+
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-sm truncate">{conv.otherUser.firstName}</span>
+                <span className={cn(
+                  "font-semibold text-sm truncate",
+                  conv.unreadCount > 0 ? "text-foreground" : "text-foreground/80"
+                )}>
+                  {conv.otherUser.firstName}
+                </span>
                 {conv.lastMessage && (
-                  <span className="text-xs text-muted-foreground shrink-0">
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">
                     {formatDate(conv.lastMessage.createdAt)}
                   </span>
                 )}
               </div>
+              
               <div className="flex items-center justify-between gap-2 mt-0.5">
-                <p className="text-xs text-muted-foreground truncate">
+                <p className={cn(
+                  "text-xs truncate max-w-[160px]",
+                  conv.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"
+                )}>
                   {conv.lastMessage
                     ? (conv.lastMessage.senderId === currentUserId ? "Вы: " : "") + conv.lastMessage.text
-                    : "Нет сообщений"}
+                    : "Начните общение"}
                 </p>
+                
                 {conv.unreadCount > 0 && (
-                  <span className="shrink-0 size-5 flex items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                  <span className="shrink-0 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground px-1 shadow-sm">
                     {conv.unreadCount}
                   </span>
                 )}

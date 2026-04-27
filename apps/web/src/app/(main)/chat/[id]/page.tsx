@@ -37,19 +37,21 @@ export default async function ConversationPage({
   if (!otherParticipant) notFound();
 
   return (
-    <div className="flex w-full">
-      <aside className="hidden md:flex w-80 shrink-0 border-r border-border flex-col overflow-y-auto">
-        <div className="px-4 py-3 border-b border-border">
-          <h1 className="font-semibold text-base">Сообщения</h1>
+    <div className="flex w-full h-[calc(100vh-120px)] lg:h-[calc(100vh-40px)] overflow-hidden bg-background/30 rounded-2xl border border-border/50 shadow-xl">
+      <aside className="hidden md:flex w-80 shrink-0 border-r border-border/60 flex-col bg-surface/30 backdrop-blur-md">
+        <div className="px-5 py-4 border-b border-border/60 bg-background/40">
+          <h1 className="font-bold text-lg tracking-tight">Сообщения</h1>
         </div>
-        <ConversationList
-          conversations={conversations}
-          activeId={id}
-          currentUserId={user.id}
-        />
+        <div className="flex-1 overflow-y-auto">
+          <ConversationList
+            conversations={conversations}
+            activeId={id}
+            currentUserId={user.id}
+          />
+        </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 bg-background/20">
         <ChatWindow
           conversationId={id}
           currentUserId={user.id}
@@ -61,7 +63,7 @@ export default async function ConversationPage({
           initialMessages={messages}
           showBack={true}
         />
-      </div>
+      </main>
     </div>
   );
 }

@@ -33,8 +33,8 @@ export function MessageInput({ conversationId, onSend, disabled }: Props) {
   };
 
   return (
-    <div className="border-t border-border bg-card px-4 py-3">
-      <div className="flex items-end gap-2">
+    <div className="flex items-end gap-3">
+      <div className="relative flex-1">
         <textarea
           ref={textareaRef}
           value={text}
@@ -50,23 +50,28 @@ export function MessageInput({ conversationId, onSend, disabled }: Props) {
               handleSend();
             }
           }}
-          placeholder="Написать сообщение..."
+          placeholder="Сообщение..."
           disabled={disabled || sending}
           rows={1}
           className={cn(
-            "flex-1 resize-none rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm",
-            "focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10",
+            "flex-1 w-full resize-none rounded-2xl border border-border/40 bg-background/50 px-4 py-3 text-sm transition-all",
+            "focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10",
+            "placeholder:text-muted-foreground/60 scrollbar-none",
             "disabled:opacity-60 disabled:cursor-not-allowed max-h-[120px]"
           )}
         />
-        <button
-          onClick={handleSend}
-          disabled={!text.trim() || sending || disabled}
-          className="shrink-0 rounded-xl bg-primary p-2.5 text-primary-foreground transition hover:brightness-110 disabled:opacity-50"
-        >
-          <Send className="size-4" />
-        </button>
       </div>
+      
+      <button
+        onClick={handleSend}
+        disabled={!text.trim() || sending || disabled}
+        className={cn(
+          "shrink-0 rounded-2xl bg-primary p-3 text-primary-foreground transition-all duration-200 active:scale-95 shadow-md",
+          "hover:shadow-primary/20 hover:brightness-110 disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
+        )}
+      >
+        <Send className={cn("size-5 transition-transform", !text.trim() ? "translate-x-0" : "translate-x-0.5 -translate-y-0.5")} />
+      </button>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { cn } from "@/shared/lib/cn";
+import { toast } from "sonner";
 import type { MessageDTO } from "@/shared/lib/socket-events";
 
 interface Props {
@@ -17,14 +18,26 @@ export function NotificationBellClient({ initialUnread }: Props) {
   const router = useRouter();
 
   useEffect(() => {
-    const handler = (_data: { conversationId: string; message: MessageDTO }) => {
+    const handler = (data: { conversationId: string; message: MessageDTO }) => {
       setCount((c) => c + 1);
+      
+      // Показываем тост, если это не наше собственное сообщение
+      // (хотя сервер шлет его в user:ID комнату только получателю, так что это безопасно)
+      toast.info(`Новое сообщение от ${data.message.sender.firstName}`, {
+        description: data.message.text.length > 60 
+          ? data.message.text.slice(0, 60) + "..." 
+          : data.message.text,
+        action: {
+          label: "Открыть",
+          onClick: () => router.push(`/chat/${data.conversationId}`),
+        },
+      });
     };
     socket.on("new:message", handler);
     return () => {
       socket.off("new:message", handler);
     };
-  }, [socket]);
+  }, [socket, router]);
 
   return (
     <button
