@@ -29,6 +29,7 @@ export default async function ConversationPage({
           select: {
             id: true,
             slug: true,
+            category: { select: { slug: true } },
             city: { select: { slug: true } },
           },
         },
@@ -72,6 +73,7 @@ export default async function ConversationPage({
           context={{
             orderId: conversation.orderId,
             orderSlug: conversation.order?.slug || null,
+            categorySlug: conversation.order?.category?.slug || null,
             citySlug: conversation.order?.city?.slug || null,
             listingId: conversation.listingId,
             listingSlug: conversation.listing?.slug || null,

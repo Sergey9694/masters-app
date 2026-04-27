@@ -22,6 +22,7 @@ interface Props {
   context: { 
     orderId: string | null; 
     orderSlug?: string | null;
+    categorySlug?: string | null;
     citySlug?: string | null;
     listingId: string | null; 
     listingSlug?: string | null;

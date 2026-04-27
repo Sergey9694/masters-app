@@ -7,6 +7,7 @@ interface Props {
   context: { 
     orderId: string | null; 
     orderSlug?: string | null;
+    categorySlug?: string | null;
     citySlug?: string | null;
     listingId: string | null; 
     listingSlug?: string | null;
@@ -15,8 +16,8 @@ interface Props {
 }
 
 export function ConversationHeader({ otherUser, context, showBack }: Props) {
-  const contextLink = (context.orderId && context.orderSlug && context.citySlug)
-    ? { href: `/orders/${context.citySlug}/${context.orderSlug}`, label: "Перейти к заказу" }
+  const contextLink = (context.orderId && context.orderSlug && context.citySlug && context.categorySlug)
+    ? { href: `/orders/${context.citySlug}/${context.categorySlug}/${context.orderSlug}`, label: "Перейти к заказу" }
     : (context.listingId && context.listingSlug)
     ? { href: `/listings/${context.listingSlug}`, label: "Перейти к объявлению" }
     : null;
