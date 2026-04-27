@@ -355,6 +355,7 @@ model ConversationParticipant {
   lastReadAt DateTime?
 
   @@id([conversationId, userId])
+  @@index([userId])
 }
 
 model Message {
