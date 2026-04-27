@@ -77,18 +77,21 @@ model User {
   displayName  String?
   avatar       String?
   passwordHash String?
-  isBanned     Boolean      @default(false)
-  authProvider AuthProvider @default(TELEGRAM)
+  isBanned      Boolean      @default(false)
+  chatBlockedAt DateTime?
+  authProvider  AuthProvider @default(TELEGRAM)
 
   location Unsupported("geometry(Point, 4326)")?
   cityId   String?
   city     City?                                 @relation(fields: [cityId], references: [id])
 
-  providerProfile ProviderProfile?
-  ordersCreated   Order[]
-  reviewsLeft     Review[]         @relation("Author")
-  notifications   Notification[]
-  auditLogs       AuditLog[]
+  providerProfile      ProviderProfile?
+  ordersCreated        Order[]
+  reviewsLeft          Review[]                  @relation("Author")
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+  conversations        ConversationParticipant[]
+  sentMessages         Message[]                 @relation("SentMessages")
 
   // Auth.js
   emailVerified DateTime?
@@ -180,8 +183,9 @@ model ServiceListing {
 
   images String[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
 
   @@index([cityId, categoryId, status])
   @@index([providerId])
@@ -212,8 +216,9 @@ model Order {
 
   orderLocation Unsupported("geometry(Point, 4326)")?
 
-  proposals Proposal[]
-  review    Review?
+  proposals     Proposal[]
+  review        Review?
+  conversations Conversation[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }
@@ -287,6 +292,10 @@ enum NotificationType {
   ORDER_CANCELED
   NEW_REVIEW
   NEW_ORDER
+  NEW_MESSAGE
+  LISTING_APPROVED
+  LISTING_REJECTED
+  ACCOUNT_LINKED
 }
 
 model Notification {
@@ -317,4 +326,51 @@ model AuditLog {
 
   @@index([userId])
   @@index([entity, entityId])
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+
+  orderId   String?
+  order     Order?          @relation(fields: [orderId], references: [id])
+  listingId String?
+  listing   ServiceListing? @relation(fields: [listingId], references: [id])
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([listingId])
+}
+
+model ConversationParticipant {
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+
+  lastReadAt DateTime?
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+
+  text        String
+  attachments String[] @default([])
+
+  deletedAt DateTime?
+  deletedBy String?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
 }
