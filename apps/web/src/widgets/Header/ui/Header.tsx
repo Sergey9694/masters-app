@@ -44,7 +44,7 @@ export async function Header() {
           <div className="ml-auto flex items-center gap-2 pr-4 sm:pr-6">
             {user && (
               <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/40 p-1">
-                <NotificationBellClient initialUnread={unreadCount} />
+                <NotificationBellClient initialUnread={unreadCount} userId={user.id} />
                 <Link
                   href="/favorites"
                   aria-label="Избранное"

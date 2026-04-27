@@ -21,6 +21,7 @@ export const sendMessageAction = authActionClient
       parsedInput.attachments
     );
 
+    console.log(`[SendMessage] Emitting to conv:${parsedInput.conversationId}`);
     await emitToSocket({
       room: `conv:${parsedInput.conversationId}`,
       event: "new:message",

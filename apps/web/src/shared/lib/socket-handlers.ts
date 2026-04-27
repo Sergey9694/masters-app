@@ -2,6 +2,7 @@ import type { Server } from "socket.io";
 import type { ServerToClientEvents, ClientToServerEvents, SocketData } from "./socket-events";
 import { db } from "./db";
 import { decrypt } from "./auth";
+import { decode } from "next-auth/jwt";
 
 /**
  * Извлекает пользователя из cookie-заголовка.
@@ -18,14 +19,46 @@ async function getUserFromCookie(
       })
     );
 
-    const token = cookies["session"];
-    if (!token) return null;
+    let userId: string | null = null;
 
-    const payload = await decrypt(token);
-    if (!payload?.userId) return null;
+    // 1. Check custom session (Admin/Mobile)
+    const customToken = cookies["session"];
+    if (customToken) {
+      try {
+        const payload = await decrypt(customToken);
+        userId = payload.userId;
+      } catch (e) {
+        console.warn("[Socket Auth] Failed to decrypt custom session", e);
+      }
+    }
+
+    // 2. Check Auth.js session (Web/Telegram)
+    if (!userId) {
+      const authJsCookieName = 
+        cookies["authjs.session-token"] ? "authjs.session-token" :
+        cookies["__Secure-authjs.session-token"] ? "__Secure-authjs.session-token" :
+        cookies["next-auth.session-token"] ? "next-auth.session-token" :
+        cookies["__Secure-next-auth.session-token"] ? "__Secure-next-auth.session-token" : 
+        null;
+
+      if (authJsCookieName) {
+        try {
+          const decoded = await decode({
+            token: cookies[authJsCookieName],
+            secret: process.env.AUTH_SECRET || "",
+            salt: authJsCookieName, // Auth.js v5 requires salt, which defaults to cookie name
+          });
+          userId = decoded?.sub || null;
+        } catch (e) {
+          console.warn("[Socket Auth] Failed to decode Auth.js session", e);
+        }
+      }
+    }
+
+    if (!userId) return null;
 
     const user = await db.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: userId },
       select: { id: true, firstName: true },
     });
     return user;
@@ -39,6 +72,9 @@ export function registerSocketHandlers(
 ) {
   io.use(async (socket, next) => {
     const cookieHeader = socket.handshake.headers.cookie ?? "";
+    const cookieNames = cookieHeader.split(";").map(c => c.trim().split("=")[0]);
+    console.log(`[Socket Auth] Handshake cookies:`, cookieNames);
+
     const user = await getUserFromCookie(cookieHeader);
     if (!user) return next(new Error("Unauthorized"));
     socket.data.userId = user.id;
@@ -88,6 +124,7 @@ export function registerSocketHandlers(
     });
 
     socket.on("typing:start", (conversationId) => {
+      console.log(`[Socket Typing] Start from ${userName} in ${conversationId}`);
       socket.to(`conv:${conversationId}`).emit("typing:start", {
         conversationId,
         userId,
@@ -96,6 +133,7 @@ export function registerSocketHandlers(
     });
 
     socket.on("typing:stop", (conversationId) => {
+      console.log(`[Socket Typing] Stop from ${userName} in ${conversationId}`);
       socket.to(`conv:${conversationId}`).emit("typing:stop", {
         conversationId,
         userId,

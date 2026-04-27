@@ -3,8 +3,8 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useSocket } from "./use-socket";
 
-export function useTyping(conversationId: string) {
-  const { socket } = useSocket();
+export function useTyping(conversationId: string, userId?: string) {
+  const { socket } = useSocket(userId);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
 
@@ -17,6 +17,7 @@ export function useTyping(conversationId: string) {
 
   const handleInput = useCallback(() => {
     if (!isTypingRef.current) {
+      console.log(`[useTyping] Emitting typing:start for ${conversationId}`);
       socket.emit("typing:start", conversationId);
       isTypingRef.current = true;
     }

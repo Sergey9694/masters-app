@@ -1,38 +1,64 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { cn } from "@/shared/lib/cn";
 import { toast } from "sonner";
+import { usePathname } from "next/navigation";
 import type { MessageDTO } from "@/shared/lib/socket-events";
 
 interface Props {
   initialUnread: number;
+  userId?: string;
 }
 
-export function NotificationBellClient({ initialUnread }: Props) {
+export function NotificationBellClient({ initialUnread, userId }: Props) {
   const [count, setCount] = useState(initialUnread);
-  const { socket } = useSocket();
+  const { socket } = useSocket(userId);
   const router = useRouter();
 
+  const pathname = usePathname();
+
+  const pathnameRef = useRef(pathname);
   useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!socket) return;
+
     const handler = (data: { conversationId: string; message: MessageDTO }) => {
-      setCount((c) => c + 1);
+      console.log("[NotificationBell] Received new:message", data);
       
-      // Показываем тост, если это не наше собственное сообщение
-      // (хотя сервер шлет его в user:ID комнату только получателю, так что это безопасно)
-      toast.info(`Новое сообщение от ${data.message.sender.firstName}`, {
-        description: data.message.text.length > 60 
-          ? data.message.text.slice(0, 60) + "..." 
-          : data.message.text,
-        action: {
-          label: "Открыть",
-          onClick: () => router.push(`/chat/${data.conversationId}`),
-        },
-      });
+      const convId = data.conversationId || (data.message as any).conversationId;
+      if (!convId) {
+        console.warn("[NotificationBell] No conversationId found in event data", data);
+        return;
+      }
+
+      // Инкрементируем счетчик только если мы НЕ в этом чате
+      const isCurrentChat = pathnameRef.current === `/chat/${convId}`;
+      
+      if (!isCurrentChat) {
+        setCount((c) => c + 1);
+        
+        toast.info(`Новое сообщение от ${data.message.sender.firstName}`, {
+          description: data.message.text.length > 60 
+            ? data.message.text.slice(0, 60) + "..." 
+            : data.message.text,
+          action: {
+            label: "Открыть",
+            onClick: () => {
+              console.log("[NotificationBell] Redirecting to chat:", convId);
+              router.push(`/chat/${convId}`);
+            },
+          },
+        });
+      }
     };
+
     socket.on("new:message", handler);
     return () => {
       socket.off("new:message", handler);

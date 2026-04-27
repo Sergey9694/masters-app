@@ -22,7 +22,7 @@ function formatDate(date: Date) {
 }
 
 export function ConversationList({ conversations, activeId, currentUserId }: Props) {
-  const { socket } = useSocket();
+  const { socket } = useSocket(currentUserId);
   const [list, setList] = useState(conversations);
   const router = useRouter();
 

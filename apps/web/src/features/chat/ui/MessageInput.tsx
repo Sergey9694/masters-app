@@ -7,14 +7,15 @@ import { useTyping } from "@/shared/hooks/use-typing";
 
 interface Props {
   conversationId: string;
+  userId?: string;
   onSend: (text: string) => Promise<void>;
   disabled?: boolean;
 }
 
-export function MessageInput({ conversationId, onSend, disabled }: Props) {
+export function MessageInput({ conversationId, userId, onSend, disabled }: Props) {
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const { handleInput } = useTyping(conversationId);
+  const { handleInput } = useTyping(conversationId, userId);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = async () => {

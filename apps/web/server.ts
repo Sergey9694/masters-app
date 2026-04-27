@@ -78,14 +78,18 @@ async function startServer() {
     if (channel === "socket-bridge") {
       try {
         const { room, event, data } = JSON.parse(message);
-        console.log(`[Redis Bridge] Emitting to room ${room}: ${event}`);
+        console.log(`[Redis Bridge] Received message for room: ${room}, event: ${event}`);
+        
         if (room) {
+          const roomClients = io.sockets.adapter.rooms.get(room);
+          console.log(`[Redis Bridge] Room ${room} has ${roomClients?.size ?? 0} active local clients`);
           io.to(room).emit(event, data);
         } else {
+          console.log(`[Redis Bridge] Emitting global event: ${event}`);
           io.emit(event, data);
         }
       } catch (e) {
-        console.error("[Redis Bridge] Error parsing message:", e);
+        console.error("[Redis Bridge] Error processing message:", e);
       }
     }
   });

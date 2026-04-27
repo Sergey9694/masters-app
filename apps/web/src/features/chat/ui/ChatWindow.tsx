@@ -45,7 +45,7 @@ export function ChatWindow({
   initialMessages,
   showBack,
 }: Props) {
-  const { socket } = useSocket();
+  const { socket } = useSocket(currentUserId);
   const [messages, setMessages] = useState<MessageDTO[]>(initialMessages);
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -54,11 +54,21 @@ export function ChatWindow({
   const topRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log(`[ChatWindow] Emitting join:conversation for ${conversationId}`);
-    socket.emit("join:conversation", conversationId);
-    markAsReadAction({ conversationId });
+    const join = () => {
+      console.log(`[ChatWindow] Joining room: ${conversationId}`);
+      socket.emit("join:conversation", conversationId);
+      markAsReadAction({ conversationId });
+    };
+
+    if (socket.connected) {
+      join();
+    }
+
+    socket.on("connect", join);
+    
     return () => {
-      console.log(`[ChatWindow] Emitting leave:conversation for ${conversationId}`);
+      console.log(`[ChatWindow] Leaving room: ${conversationId}`);
+      socket.off("connect", join);
       socket.emit("leave:conversation", conversationId);
     };
   }, [socket, conversationId]);
@@ -92,36 +102,35 @@ export function ChatWindow({
         setTimeout(() => {
           bottomRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
-      } else if (message.senderId !== currentUserId) {
-        // Уведомление о сообщении в ДРУГОМ диалоге
-        toast.info(`Новое сообщение от ${message.sender.firstName}`, {
-          description: message.text.length > 50 ? message.text.slice(0, 50) + "..." : message.text,
-          action: {
-            label: "Открыть",
-            onClick: () => (window.location.href = `/chat/${cId}`),
-          },
-        });
       }
     };
 
     const onTypingStart = ({
       userId,
       userName,
+      conversationId: cId,
     }: {
       conversationId: string;
       userId: string;
       userName: string;
     }) => {
-      if (userId !== currentUserId) setTypingUser(userName);
+      console.log(`[Chat Debug] Typing Start from ${userName} (${userId}). Current: ${currentUserId}`);
+      if (cId === conversationId && userId !== currentUserId) {
+        setTypingUser(userName);
+      }
     };
 
     const onTypingStop = ({
       userId,
+      conversationId: cId,
     }: {
       conversationId: string;
       userId: string;
     }) => {
-      if (userId !== currentUserId) setTypingUser(null);
+      console.log(`[Chat Debug] Typing Stop from ${userId}`);
+      if (cId === conversationId && userId !== currentUserId) {
+        setTypingUser(null);
+      }
     };
 
     const onDeleted = ({
@@ -200,11 +209,20 @@ export function ChatWindow({
 
     const result = await sendMessageAction({ conversationId, text });
     if (result?.data?.message) {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === optimistic.id ? result.data!.message : m))
-      );
+      const realMessage = result.data.message;
+      setMessages((prev) => {
+        // 1. Убираем оптимистичное сообщение
+        const filtered = prev.filter((m) => m.id !== optimistic.id);
+        // 2. Проверяем, не пришло ли оно уже через сокет
+        if (filtered.some((m) => m.id === realMessage.id)) {
+          return filtered;
+        }
+        // 3. Если нет, добавляем реальное
+        return [...filtered, realMessage];
+      });
     } else {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      toast.error("Не удалось отправить сообщение");
     }
   };
 
@@ -259,7 +277,11 @@ export function ChatWindow({
       </div>
 
       <div className="p-4 border-t border-border/40 bg-surface/50 backdrop-blur-md">
-        <MessageInput conversationId={conversationId} onSend={handleSend} />
+        <MessageInput
+          conversationId={conversationId}
+          userId={currentUserId}
+          onSend={handleSend}
+        />
       </div>
     </div>
   );
