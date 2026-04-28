@@ -57,5 +57,13 @@
 - Требуется запущенный инстанс **Redis** (настроен в `docker-compose.yml`).
 - Переменная `NEXTAUTH_URL` обязательна для корректной работы CORS.
 
+## Production Note 2026-04-28: Socket.io proxy и Next-only модули
+
+В production Docker-образе `server.ts` собирается в отдельный proxy-бандл (`apps/web/server.js`), который запускает Socket.io и проксирует HTTP-трафик в Next.js standalone server (`server-next.js`) на внутреннем порту `3001`.
+
+Код, попадающий в proxy-бандл, не должен импортировать `next/server`, `next/headers`, `next/navigation` и другие Next-only entrypoints на верхнем уровне. Эти entrypoints рассчитаны на Next runtime и в standalone-образе могут отсутствовать частично вместе с compiled-зависимостями.
+
+Для проверки custom JWT cookie в Socket.io используется `src/shared/lib/session-token.ts`. Этот модуль содержит только `jose`-логику `encrypt`/`decrypt` и безопасен для proxy-бандла. `auth.ts` остается Next-aware модулем для route handlers, middleware и server actions.
+
 ---
 *Документация актуальна на: Апрель 2026*

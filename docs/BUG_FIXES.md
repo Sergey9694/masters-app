@@ -72,3 +72,15 @@
 ### 2. `Unique constraint failed` в `ensureCityAction`
 **Причина:** Поиск города по `name + region` не находил записи без региона, пытаясь создать дубликат.
 **Решение:** Поиск изменен на `OR: [{ fiasId }, { name }]`.
+
+## [2026-04-28] VPS Docker `uslugi_web` / Next standalone
+
+**Симптом:** контейнер `uslugi_web` в `/root/masters_app` проходил миграции и seed, запускал Next.js на `3001`, но падал на старте `Proxy-Bridge` с ошибкой `Cannot find module 'next/dist/compiled/ua-parser-js'`.
+
+**Причина:** production proxy-бандл (`apps/web/server.js`) импортировал `socket-handlers.ts`, а тот тянул `auth.ts`. В `auth.ts` на верхнем уровне используются `next/server` и `next/headers`. Для Next standalone эти entrypoint-файлы и их compiled-зависимости не гарантированно попадают в runtime-образ, поэтому proxy падал до готовности публичного порта `3000`.
+
+**Постоянный фикс:** JWT `encrypt`/`decrypt` вынесены в `apps/web/src/shared/lib/session-token.ts` без импортов `next/*`, `socket-handlers.ts` использует этот чистый модуль, `startup.js` больше не переобъявляет `appDir`, Dockerfile проверяет `startup.js` через `node --check` и вызывает esbuild с явным entrypoint `./apps/web/server.ts`.
+
+**Проверки:** `node --check apps/web/scripts/startup.js`, `tsc --noEmit --project apps/web/tsconfig.json`.
+
+---

@@ -110,6 +110,15 @@ ENCRYPTION_KEY=<64 hex символа>
 
 ---
 
+## Обновление 2026-04-28: стабилизация `masters_app` на VPS
+
+- На VPS `/root/masters_app` подтверждена причина падения `uslugi_web`: proxy-бандл импортировал `auth.ts`, а через него `next/server` / `next/headers`; Next standalone runtime падал на отсутствии `next/dist/compiled/ua-parser-js`.
+- Постоянное исправление в коде: custom JWT `encrypt`/`decrypt` вынесены в `src/shared/lib/session-token.ts`, а `socket-handlers.ts` использует этот чистый модуль вместо `auth.ts`.
+- Docker bootstrap усилен: `startup.js` проверяется через `node --check` на этапе сборки, а esbuild получает явный entrypoint `./apps/web/server.ts`.
+- Проверки после фикса: `node --check apps/web/scripts/startup.js`, `tsc --noEmit --project apps/web/tsconfig.json`.
+
+---
+
 ## 🔄 Агентам: как обновлять этот файл
 
 После каждой задачи, которая:
