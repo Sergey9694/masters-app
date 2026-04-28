@@ -1,6 +1,7 @@
 import { db } from "@/shared/lib/db";
 import { encryptText, decryptText } from "@/shared/lib/crypto";
 import { MessageDTO, ConversationPreview } from "@uslugi/shared-types";
+import { isUserOnline } from "@/shared/lib/redis";
 
 // Internal Prisma-mapped types with Date objects
 interface InternalMessage {
@@ -57,7 +58,7 @@ export const chatService = {
       include: {
         conversation: {
           include: {
-            participants: { include: { user: { select: { id: true, firstName: true, avatar: true } } } },
+            participants: { include: { user: { select: { id: true, firstName: true, avatar: true, lastSeenAt: true } } } },
             messages: {
               where: { deletedAt: null },
               orderBy: { createdAt: "desc" },
@@ -71,37 +72,28 @@ export const chatService = {
       take: 50, // H2: Limit conversations
     });
 
-    return participations.map(({ conversation, lastReadAt }: {
-      conversation: {
-        id: string;
-        orderId: string | null;
-        listingId: string | null;
-        updatedAt: Date;
-        participants: Array<{ userId: string; user: { id: string; firstName: string; avatar: string | null } }>;
-        messages: Array<{
-          id: string;
-          text: string;
-          attachments: string[];
-          senderId: string;
-          sender: { id: string; firstName: string; avatar: string | null };
-          createdAt: Date;
-        }>;
-      };
-      lastReadAt: Date | null;
-    }) => {
+    const results = await Promise.all(participations.map(async ({ conversation, lastReadAt }) => {
       const other = conversation.participants.find((p) => p.userId !== userId)!.user;
       const last = conversation.messages[0] ?? null;
       const unread = last && (!lastReadAt || lastReadAt < last.createdAt) ? 1 : 0;
-        return {
-          id: conversation.id,
-          orderId: conversation.orderId,
-          listingId: conversation.listingId,
-          lastMessage: last ? mapMessage({ ...last, deletedAt: null, deletedBy: null }) : null,
-          unreadCount: unread,
-          otherUser: other,
-          updatedAt: conversation.updatedAt.toISOString(),
-        };
-    });
+      const isOnline = await isUserOnline(other.id);
+
+      return {
+        id: conversation.id,
+        orderId: conversation.orderId,
+        listingId: conversation.listingId,
+        lastMessage: last ? mapMessage({ ...last, deletedAt: null, deletedBy: null }) : null,
+        unreadCount: unread,
+        otherUser: {
+          ...other,
+          lastSeenAt: other.lastSeenAt?.toISOString() ?? null,
+          isOnline,
+        },
+        updatedAt: conversation.updatedAt.toISOString(),
+      };
+    }));
+
+    return results;
   },
 
   async getMessages(

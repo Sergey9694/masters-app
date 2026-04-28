@@ -3,6 +3,7 @@ import type { ServerToClientEvents, ClientToServerEvents, SocketData } from "./s
 import { db } from "./db";
 import { decrypt } from "./auth";
 import { decode } from "next-auth/jwt";
+import { setUserOnline, setUserOffline } from "./redis";
 
 /**
  * Извлекает пользователя из cookie-заголовка.
@@ -85,6 +86,52 @@ async function getUserFromCookie(
   }
 }
 
+/**
+ * Рассылает статус пользователя всем, с кем у него есть общие чаты.
+ */
+async function broadcastUserStatus(
+  io: Server,
+  userId: string,
+  status: "online" | "offline",
+  lastSeenAt: Date
+) {
+  try {
+    // Находим всех участников всех чатов, где состоит данный пользователь
+    const conversations = await db.conversation.findMany({
+      where: {
+        participants: {
+          some: { userId }
+        }
+      },
+      select: {
+        participants: {
+          where: {
+            userId: { not: userId }
+          },
+          select: { userId: true }
+        }
+      }
+    });
+
+    const otherUserIds = new Set<string>();
+    conversations.forEach(conv => {
+      conv.participants.forEach(p => otherUserIds.add(p.userId));
+    });
+
+    console.log(`[Socket Status] Broadcasting ${status} for ${userId} to ${otherUserIds.size} users`);
+
+    otherUserIds.forEach(targetId => {
+      io.to(`user:${targetId}`).emit("user:status", {
+        userId,
+        status,
+        lastSeenAt: lastSeenAt.toISOString()
+      });
+    });
+  } catch (err) {
+    console.error("[Socket Status] Broadcast error:", err);
+  }
+}
+
 export function registerSocketHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents, object, SocketData>
 ) {
@@ -100,9 +147,20 @@ export function registerSocketHandlers(
     next();
   });
 
-  io.on("connection", (socket) => {
+  io.on("connection", async (socket) => {
     const { userId, userName } = socket.data;
     console.log(`[Socket] User connected: ${userName} (${userId}). Socket ID: ${socket.id}`);
+
+    // Устанавливаем статус ONLINE
+    const now = new Date();
+    await setUserOnline(userId);
+    await db.user.update({
+      where: { id: userId },
+      data: { lastSeenAt: now }
+    });
+    
+    // Уведомляем других
+    broadcastUserStatus(io, userId, "online", now);
 
     // Логируем ВСЕ входящие события для дебага
     socket.onAny((eventName, ...args) => {
@@ -144,8 +202,23 @@ export function registerSocketHandlers(
       console.log(`[Socket] User ${userName} left room conv:${conversationId}`);
     });
 
-    socket.on("disconnect", (reason) => {
+    socket.on("disconnect", async (reason) => {
       console.log(`[Socket] User disconnected: ${userName} (${userId}). Reason: ${reason}`);
+      
+      // Небольшая задержка, чтобы не спамить при перезагрузке страницы
+      setTimeout(async () => {
+        // Проверяем, не переподключился ли пользователь (в другом окне/вкладке)
+        const sockets = await io.in(`user:${userId}`).fetchSockets();
+        if (sockets.length === 0) {
+          const lastSeen = new Date();
+          await setUserOffline(userId);
+          await db.user.update({
+            where: { id: userId },
+            data: { lastSeenAt: lastSeen }
+          });
+          broadcastUserStatus(io, userId, "offline", lastSeen);
+        }
+      }, 3000);
     });
 
     socket.on("typing:start", async (conversationId) => {

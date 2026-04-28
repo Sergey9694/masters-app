@@ -12,13 +12,18 @@ import { ConversationHeader } from "./ConversationHeader";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { groupByDate } from "@/shared/lib/date";
 import { Virtuoso } from "react-virtuoso";
 
 interface Props {
   conversationId: string;
   currentUserId: string;
-  otherUser: { id: string; firstName: string; avatar: string | null };
+  otherUser: { 
+    id: string; 
+    firstName: string; 
+    avatar: string | null; 
+    lastSeenAt?: string | null; 
+    status?: "online" | "offline" 
+  };
   context: { 
     orderId: string | null; 
     orderSlug?: string | null;
@@ -43,6 +48,8 @@ export function ChatWindow({
   const { socket } = useSocket(currentUserId);
   const [messages, setMessages] = useState<MessageDTO[]>(initialMessages);
   const [typingUser, setTypingUser] = useState<string | null>(null);
+  const [onlineStatus, setOnlineStatus] = useState<"online" | "offline">(otherUser.status || "offline");
+  const [lastSeenAt, setLastSeenAt] = useState<string | null>(otherUser.lastSeenAt || null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialMessages.length === 30);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -80,10 +87,31 @@ export function ChatWindow({
           return [...prev, message];
         });
         markAsReadAction({ conversationId });
+        
+        // Сбрасываем "печатает", если сообщение пришло от того же пользователя
+        if (message.senderId === otherUser.id) {
+          setTypingUser(null);
+        }
+
         // Прокрутка вниз при новом сообщении
         setTimeout(() => {
           bottomRef.current?.scrollIntoView({ behavior: "smooth" });
         }, 100);
+      }
+    };
+
+    const onUserStatus = ({
+      userId,
+      status,
+      lastSeenAt: lastSeen,
+    }: {
+      userId: string;
+      status: "online" | "offline";
+      lastSeenAt: string;
+    }) => {
+      if (userId === otherUser.id) {
+        setOnlineStatus(status);
+        setLastSeenAt(lastSeen);
       }
     };
 
@@ -132,14 +160,16 @@ export function ChatWindow({
     socket.on("typing:start", onTypingStart);
     socket.on("typing:stop", onTypingStop);
     socket.on("message:deleted", onDeleted);
+    socket.on("user:status", onUserStatus);
 
     return () => {
       socket.off("new:message", onMessage);
       socket.off("typing:start", onTypingStart);
       socket.off("typing:stop", onTypingStop);
       socket.off("message:deleted", onDeleted);
+      socket.off("user:status", onUserStatus);
     };
-  }, [socket, conversationId, currentUserId]);
+  }, [socket, conversationId, currentUserId, otherUser.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -214,6 +244,8 @@ export function ChatWindow({
         otherUser={otherUser}
         context={context}
         showBack={showBack}
+        status={onlineStatus}
+        lastSeenAt={lastSeenAt}
       />
 
       <div className="flex-1 overflow-hidden relative">

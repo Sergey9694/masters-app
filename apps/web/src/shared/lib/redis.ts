@@ -12,3 +12,25 @@ export function getRedis(): Redis {
   }
   return global._redis;
 }
+
+const STATUS_PREFIX = "user:status:";
+
+/**
+ * Устанавливает статус пользователя 'online' с временем жизни (TTL) 2 минуты.
+ * Используем TTL как предохранитель, если disconnect не сработает.
+ */
+export async function setUserOnline(userId: string) {
+  const redis = getRedis();
+  await redis.set(`${STATUS_PREFIX}${userId}`, "online", "EX", 120);
+}
+
+export async function setUserOffline(userId: string) {
+  const redis = getRedis();
+  await redis.del(`${STATUS_PREFIX}${userId}`);
+}
+
+export async function isUserOnline(userId: string): Promise<boolean> {
+  const redis = getRedis();
+  const status = await redis.get(`${STATUS_PREFIX}${userId}`);
+  return status === "online";
+}

@@ -33,21 +33,39 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
     setList(conversations);
   }, [conversations]);
 
+  const [onlineUsers, setOnlineUsers] = useState<Record<string, boolean>>({});
+
+  // Initialize online status from conversations
+  useEffect(() => {
+    const initialStatuses: Record<string, boolean> = {};
+    conversations.forEach(c => {
+      if (c.otherUser.id) {
+        initialStatuses[c.otherUser.id] = !!c.otherUser.isOnline;
+      }
+    });
+    setOnlineUsers(initialStatuses);
+  }, [conversations]);
+
   useEffect(() => {
     if (!socket) return;
-    const handler = (data: { conversationId: string; message: MessageDTO }) => {
-      // In a real app we would update the list item with the new message
-      // and increment unread count if it's not the active conversation.
-      // For now, router.refresh() is the "lazy" way, but let's try to be smarter
-      // Or at least don't refresh if it's just a message in the ACTIVE conversation
+    
+    const onMessage = (data: { conversationId: string; message: MessageDTO }) => {
       if (data.conversationId !== activeId) {
         router.refresh();
       }
     };
-    socket.on("new:message", handler);
+
+    const onUserStatus = (data: { userId: string; isOnline: boolean }) => {
+      setOnlineUsers(prev => ({ ...prev, [data.userId]: data.isOnline }));
+    };
+
+    socket.on("new:message", onMessage);
+    socket.on("user:status", onUserStatus);
     socket.on("conversation:update", () => router.refresh());
+
     return () => { 
-      socket.off("new:message", handler); 
+      socket.off("new:message", onMessage); 
+      socket.off("user:status", onUserStatus);
       socket.off("conversation:update");
     };
   }, [socket, router, activeId]);
@@ -96,8 +114,10 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
                 )}
                 <AvatarFallback>{conv.otherUser.firstName[0]}</AvatarFallback>
               </Avatar>
-              {/* Индикатор онлайна (заглушка для красоты) */}
-              <div className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-500 border-2 border-background" />
+              {/* Индикатор онлайна */}
+              {onlineUsers[conv.otherUser.id] && (
+                <div className="absolute bottom-0 right-0 size-3 rounded-full bg-emerald-500 border-2 border-background animate-in zoom-in duration-300" />
+              )}
             </div>
 
             <div className="flex-1 min-w-0">

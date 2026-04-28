@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { chatService } from "@/services/chat.service";
 import { db } from "@/shared/lib/db";
+import { isUserOnline } from "@/shared/lib/redis";
 import { ConversationList } from "@/features/chat/ui/ConversationList";
 import { ChatWindow } from "@/features/chat/ui/ChatWindow";
 
@@ -24,7 +25,7 @@ export default async function ConversationPage({
       where: { id },
       include: {
         participants: {
-          include: { user: { select: { id: true, firstName: true, avatar: true } } },
+          include: { user: { select: { id: true, firstName: true, avatar: true, lastSeenAt: true } } },
         },
         order: {
           select: {
@@ -51,6 +52,8 @@ export default async function ConversationPage({
   );
   if (!otherParticipant) notFound();
 
+  const isOnline = await isUserOnline(otherParticipant.userId);
+
   return (
     <div className="flex w-full h-[calc(100vh-120px)] lg:h-[calc(100vh-40px)] overflow-hidden bg-background/30 rounded-2xl border border-border/50 shadow-xl">
       <aside className="hidden md:flex w-80 shrink-0 border-r border-border/60 flex-col bg-surface/30 backdrop-blur-md">
@@ -70,7 +73,10 @@ export default async function ConversationPage({
         <ChatWindow
           conversationId={id}
           currentUserId={user.id}
-          otherUser={otherParticipant.user}
+          otherUser={{
+          ...otherParticipant.user,
+          status: isOnline ? "online" : "offline"
+        }}
           context={{
             orderId: conversation.orderId,
             orderSlug: conversation.order?.slug || null,

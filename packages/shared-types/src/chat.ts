@@ -22,7 +22,9 @@ export interface ConversationPreview {
   otherUser: { 
     id: string; 
     firstName: string; 
-    avatar: string | null 
+    avatar: string | null;
+    lastSeenAt?: string | null;
+    isOnline?: boolean;
   };
   updatedAt: string; // ISO string
 }

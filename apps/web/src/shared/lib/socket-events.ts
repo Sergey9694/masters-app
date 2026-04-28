@@ -20,6 +20,7 @@ export interface ServerToClientEvents {
   "message:deleted": (data: { conversationId: string; messageId: string }) => void;
   "user:blocked": () => void;
   "conversation:update": (data: { conversationId: string }) => void;
+  "user:status": (data: { userId: string; status: "online" | "offline"; lastSeenAt: string }) => void;
 }
 
 // Client → Server
