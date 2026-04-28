@@ -63,9 +63,10 @@ ENV NODE_ENV="production"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV UPLOADS_DIR="/app/uploads"
 
-# Устанавливаем необходимые системные зависимости и Prisma CLI для startup.js
+# Устанавливаем необходимые системные зависимости и пакеты для кастомного сервера и сидинга
 RUN apk add --no-cache openssl libc6-compat curl && \
-    npm install -g prisma@5.22.0 bcryptjs
+    npm install -g prisma@5.22.0 && \
+    npm install socket.io@4.8.3 ioredis@5.10.1 @socket.io/redis-adapter@8.3.0 bcryptjs@2.4.3
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

@@ -167,10 +167,15 @@ async function main() {
         console.log(`[STARTUP] Warning during asset linking: ${e.message}`);
     }
 
-    const serverTsPath = path.join(__dirname, "apps", "web", "server.ts");
+    // Настройка путей для поиска модулей
+    const rootNodeModules = path.join(__dirname, "node_modules");
+    const standaloneNodeModules = path.join(__dirname, "apps", "web", "node_modules");
+    process.env.NODE_PATH = `${rootNodeModules}:${standaloneNodeModules}${process.env.NODE_PATH ? ":" + process.env.NODE_PATH : ""}`;
+    require('module').Module._initPaths();
+
     const serverJsPath = path.join(__dirname, "apps", "web", "server.js");
     
-    console.log(`[STARTUP] Checking entry points: TS=${serverTsPath}, JS=${serverJsPath}`);
+    console.log(`[STARTUP] Checking entry points: JS=${serverJsPath}`);
 
     if (fs.existsSync(serverJsPath)) {
         console.log(`[STARTUP] Launching compiled CUSTOM server.js (Socket.io support)...`);
