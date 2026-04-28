@@ -21,6 +21,9 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 # Копируем исходный код
 COPY . .
 
+# Fail the image build early if the runtime bootstrap script has a syntax error.
+RUN node --check apps/web/scripts/startup.js
+
 # Нативные бинарники для Alpine (musl)
 RUN npm install --no-save --os=linux --libc=musl --cpu=x64 sharp @tailwindcss/oxide-linux-x64-musl && \
     cd apps/web && npm install --no-save --os=linux --libc=musl --cpu=x64 lightningcss @tailwindcss/oxide-linux-x64-musl
@@ -44,7 +47,7 @@ RUN npx turbo run build --filter=@uslugi/web && \
 
 # Компилируем кастомный сервер для продакшена
 # Бандлим всё (включая socket.io и ioredis), КРОМЕ next и prisma
-RUN npx esbuild apps/web/server.ts \
+RUN npx esbuild ./apps/web/server.ts \
     --bundle \
     --platform=node \
     --target=node20 \

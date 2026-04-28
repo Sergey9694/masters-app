@@ -1,7 +1,7 @@
 import type { Server, Socket } from "socket.io";
 import type { ServerToClientEvents, ClientToServerEvents, SocketData } from "./socket-events";
 import { db } from "./db";
-import { decrypt } from "./auth";
+import { decrypt } from "./session-token";
 import { decode } from "next-auth/jwt";
 import { setUserOnline, setUserOffline } from "./redis";
 

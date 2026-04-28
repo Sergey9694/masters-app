@@ -181,7 +181,6 @@ async function main() {
     }
 
     // Change directory to the app root so Next.js can find .next folder
-    const appDir = path.join(__dirname, "apps", "web");
     console.log(`[STARTUP] Changing working directory to: ${appDir}`);
     process.chdir(appDir);
 
