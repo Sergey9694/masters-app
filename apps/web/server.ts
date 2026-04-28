@@ -1,66 +1,62 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createServer } from "node:http";
+import { createServer, request } from "node:http";
 import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 
 // --- POLYFILL START ---
-// Next.js 16 requires AsyncLocalStorage to be available before 'next' is imported
 if (typeof (globalThis as any).AsyncLocalStorage === "undefined") {
   (globalThis as any).AsyncLocalStorage = AsyncLocalStorage;
 }
 // --- POLYFILL END ---
 
+/**
+ * ARCHITECTURE: Proxy-Bridge
+ * This server listens on the PUBLIC_PORT (3000) and:
+ * 1. Handles Socket.io traffic locally.
+ * 2. Proxies all other HTTP traffic to the Next.js standalone server on NEXT_PORT (3001).
+ * 
+ * This avoids any dependency conflicts between Next.js standalone and custom server logic.
+ */
+
 async function startServer() {
   const dev = process.env.NODE_ENV !== "production";
   const hostname = "0.0.0.0";
-  const port = parseInt(process.env.PORT ?? "3000", 10);
+  const PUBLIC_PORT = parseInt(process.env.PORT ?? "3000", 10);
+  const NEXT_PORT = PUBLIC_PORT + 1; // Usually 3001
 
-  let app: any;
-
-  if (dev) {
-    const { default: next } = await import("next");
-    app = next({ dev, hostname, port });
-  } else {
-    // In production (standalone mode), we use the lightweight NextNodeServer
-    // directly to avoid issues with missing dev dependencies (like webpack-lib)
-    try {
-      const NextServer = require("next/dist/server/next-server").default;
-      app = new NextServer({
-        hostname,
-        port,
-        dir: process.cwd(), // Standalone server expects to be run from the root of the app
-        dev: false,
-        customServer: true,
-        conf: { distDir: ".next" }
-      });
-      console.log("▶ [Server] Standalone NextNodeServer initialized successfully");
-    } catch (e: any) {
-      console.warn("⚠ [Server] Failed to initialize Standalone NextNodeServer:", e.message);
-      console.log("▶ [Server] Falling back to standard next() initialization...");
-      const { default: next } = await import("next");
-      app = next({ dev, hostname, port });
-    }
-  }
-
-  const handler = app.getRequestHandler();
-
-  // app.prepare() is not strictly needed for NextNodeServer in standalone, 
-  // but we call it for compatibility with the dev/standard mode
-  if (typeof app.prepare === 'function') {
-    await app.prepare();
-  }
+  console.log(`[Proxy] Initializing Proxy-Bridge on port ${PUBLIC_PORT} -> ${NEXT_PORT}`);
 
   const httpServer = createServer((req, res) => {
-    if (req.url?.startsWith("/socket.io")) {
-      console.log(`[Server] Incoming Socket.io request: ${req.method} ${req.url}`);
-    }
-    return handler(req, res);
+    // 1. Simple HTTP Proxy to Next.js
+    const proxyReq = request({
+      hostname: "localhost",
+      port: NEXT_PORT,
+      path: req.url,
+      method: req.method,
+      headers: req.headers
+    }, (proxyRes) => {
+      // Forward status and headers
+      res.writeHead(proxyRes.statusCode!, proxyRes.headers);
+      // Pipe the body
+      proxyRes.pipe(res, { end: true });
+    });
+
+    proxyReq.on('error', (err) => {
+      console.error(`[Proxy Error] Failed to reach Next.js on port ${NEXT_PORT}:`, err.message);
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'text/plain' });
+        res.end("Bad Gateway: Next.js server is starting or unreachable.");
+      }
+    });
+
+    // Pipe the incoming request body to the proxy request
+    req.pipe(proxyReq, { end: true });
   });
 
-  // Socket.io initialization on the SAME port
+  // 2. Socket.io initialization
   const io = new Server(httpServer, {
     cors: {
-      origin: dev ? true : (process.env.NEXTAUTH_URL ?? true), 
+      origin: true, 
       credentials: true,
     },
     path: "/socket.io",
@@ -68,80 +64,53 @@ async function startServer() {
     transports: ["websocket", "polling"]
   });
 
-  global._io = io;
-  console.log(`[Server] Global IO instance set: ${!!global._io} (ID: ${Math.random().toString(36).substring(7)}, PID: ${process.pid})`);
+  // Global access for internal modules
+  (global as any)._io = io;
+  
+  // Redis Adapter setup
+  try {
+    const { getRedis } = await import("./src/shared/lib/redis");
+    const pubClient = getRedis();
+    const subClient = pubClient.duplicate();
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("▶ [Proxy] Socket.io Redis Adapter enabled");
 
-  // CRITICAL: Handle the 'upgrade' event to support both Socket.io and Next.js HMR
-  const nextUpgradeHandler = app.getUpgradeHandler();
-  httpServer.on("upgrade", (req, socket, head) => {
-    const url = req.url || "";
-    if (url.startsWith("/socket.io")) {
-      console.log(`[Server] WebSocket Upgrade request for Socket.io: ${url}`);
-      return;
-    }
-    console.log(`[Server] WebSocket Upgrade request for Next.js/Other: ${url}`);
-    nextUpgradeHandler(req, socket, head);
-  });
+    // Redis Bridge for Server Actions
+    const bridgeSub = pubClient.duplicate();
+    await bridgeSub.subscribe("socket-bridge");
+    bridgeSub.on("message", (channel, message) => {
+      if (channel === "socket-bridge") {
+        try {
+          const { room, event, data } = JSON.parse(message);
+          if (room) io.to(room).emit(event, data);
+          else io.emit(event, data);
+        } catch (e) {
+          console.error("[Redis Bridge] Error:", e);
+        }
+      }
+    });
+  } catch (e) {
+    console.warn("⚠ [Proxy] Redis not available, running without Redis adapter");
+  }
 
-  const { getRedis } = await import("./src/shared/lib/redis");
-  const pubClient = getRedis();
-  const subClient = pubClient.duplicate();
-  io.adapter(createAdapter(pubClient, subClient));
-
-  global._io = io;
-  console.log("▶ Global Socket.io instance initialized and stored in global._io");
-
+  // Register handlers
   const { registerSocketHandlers } = await import("./src/shared/lib/socket-handlers");
   registerSocketHandlers(io);
 
-  // --- REDIS BRIDGE START ---
-  // Allow Server Actions (in separate processes) to emit events via Redis
-  const bridgeSub = pubClient.duplicate();
-  await bridgeSub.subscribe("socket-bridge", (err) => {
-    if (err) console.error("[Redis Bridge] Failed to subscribe:", err);
-    else console.log("▶ Redis Bridge: Subscribed to 'socket-bridge' channel");
+  httpServer.listen(PUBLIC_PORT, hostname, () => {
+    console.log(`▶ [Proxy] Public Gateway Ready: http://${hostname}:${PUBLIC_PORT}`);
+    console.log(`▶ [Proxy] Forwarding traffic to Next.js on port ${NEXT_PORT}`);
   });
 
-  bridgeSub.on("message", (channel, message) => {
-    if (channel === "socket-bridge") {
-      try {
-        const { room, event, data } = JSON.parse(message);
-        console.log(`[Redis Bridge] Received message for room: ${room}, event: ${event}`);
-        
-        if (room) {
-          const roomClients = io.sockets.adapter.rooms.get(room);
-          console.log(`[Redis Bridge] Room ${room} has ${roomClients?.size ?? 0} active local clients`);
-          io.to(room).emit(event, data);
-        } else {
-          console.log(`[Redis Bridge] Emitting global event: ${event}`);
-          io.emit(event, data);
-        }
-      } catch (e) {
-        console.error("[Redis Bridge] Error processing message:", e);
-      }
-    }
-  });
-  // --- REDIS BRIDGE END ---
-
-  httpServer.listen(port, hostname, () => {
-    console.log(`▶ Next.js 16 App + Socket.io Ready on http://${hostname}:${port}`);
-    console.log(`▶ Socket.io with Redis Adapter enabled`);
-  });
-
-  httpServer.on("error", (err) => {
-    console.error("[Server Error]:", err);
-  });
-
-  process.on("unhandledRejection", (reason, promise) => {
-    console.error("[Unhandled Rejection]:", reason);
-  });
-
-  process.on("uncaughtException", (err) => {
-    console.error("[Uncaught Exception]:", err);
+  // Handle process signals
+  process.on("SIGTERM", () => {
+    console.log("SIGTERM received, shutting down Proxy-Bridge...");
+    httpServer.close();
+    process.exit(0);
   });
 }
 
 startServer().catch((err) => {
-  console.error("⨯ Failed to start server:", err);
+  console.error("⨯ [Proxy] Fatal startup error:", err);
   process.exit(1);
 });

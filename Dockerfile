@@ -80,8 +80,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/.prisma ./apps/web/node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/@prisma ./apps/web/node_modules/@prisma
 
-# Копируем скомпилированный сервер (заменяем стандартный в корне standalone) и скрипт запуска
+# Подготовка серверов: наш прокси и оригинальный Next
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
+COPY --from=builder --chown=nextjs:nodejs /app/server.js ./server-next.js
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/server-prod.js ./server.js
 
 USER nextjs

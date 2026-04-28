@@ -167,18 +167,51 @@ async function main() {
         console.log(`[STARTUP] Warning during asset linking: ${e.message}`);
     }
 
-    const serverJsPath = path.join(__dirname, "server.js");
+    const { spawn } = require("child_process");
+    const nextServerPath = path.join(__dirname, "server-next.js");
+    const proxyServerPath = path.join(__dirname, "server.js");
     
-    console.log(`[STARTUP] Entry point check: ${serverJsPath} (Exists: ${fs.existsSync(serverJsPath)})`);
+    console.log(`[STARTUP] Entry point check:`);
+    console.log(` - Next.js: ${nextServerPath} (Exists: ${fs.existsSync(nextServerPath)})`);
+    console.log(` - Proxy: ${proxyServerPath} (Exists: ${fs.existsSync(proxyServerPath)})`);
 
-    if (fs.existsSync(serverJsPath)) {
-        console.log(`[STARTUP] Launching BUNDLED CUSTOM server.js (Socket.io + Redis built-in)...`);
-        require(serverJsPath);
-    } else {
-        console.error(`[STARTUP] FATAL: No server.js found at ${serverJsPath}`);
-        console.error(`[STARTUP] Current directory contents: ${fs.readdirSync(__dirname).join(", ")}`);
+    if (!fs.existsSync(nextServerPath) || !fs.existsSync(proxyServerPath)) {
+        console.error(`[STARTUP] FATAL: Required server files missing!`);
         process.exit(1);
     }
+
+    // 1. Spawn Next.js on port 3001
+    console.log(`[STARTUP] Spawning Next.js on port 3001...`);
+    const nextEnv = { ...process.env, PORT: "3001", NODE_ENV: "production" };
+    const nextProcess = spawn("node", ["server-next.js"], {
+        env: nextEnv,
+        stdio: "inherit",
+        shell: false
+    });
+
+    nextProcess.on("error", (err) => {
+        console.error("[STARTUP] Failed to start Next.js process:", err);
+        process.exit(1);
+    });
+
+    nextProcess.on("exit", (code) => {
+        console.log(`[STARTUP] Next.js process exited with code ${code}`);
+        if (code !== 0) process.exit(code || 1);
+    });
+
+    // 2. Launch Proxy on public port (usually 3000)
+    console.log(`[STARTUP] Launching Proxy-Bridge on port ${process.env.PORT || 3000}...`);
+    try {
+        require(proxyServerPath);
+    } catch (e) {
+        console.error("[STARTUP] Failed to launch Proxy-Bridge:", e);
+        nextProcess.kill();
+        process.exit(1);
+    }
+
+    // Cleanup on exit
+    process.on("SIGTERM", () => nextProcess.kill());
+    process.on("SIGINT", () => nextProcess.kill());
 }
 
 main().catch(err => {
