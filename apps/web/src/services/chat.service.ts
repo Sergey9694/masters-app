@@ -9,7 +9,7 @@ interface InternalMessage {
   text: string;
   attachments: string[];
   senderId: string;
-  sender: { id: string; firstName: string; avatar: string | null };
+  sender: { id: string; firstName: string; lastName?: string | null; avatar: string | null };
   createdAt: Date;
   deletedAt: Date | null;
   deletedBy: string | null;
@@ -58,12 +58,12 @@ export const chatService = {
       include: {
         conversation: {
           include: {
-            participants: { include: { user: { select: { id: true, firstName: true, avatar: true, lastSeenAt: true } } } },
+            participants: { include: { user: { select: { id: true, firstName: true, lastName: true, avatar: true, lastSeenAt: true } } } },
             messages: {
               where: { deletedAt: null },
               orderBy: { createdAt: "desc" },
               take: 1,
-              include: { sender: { select: { id: true, firstName: true, avatar: true } } },
+              include: { sender: { select: { id: true, firstName: true, lastName: true, avatar: true } } },
             },
           },
         },
@@ -122,7 +122,7 @@ export const chatService = {
         conversationId,
         ...(cursorDate ? { createdAt: { lt: cursorDate } } : {}),
       },
-      include: { sender: { select: { id: true, firstName: true, avatar: true } } },
+      include: { sender: { select: { id: true, firstName: true, lastName: true, avatar: true } } },
       orderBy: { createdAt: "desc" },
       take: limit,
     });
@@ -132,7 +132,7 @@ export const chatService = {
       text: string;
       attachments: string[];
       senderId: string;
-      sender: { id: string; firstName: string; avatar: string | null };
+      sender: { id: string; firstName: string; lastName: string | null; avatar: string | null };
       createdAt: Date;
       deletedAt: Date | null;
       deletedBy: string | null;
@@ -160,7 +160,7 @@ export const chatService = {
         text: encryptText(text),
         attachments,
       },
-      include: { sender: { select: { id: true, firstName: true, avatar: true } } },
+      include: { sender: { select: { id: true, firstName: true, lastName: true, avatar: true } } },
     });
 
     await db.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
@@ -200,7 +200,7 @@ export const chatService = {
       db.conversation.findMany({
         where,
         include: {
-          participants: { include: { user: { select: { id: true, firstName: true, email: true, avatar: true } } } },
+          participants: { include: { user: { select: { id: true, firstName: true, lastName: true, email: true, avatar: true } } } },
           messages: { orderBy: { createdAt: "desc" }, take: 1 },
           _count: { select: { messages: true } },
         },
@@ -216,7 +216,7 @@ export const chatService = {
   async getMessagesAdmin(conversationId: string): Promise<MessageDTO[]> {
     const messages = await db.message.findMany({
       where: { conversationId },
-      include: { sender: { select: { id: true, firstName: true, avatar: true } } },
+      include: { sender: { select: { id: true, firstName: true, lastName: true, avatar: true } } },
       orderBy: { createdAt: "desc" },
       take: 200, // H3: Admin messages limit
     });
@@ -225,7 +225,7 @@ export const chatService = {
       text: string;
       attachments: string[];
       senderId: string;
-      sender: { id: string; firstName: string; avatar: string | null };
+      sender: { id: string; firstName: string; lastName: string | null; avatar: string | null };
       createdAt: Date;
       deletedAt: Date | null;
       deletedBy: string | null;

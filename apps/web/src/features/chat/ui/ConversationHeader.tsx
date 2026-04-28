@@ -37,7 +37,7 @@ export function ConversationHeader({ otherUser, context, showBack, status, lastS
       )}
       <div className="relative">
         <Avatar size="default">
-          {otherUser.avatar && <AvatarImage src={otherUser.avatar} alt={otherUser.firstName} />}
+          {otherUser.avatar && <AvatarImage src={otherUser.avatar} alt={`${otherUser.firstName} ${otherUser.lastName || ""}`} />}
           <AvatarFallback>{otherUser.firstName[0]}</AvatarFallback>
         </Avatar>
         {isOnline && (
@@ -46,7 +46,9 @@ export function ConversationHeader({ otherUser, context, showBack, status, lastS
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="font-medium text-sm truncate leading-tight">{otherUser.firstName}</p>
+          <p className="font-medium text-sm truncate leading-tight">
+            {otherUser.firstName} {otherUser.lastName || ""}
+          </p>
           <p className={cn(
             "text-[10px] leading-tight shrink-0",
             isOnline ? "text-green-500 font-medium" : "text-muted-foreground"

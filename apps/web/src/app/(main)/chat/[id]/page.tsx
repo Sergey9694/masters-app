@@ -25,7 +25,7 @@ export default async function ConversationPage({
       where: { id },
       include: {
         participants: {
-          include: { user: { select: { id: true, firstName: true, avatar: true, lastSeenAt: true } } },
+          include: { user: { select: { id: true, firstName: true, lastName: true, avatar: true, lastSeenAt: true } } },
         },
         order: {
           select: {

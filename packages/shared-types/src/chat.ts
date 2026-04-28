@@ -6,6 +6,7 @@ export interface MessageDTO {
   sender: { 
     id: string; 
     firstName: string; 
+    lastName?: string | null;
     avatar: string | null 
   };
   createdAt: string; // ISO string
@@ -22,6 +23,7 @@ export interface ConversationPreview {
   otherUser: { 
     id: string; 
     firstName: string; 
+    lastName?: string | null;
     avatar: string | null;
     lastSeenAt?: string | null;
     isOnline?: boolean;
