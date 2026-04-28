@@ -15,12 +15,40 @@ async function startServer() {
   const hostname = "0.0.0.0";
   const port = parseInt(process.env.PORT ?? "3000", 10);
 
-  // Dynamic import 'next' AFTER polyfill setup
-  const { default: next } = await import("next");
-  const app = next({ dev, hostname, port });
+  let app: any;
+
+  if (dev) {
+    const { default: next } = await import("next");
+    app = next({ dev, hostname, port });
+  } else {
+    // In production (standalone mode), we use the lightweight NextNodeServer
+    // directly to avoid issues with missing dev dependencies (like webpack-lib)
+    try {
+      const NextServer = require("next/dist/server/next-server").default;
+      app = new NextServer({
+        hostname,
+        port,
+        dir: process.cwd(), // Standalone server expects to be run from the root of the app
+        dev: false,
+        customServer: true,
+        conf: { distDir: ".next" }
+      });
+      console.log("▶ [Server] Standalone NextNodeServer initialized successfully");
+    } catch (e: any) {
+      console.warn("⚠ [Server] Failed to initialize Standalone NextNodeServer:", e.message);
+      console.log("▶ [Server] Falling back to standard next() initialization...");
+      const { default: next } = await import("next");
+      app = next({ dev, hostname, port });
+    }
+  }
+
   const handler = app.getRequestHandler();
 
-  await app.prepare();
+  // app.prepare() is not strictly needed for NextNodeServer in standalone, 
+  // but we call it for compatibility with the dev/standard mode
+  if (typeof app.prepare === 'function') {
+    await app.prepare();
+  }
 
   const httpServer = createServer((req, res) => {
     if (req.url?.startsWith("/socket.io")) {

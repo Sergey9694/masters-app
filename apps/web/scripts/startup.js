@@ -167,19 +167,15 @@ async function main() {
         console.log(`[STARTUP] Warning during asset linking: ${e.message}`);
     }
 
-    const serverJsPath = path.join(__dirname, "apps", "web", "server.js");
-    const standaloneJs = path.join(__dirname, "server.js");
+    const serverJsPath = path.join(__dirname, "server.js");
     
     console.log(`[STARTUP] Entry point check: ${serverJsPath} (Exists: ${fs.existsSync(serverJsPath)})`);
 
     if (fs.existsSync(serverJsPath)) {
         console.log(`[STARTUP] Launching BUNDLED CUSTOM server.js (Socket.io + Redis built-in)...`);
         require(serverJsPath);
-    } else if (fs.existsSync(standaloneJs)) {
-        console.log(`[STARTUP] Fallback: Launching standard standalone server.js...`);
-        require(standaloneJs);
     } else {
-        console.error(`[STARTUP] FATAL: No server.js found at ${serverJsPath} or ${standaloneJs}`);
+        console.error(`[STARTUP] FATAL: No server.js found at ${serverJsPath}`);
         console.error(`[STARTUP] Current directory contents: ${fs.readdirSync(__dirname).join(", ")}`);
         process.exit(1);
     }
