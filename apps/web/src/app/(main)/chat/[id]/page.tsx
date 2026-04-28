@@ -6,6 +6,7 @@ import { ConversationList } from "@/features/chat/ui/ConversationList";
 import { ChatWindow } from "@/features/chat/ui/ChatWindow";
 
 export const dynamic = "force-dynamic";
+export const metadata = { robots: "noindex, nofollow" };
 
 export default async function ConversationPage({
   params,

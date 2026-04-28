@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionFromRequest } from "@/shared/lib/auth";
 import { apiSuccess, apiUnauthorized, apiError } from "@/shared/lib/api-helpers";
 import { chatService } from "@/services/chat.service";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
 
 /**
  * GET /api/v1/conversations/[id]/messages — постраничные сообщения диалога
@@ -46,6 +47,16 @@ export async function POST(
   if (!session) return apiUnauthorized();
 
   const { id } = await params;
+
+  // B6: Rate limit (30 messages per 60s)
+  const rl = checkRateLimit({ 
+    key: `chat:api:${session.userId}`, 
+    limit: 30, 
+    windowSec: 60 
+  });
+  if (!rl.allowed) {
+    return apiError(`Too many messages. Retry in ${rl.retryAfterSec}s`, 429);
+  }
 
   let body: unknown;
   try {

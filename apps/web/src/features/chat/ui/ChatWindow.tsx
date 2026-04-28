@@ -10,7 +10,7 @@ import { TypingIndicator } from "./TypingIndicator";
 import { MessageInput } from "./MessageInput";
 import { ConversationHeader } from "./ConversationHeader";
 import { toast } from "sonner";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { groupByDate } from "@/shared/lib/date";
 import { Virtuoso } from "react-virtuoso";
@@ -50,7 +50,6 @@ export function ChatWindow({
 
   useEffect(() => {
     const join = () => {
-      console.log(`[ChatWindow] Joining room: ${conversationId}`);
       socket.emit("join:conversation", conversationId);
       markAsReadAction({ conversationId });
     };
@@ -62,7 +61,6 @@ export function ChatWindow({
     socket.on("connect", join);
     
     return () => {
-      console.log(`[ChatWindow] Leaving room: ${conversationId}`);
       socket.off("connect", join);
       socket.emit("leave:conversation", conversationId);
     };
@@ -98,7 +96,6 @@ export function ChatWindow({
       userId: string;
       userName: string;
     }) => {
-      console.log(`[Chat Debug] Typing Start from ${userName} (${userId}). Current: ${currentUserId}`);
       if (cId === conversationId && userId !== currentUserId) {
         setTypingUser(userName);
       }
@@ -111,7 +108,6 @@ export function ChatWindow({
       conversationId: string;
       userId: string;
     }) => {
-      console.log(`[Chat Debug] Typing Stop from ${userId}`);
       if (cId === conversationId && userId !== currentUserId) {
         setTypingUser(null);
       }
@@ -210,7 +206,7 @@ export function ChatWindow({
     }
   };
 
-  const groups = groupByDate(messages);
+  // const groups = groupByDate(messages);
 
   return (
     <div className="flex flex-col h-full bg-background/50 backdrop-blur-sm">

@@ -5,7 +5,10 @@ import { ConversationList } from "@/features/chat/ui/ConversationList";
 import { ChatEmpty } from "@/features/chat/ui/ChatEmpty";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Сообщения — УслугиРядом" };
+export const metadata = { 
+  title: "Сообщения — УслугиРядом",
+  robots: "noindex, nofollow"
+};
 
 export default async function ChatPage() {
   const user = await getCurrentUser();

@@ -10,6 +10,7 @@ const mockDb = {
     findMany: vi.fn(),
     update: vi.fn(),
     findUnique: vi.fn(),
+    count: vi.fn(),
   },
   user: { findUnique: vi.fn(), update: vi.fn() },
   conversationParticipant: {
@@ -62,6 +63,7 @@ describe("chatService.getMessages", () => {
     const { encryptText } = await import("@/shared/lib/crypto");
     const encrypted = encryptText("читаемый текст");
 
+    mockDb.user.findUnique.mockResolvedValue({ chatBlockedAt: null });
     mockDb.conversationParticipant.findFirst.mockResolvedValue({ userId: "user1" });
     mockDb.message.findUnique.mockResolvedValue(null);
     mockDb.message.findMany.mockResolvedValue([
@@ -112,23 +114,27 @@ describe("chatService.startConversation", () => {
 });
 
 describe("chatService.getUnreadCount", () => {
-  it("returns count of conversations with new messages", async () => {
+  it("sums unread messages across all conversations", async () => {
     const now = new Date();
     const past = new Date(now.getTime() - 1000);
     
+    // Два диалога
     mockDb.conversationParticipant.findMany.mockResolvedValue([
-      { 
-        lastReadAt: past, 
-        conversation: { messages: [{ createdAt: now }] } 
-      },
-      { 
-        lastReadAt: now, 
-        conversation: { messages: [{ createdAt: past }] } 
-      },
+      { conversationId: "c1", lastReadAt: past },
+      { conversationId: "c2", lastReadAt: now },
     ]);
 
+    // Для первого диалога - 5 непрочитанных, для второго - 0
+    mockDb.message.count.mockResolvedValueOnce(5);
+    mockDb.message.count.mockResolvedValueOnce(0);
+
     const count = await chatService.getUnreadCount("user1");
-    expect(count).toBe(1); // Only the first one is unread
+    expect(count).toBe(5);
+    
+    expect(mockDb.message.count).toHaveBeenCalledTimes(2);
+    expect(mockDb.message.count).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ conversationId: "c1" })
+    }));
   });
 });
 

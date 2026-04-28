@@ -32,7 +32,7 @@ async function startServer() {
   // Socket.io initialization on the SAME port
   const io = new Server(httpServer, {
     cors: {
-      origin: "*", // More permissive for local dev/proxies
+      origin: dev ? true : (process.env.NEXTAUTH_URL ?? true), 
       credentials: true,
     },
     path: "/socket.io",
@@ -40,8 +40,8 @@ async function startServer() {
     transports: ["websocket", "polling"]
   });
 
-  (global as any)._io = io;
-  console.log(`[Server] Global IO instance set: ${!!(global as any)._io} (ID: ${Math.random().toString(36).substring(7)}, PID: ${process.pid})`);
+  global._io = io;
+  console.log(`[Server] Global IO instance set: ${!!global._io} (ID: ${Math.random().toString(36).substring(7)}, PID: ${process.pid})`);
 
   // CRITICAL: Handle the 'upgrade' event to support both Socket.io and Next.js HMR
   const nextUpgradeHandler = app.getUpgradeHandler();
@@ -60,7 +60,7 @@ async function startServer() {
   const subClient = pubClient.duplicate();
   io.adapter(createAdapter(pubClient, subClient));
 
-  (global as any)._io = io;
+  global._io = io;
   console.log("▶ Global Socket.io instance initialized and stored in global._io");
 
   const { registerSocketHandlers } = await import("./src/shared/lib/socket-handlers");

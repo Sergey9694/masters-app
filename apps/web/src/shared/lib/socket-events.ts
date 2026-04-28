@@ -1,4 +1,5 @@
-export type { MessageDTO } from "@uslugi/shared-types";
+import type { MessageDTO } from "@uslugi/shared-types";
+export type { MessageDTO };
 
 export interface NotificationDTO {
   id: string;

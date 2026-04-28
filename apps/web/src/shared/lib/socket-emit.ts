@@ -1,5 +1,6 @@
 import { getRedis } from "./redis";
 import { getIO } from "./get-io";
+import type { ServerToClientEvents } from "./socket-events";
 
 /**
  * Универсальная функция для отправки событий в Socket.io.
@@ -13,16 +14,16 @@ export async function emitToSocket({
 }: {
   room?: string;
   event: string;
-  data: any;
+  data: unknown;
 }) {
   const io = getIO();
   
   if (io) {
     console.log(`[SocketEmit] Using Direct IO to room ${room}: ${event}`);
     if (room) {
-      io.to(room).emit(event as any, data);
+      io.to(room).emit(event as keyof ServerToClientEvents, data as never);
     } else {
-      io.emit(event as any, data);
+      io.emit(event as keyof ServerToClientEvents, data as never);
     }
     return true;
   }

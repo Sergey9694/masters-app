@@ -112,6 +112,13 @@ export function registerSocketHandlers(
     socket.join(`user:${userId}`);
 
     socket.on("join:conversation", async (conversationId) => {
+      // B5: Validate UUID to prevent Prisma internal errors
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(conversationId)) {
+        console.warn(`[Socket] Invalid UUID format: ${conversationId}`);
+        return;
+      }
+
       console.log(`[Socket Debug] User ${userName} (${userId}) attempting to join room: ${conversationId}`);
       
       // Получаем роль пользователя из базы (или можно было сохранить в socket.data)
@@ -141,7 +148,13 @@ export function registerSocketHandlers(
       console.log(`[Socket] User disconnected: ${userName} (${userId}). Reason: ${reason}`);
     });
 
-    socket.on("typing:start", (conversationId) => {
+    socket.on("typing:start", async (conversationId) => {
+      // B4: Check participant before broadcasting
+      const isParticipant = await db.conversationParticipant.findFirst({
+        where: { conversationId, userId },
+      });
+      if (!isParticipant) return;
+
       console.log(`[Socket Typing] Start from ${userName} in ${conversationId}`);
       socket.to(`conv:${conversationId}`).emit("typing:start", {
         conversationId,
@@ -150,7 +163,13 @@ export function registerSocketHandlers(
       });
     });
 
-    socket.on("typing:stop", (conversationId) => {
+    socket.on("typing:stop", async (conversationId) => {
+      // B4: Check participant before broadcasting
+      const isParticipant = await db.conversationParticipant.findFirst({
+        where: { conversationId, userId },
+      });
+      if (!isParticipant) return;
+
       console.log(`[Socket Typing] Stop from ${userName} in ${conversationId}`);
       socket.to(`conv:${conversationId}`).emit("typing:stop", {
         conversationId,

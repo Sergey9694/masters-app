@@ -68,6 +68,7 @@ export const chatService = {
         },
       },
       orderBy: { conversation: { updatedAt: "desc" } },
+      take: 50, // H2: Limit conversations
     });
 
     return participations.map(({ conversation, lastReadAt }: {
@@ -109,6 +110,9 @@ export const chatService = {
     cursor?: string,
     limit = 30
   ): Promise<MessageDTO[]> {
+    const user = await db.user.findUnique({ where: { id: userId }, select: { chatBlockedAt: true } });
+    if (user?.chatBlockedAt) throw new Error("Нет доступа к диалогу (аккаунт заблокирован)");
+
     const participant = await db.conversationParticipant.findFirst({
       where: { conversationId, userId },
     });
@@ -221,9 +225,10 @@ export const chatService = {
     const messages = await db.message.findMany({
       where: { conversationId },
       include: { sender: { select: { id: true, firstName: true, avatar: true } } },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
+      take: 200, // H3: Admin messages limit
     });
-    return messages.map((m: {
+    return messages.reverse().map((m: {
       id: string;
       text: string;
       attachments: string[];
@@ -257,29 +262,27 @@ export const chatService = {
   },
 
   async getUnreadCount(userId: string): Promise<number> {
-    // Оптимизированный запрос: выбираем только нужные поля для расчета
+    // H4: Optimized count of unread messages across all conversations
     const participations = await db.conversationParticipant.findMany({
       where: { userId },
-      select: {
-        lastReadAt: true,
-        conversation: {
-          select: {
-            updatedAt: true,
-            messages: {
-              where: { deletedAt: null, senderId: { not: userId } },
-              orderBy: { createdAt: "desc" },
-              take: 1,
-              select: { createdAt: true },
-            },
-          },
-        },
-      },
+      select: { conversationId: true, lastReadAt: true },
     });
 
-    return participations.filter((p) => {
-      const lastMsg = p.conversation.messages[0];
-      return lastMsg && (!p.lastReadAt || p.lastReadAt < lastMsg.createdAt);
-    }).length;
+    if (participations.length === 0) return 0;
+
+    const unreadPromises = participations.map((p) =>
+      db.message.count({
+        where: {
+          conversationId: p.conversationId,
+          senderId: { not: userId },
+          deletedAt: null,
+          ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+        },
+      })
+    );
+
+    const counts = await Promise.all(unreadPromises);
+    return counts.reduce((sum, c) => sum + c, 0);
   },
 
   async exportConversation(conversationId: string, format: "json" | "csv"): Promise<Buffer> {
