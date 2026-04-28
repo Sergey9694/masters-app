@@ -100,7 +100,7 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
               "flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
               activeId === conv.id 
                 ? "bg-primary/10 ring-1 ring-primary/20" 
-                : "hover:bg-muted/50"
+                : "hover:bg-surface/80 hover:shadow-sm"
             )}
           >
             <div className="relative shrink-0">
