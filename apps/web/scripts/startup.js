@@ -175,7 +175,7 @@ async function main() {
     if (fs.existsSync(serverTsPath)) {
         console.log(`[STARTUP] >>> Launching CUSTOM server.ts via tsx (Socket.io support)`);
         // Используем spawnSync для запуска tsx, чтобы он не упал при require (так как это TS)
-        const child = require("child_process").spawn("npx", ["tsx", serverTsPath], {
+        const child = require("child_process").spawn("tsx", [serverTsPath], {
             stdio: "inherit",
             env: { ...process.env, NODE_ENV: "production" }
         });
@@ -193,7 +193,7 @@ async function main() {
 
         if (fs.existsSync(fallbackTs)) {
             console.log(`[STARTUP] Found fallback server.ts, launching via tsx`);
-            const child = require("child_process").spawn("npx", ["tsx", fallbackTs], {
+            const child = require("child_process").spawn("tsx", [fallbackTs], {
                 stdio: "inherit",
                 env: { ...process.env, NODE_ENV: "production" }
             });

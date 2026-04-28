@@ -51,7 +51,7 @@ ENV NODE_PATH="/usr/local/lib/node_modules"
 
 # Устанавливаем необходимые системные зависимости и Prisma CLI для startup.js
 RUN apk add --no-cache openssl libc6-compat curl && \
-    npm install -g prisma@5.22.0 bcryptjs tsx@4.21.0
+    npm install -g prisma@5.22.0 bcryptjs tsx@4.21.0 socket.io@4.8.3 @socket.io/redis-adapter@8.3.0 ioredis@5.10.1 typescript@5.5.4
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -70,6 +70,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/.prisma ./a
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/@prisma ./apps/web/node_modules/@prisma
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/server.ts ./apps/web/server.ts
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src ./apps/web/src
 
 USER nextjs
 
