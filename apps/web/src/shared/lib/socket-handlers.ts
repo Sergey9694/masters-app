@@ -1,4 +1,4 @@
-import type { Server } from "socket.io";
+import type { Server, Socket } from "socket.io";
 import type { ServerToClientEvents, ClientToServerEvents, SocketData } from "./socket-events";
 import { db } from "./db";
 import { decrypt } from "./auth";
@@ -135,9 +135,9 @@ async function broadcastUserStatus(
 export function registerSocketHandlers(
   io: Server<ClientToServerEvents, ServerToClientEvents, object, SocketData>
 ) {
-  io.use(async (socket, next) => {
+  io.use(async (socket: Socket<ClientToServerEvents, ServerToClientEvents, object, SocketData>, next: (err?: Error) => void) => {
     const cookieHeader = socket.handshake.headers.cookie ?? "";
-    const cookieNames = cookieHeader.split(";").map(c => c.trim().split("=")[0]);
+    const cookieNames = cookieHeader.split(";").map((c: string) => c.trim().split("=")[0]);
     console.log(`[Socket Auth] Handshake cookies:`, cookieNames);
 
     const user = await getUserFromCookie(cookieHeader);
@@ -147,7 +147,7 @@ export function registerSocketHandlers(
     next();
   });
 
-  io.on("connection", async (socket) => {
+  io.on("connection", async (socket: Socket<ClientToServerEvents, ServerToClientEvents, object, SocketData>) => {
     const { userId, userName } = socket.data;
     console.log(`[Socket] User connected: ${userName} (${userId}). Socket ID: ${socket.id}`);
 
@@ -163,13 +163,13 @@ export function registerSocketHandlers(
     broadcastUserStatus(io, userId, "online", now);
 
     // Логируем ВСЕ входящие события для дебага
-    socket.onAny((eventName, ...args) => {
+    socket.onAny((eventName: string, ...args: unknown[]) => {
       console.log(`[Socket Debug] Incoming Event: ${eventName}`, args);
     });
 
     socket.join(`user:${userId}`);
 
-    socket.on("join:conversation", async (conversationId) => {
+    socket.on("join:conversation", async (conversationId: string) => {
       // B5: Validate UUID to prevent Prisma internal errors
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (!uuidRegex.test(conversationId)) {
@@ -197,12 +197,12 @@ export function registerSocketHandlers(
       }
     });
 
-    socket.on("leave:conversation", (conversationId) => {
+    socket.on("leave:conversation", (conversationId: string) => {
       socket.leave(`conv:${conversationId}`);
       console.log(`[Socket] User ${userName} left room conv:${conversationId}`);
     });
 
-    socket.on("disconnect", async (reason) => {
+    socket.on("disconnect", async (reason: string) => {
       console.log(`[Socket] User disconnected: ${userName} (${userId}). Reason: ${reason}`);
       
       // Небольшая задержка, чтобы не спамить при перезагрузке страницы
@@ -221,7 +221,7 @@ export function registerSocketHandlers(
       }, 3000);
     });
 
-    socket.on("typing:start", async (conversationId) => {
+    socket.on("typing:start", async (conversationId: string) => {
       // B4: Check participant before broadcasting
       const isParticipant = await db.conversationParticipant.findFirst({
         where: { conversationId, userId },
@@ -236,7 +236,7 @@ export function registerSocketHandlers(
       });
     });
 
-    socket.on("typing:stop", async (conversationId) => {
+    socket.on("typing:stop", async (conversationId: string) => {
       // B4: Check participant before broadcasting
       const isParticipant = await db.conversationParticipant.findFirst({
         where: { conversationId, userId },

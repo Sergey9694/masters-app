@@ -36,7 +36,7 @@ export function MessageBubble({ message, isOwn }: Props) {
           {message.sender.avatar && (
             <AvatarImage src={message.sender.avatar} alt={message.sender.firstName} />
           )}
-          <AvatarFallback delayMs={600}>{message.sender.firstName[0]}</AvatarFallback>
+          <AvatarFallback delay={600}>{message.sender.firstName[0]}</AvatarFallback>
         </Avatar>
       )}
       

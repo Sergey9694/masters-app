@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { LoginForm } from "@/features/auth/ui/LoginForm";
 import { Container } from "@/shared/ui/container";
 import { Metadata } from "next";
@@ -19,7 +20,9 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <LoginForm />
+          <Suspense fallback={<div className="h-[300px] flex items-center justify-center">Загрузка...</div>}>
+            <LoginForm />
+          </Suspense>
         </div>
       </Container>
     </div>

@@ -44,7 +44,7 @@ export function ConversationHeader({ otherUser, context, showBack, status, lastS
       <div className="relative">
         <Avatar size="default">
           {otherUser.avatar && <AvatarImage src={otherUser.avatar} alt={`${otherUser.firstName} ${otherUser.lastName || ""}`} />}
-          <AvatarFallback delayMs={600}>{otherUser.firstName[0]}</AvatarFallback>
+          <AvatarFallback delay={600}>{otherUser.firstName[0]}</AvatarFallback>
         </Avatar>
         {isOnline && (
           <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-surface" />

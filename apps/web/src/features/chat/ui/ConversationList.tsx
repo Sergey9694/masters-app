@@ -112,7 +112,7 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
                     className="transition group-hover:scale-105"
                   />
                 )}
-                <AvatarFallback delayMs={600}>{conv.otherUser.firstName[0]}</AvatarFallback>
+                <AvatarFallback delay={600}>{conv.otherUser.firstName[0]}</AvatarFallback>
               </Avatar>
               {/* Индикатор онлайна */}
               {onlineUsers[conv.otherUser.id] && (
