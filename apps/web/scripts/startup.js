@@ -187,7 +187,7 @@ async function main() {
 
     // 1. Spawn Next.js on port 3001
     console.log(`[STARTUP] Spawning Next.js on port 3001...`);
-    const nextEnv = { ...process.env, PORT: "3001", NODE_ENV: "production" };
+    const nextEnv = { ...process.env, PORT: "3001", HOSTNAME: "0.0.0.0", NODE_ENV: "production" };
     const nextProcess = spawn("node", ["server-next.js"], {
         env: nextEnv,
         stdio: "inherit",
