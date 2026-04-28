@@ -74,9 +74,10 @@ export default async function ConversationPage({
           conversationId={id}
           currentUserId={user.id}
           otherUser={{
-          ...otherParticipant.user,
-          status: isOnline ? "online" : "offline"
-        }}
+            ...otherParticipant.user,
+            lastSeenAt: otherParticipant.user.lastSeenAt?.toISOString() || null,
+            status: isOnline ? "online" : "offline"
+          }}
           context={{
             orderId: conversation.orderId,
             orderSlug: conversation.order?.slug || null,
