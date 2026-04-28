@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { Sparkles, Bell, Heart } from "lucide-react";
+import { Sparkles, Heart } from "lucide-react";
 
 import { getCurrentUser } from "@/shared/lib/get-user";
+import { chatService } from "@/services/chat.service";
+import { NotificationBellClient } from "@/features/chat/ui/NotificationBellClient";
 
 import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import { HeaderSearch } from "./HeaderSearch";
@@ -12,6 +14,7 @@ import { HeaderCatalogLinks } from "./HeaderCatalogLinks";
 export async function Header() {
   const user = await getCurrentUser();
   const botId = process.env.TELEGRAM_BOT_ID;
+  const unreadCount = user ? await chatService.getUnreadCount(user.id) : 0;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-lg backdrop-saturate-150">
@@ -41,13 +44,7 @@ export async function Header() {
           <div className="ml-auto flex items-center gap-2 pr-4 sm:pr-6">
             {user && (
               <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/40 p-1">
-                <Link
-                  href="/notifications"
-                  aria-label="Уведомления"
-                  className="inline-flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background hover:text-foreground hover:shadow-sm"
-                >
-                  <Bell className="size-3.5" />
-                </Link>
+                <NotificationBellClient initialUnread={unreadCount} userId={user.id} />
                 <Link
                   href="/favorites"
                   aria-label="Избранное"

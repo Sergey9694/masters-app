@@ -2,19 +2,22 @@
 
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
-> 🕓 Последнее обновление: 2026-04-28 (Фаза 7: Чат — Production Ready, Документация завершена)
+
+> 🕓 Последнее обновление: 2026-04-28 (Фаза 7: Чат — Production Ready, Внедрен Presence и Оптимизация UX)
 
 ---
 
 ## Текущая ветка
-`feature/phase7-chat` (готова к мёрджу), `master` — продакшен
+`refactor/uslugi-ryadom` (активная, включает в себя `feature/phase7-chat`), `master` — продакшен
+
+---
 
 ## Статус фаз
 
 | Фаза | Название | Статус |
 |------|----------|--------|
 | 1–6 | Фундамент, Auth, БД, UI, Listings | ✅ Завершены |
-| 7 | Чат и уведомления (Redis + Socket.io) | ✅ Стабилизирована (Production Ready) |
+| 7 | Чат и уведомления (Redis + Socket.io + Presence) | ✅ Стабилизирована (Production Ready) |
 | 8 | Тесты и CI/CD | ❌ Не начата |
 | 9 | React Native (Expo) | ❌ Не начата |
 | 10 | Geo-поиск и карты | ❌ Не начата |
@@ -22,90 +25,83 @@
 
 ---
 
-## Фаза 6 — что сделано / что осталось
+## Фаза 7 — что сделано
 
-### ✅ Всё готово
-- `6.1` Создание объявления (`/my-listings/new`, Server Action, Zod-схема)
-- `6.1.4` Rate-limit: 3 объявления/час на создание
-- `6.2` Каталог `/listings` + страница объявления `/listings/[slug]`
-- `6.3` Управление объявлениями `/my-listings` (список + смена статуса)
-- `6.3.3` `/my-listings/[slug]/edit` — страница редактирования объявления
-- `6.4.1` `/admin/listings` — таблица объявлений (фильтр по статусу + пагинация)
-- `6.4.2` Server Actions: одобрить/отклонить/удалить объявление (admin)
-- `6.5` Каталог специалистов `/providers` + профиль `/providers/[id]`
-- `6.5.5` UI-бейдж «Только проверенные отзывы» на `/providers/[id]`
+### ✅ Инфраструктура
+- `server.ts` — кастомный HTTP-сервер (tsx runner) + Socket.io + Redis адаптер (`@socket.io/redis-adapter`)
+- `src/shared/lib/socket-handlers.ts` — auth через кастомные JWT cookies (jose), комнаты `conv:{id}` / `user:{id}`
+- `src/shared/lib/get-io.ts` — `getIO()` через `global._io` для emit из Server Actions
+- `src/shared/lib/crypto.ts` — AES-256-GCM шифрование, 12-byte IV (NIST), lazy `getKey()`
+
+### ✅ DAL (Data Access Layer)
+- `src/services/chat.service.ts` — полный DAL с шифрованием/дешифрованием, cursor pagination, CSV-экспорт, методы: `getConversations`, `getMessages`, `sendMessage`, `getOrCreateConversation`, `getUnreadCount`, `deleteMessage`, `blockUserChat`, `unblockUserChat`, `exportConversation`
+
+### ✅ Server Actions
+- `src/features/chat/api/send-message.ts` — отправка + emit `new:message`
+- `src/features/chat/api/start-conversation.ts` — создание/открытие диалога
+- `src/features/chat/api/get-messages.ts` — загрузка с пагинацией
+- `src/features/chat/api/mark-as-read.ts` — отметка прочитанного
+- `src/features/chat/api/admin-actions.ts` — 4 admin-action: delete, block, unblock, export
+
+### ✅ Клиентские хуки
+- `src/shared/hooks/use-socket.ts` — модульный синглтон, `useSocket()` → `{ socket, connected }`
+- `src/shared/hooks/use-typing.ts` — debounced 2s, emit `typing:start/stop`
+
+### ✅ UI компоненты
+- `src/features/chat/ui/ChatWindow.tsx` — infinite scroll (IntersectionObserver), виртуализация через `react-virtuoso`, оптимистичные обновления, typing indicator, Sonner notifications для фоновых чатов.
+- `src/features/chat/ui/MessageBubble.tsx` — Быстрая анимация (opacity), поддержка удаления сообщений, премиальный дизайн.
+- `src/features/chat/ui/ConversationList.tsx` — реальное время, индикация Online статуса, подсветка активного чата.
+- `src/features/chat/ui/ConversationHeader.tsx` — детальная информация о собеседнике (имя + фамилия + онлайн статус).
+- `src/features/chat/ui/MessageInput.tsx` — адаптивная высота, анимация кнопки отправки.
+- `src/features/chat/ui/NotificationBellClient.tsx` — бейдж непрочитанных в хедере.
+- `src/features/chat/ui/ChatNotificationListener.tsx` — глобальные тоасты для новых сообщений.
+
+### ✅ Presence & UX (Новое)
+- **Online Presence**: Система отслеживания онлайн-статуса и времени последнего визита (`lastSeenAt`). Хранится в Redis (TTL 3s) + DB.
+- **Full Name**: Отображение Имени и Фамилии во всех компонентах чата.
+- **UX Optimization**:
+  - Устранено мигание аватарок (через `delayMs` в Fallback).
+  - Облегчены анимации сообщений для устранения "тягучести".
+  - Исправлен резкий скролл при переключении чатов.
+
+### ✅ Багфиксы
+- **Real-time Live Chat**: Все сервисы на порту **3000**. Кастомный `upgrade` хендлер.
+- **Приоритет сессий**: Исправлен конфликт сессий в WebSocket (Auth.js > Admin).
+- **Deep-linking**: Исправлены ссылки «Перейти к заказу» (SEO-структура).
+- **Type Safety**: Исправлены все ошибки типов в компонентах чата и сервисах.
+
+### ✅ Страницы
+- `(main)/chat` — список диалогов + окно чата (Desktop/Mobile)
+- `admin/chats` — модерация диалогов для администратора
+- `api/v1/conversations` — REST API для мобильных
+
+### ✅ DevOps
+- `docker-compose.yml` — Redis (`redis:7-alpine`), healthcheck.
+- `nginx/default.conf` — WebSocket proxy headers.
+- `apps/web/e2e/chat.spec.ts` — Playwright тесты.
 
 ---
 
-## Ключевые файлы
+## ⚠️ Перед мёрджем в master — ОБЯЗАТЕЛЬНО
 
+**1. Prisma-миграция**:
+`20260427000000_add_chat_models` — все модели (Conversation, Message) добавлены в БД.
+
+**2. Добавить переменные окружения** в `.env`:
 ```
-apps/web/
-├── src/
-│   ├── proxy.ts                          — защита роутов
-│   ├── shared/lib/motion.ts              — единая точка анимаций
-│   ├── services/                         — 11 DAL-сервисов
-│   │   ├── order.service.ts
-│   │   ├── listing.service.ts
-│   │   ├── proposal.service.ts
-│   │   ├── user.service.ts
-│   │   └── ...
-│   ├── features/
-│   │   ├── auth/                         — Auth.js v5 + JWT
-│   │   ├── listing-management/           — CRUD объявлений
-│   │   └── order-management/
-│   └── app/api/v1/                       — 26 REST роутов
-├── prisma/
-│   ├── schema.prisma                     — модель данных
-│   └── migrations/                       — все миграции (13 штук)
+REDIS_URL=redis://localhost:6379
+ENCRYPTION_KEY=<64 hex символа>
 ```
 
-## БД — последние миграции
+---
 
-| Дата | Миграция |
-|------|----------|
-| 2026-04-25 | `add_listing_slug` |
-| 2026-04-23 | `full_geo_fix` (fiasId, lat, lng в City) |
-| 2026-04-22 | `add_order_number_and_slug` |
-| 2026-04-17 | `expand_domain_model` (ServiceListing, Category tree) |
+## Тесты
 
-## Последние значимые изменения
-
-- **Bugfix (Order Feed)**: Исправлена фильтрация по категориям (сохранение `categoryId=all` в URL) и синхронизация общего количества заказов в ленте через `orderService.list`.
-- **UX (Rate Limit)**: Время ожидания переведено в минуты. Добавлен упреждающий баннер и блокировка формы создания объявления при исчерпании лимита.
-- **Refactoring**: `DadataAddressInput` и `ensureCityAction` перенесены в `shared` для переиспользования между фичами.
-- **Фаза 6 завершена**: edit-страница, admin/listings, rate-limit на создание, бейдж «Проверенные отзывы»
-- `ListingForm` поддерживает `mode="edit"` + `initialData` + `listingId`
-- `features/admin/api/get-all-listings.ts` + `moderate-listing.ts` (approveListing, rejectListing, deleteListingAdminAction)
-- `features/admin/ui/ListingModerationActions.tsx` — компонент действий над объявлением
-- Admin nav: добавлен пункт «Объявления» (`/admin/listings`)
-- Объединён `MyOrderRow` + `OrderFeedCard` в единый компонент (variant="my")
-- **Chat (Audit & Optimization)**: Завершен полный аудит качества, безопасности и производительности. 
-  - Искоренен `as any` в `NotificationBellClient`.
-  - Внедрена серверная защита от спама (30 сообщений в минуту) в `sendMessageAction`.
-  - Оптимизирован `chatService.getUnreadCount` (улучшена выборка полей, переход на логику `lastReadAt < lastCreatedAt`).
-  - Усилена безопасность: удаление сообщений требует роли ADMIN. Исправлен `proxy.ts` (добавлен `/chat` в matcher).
-  - Унифицированы DTO в `shared-types`. Исправлены каскадные ошибки типизации `toISOString()`.
-  - **Производительность**: Внедрена виртуализация списка сообщений через `react-virtuoso`.
-  - **Auth & Sockets**: Исправлен приоритет сессий в сокетах (Auth.js > Admin). Это решило проблему неправильного имени отправителя при наличии двух активных сессий.
-  - **Notifications**: Создан `ChatNotificationListener` в `RootLayout`, обеспечивающий показ тоастов (sonner) о новых сообщениях во всем приложении.
-  - **UI/UX Refactoring**: Все аватарки в чате переведены на Shadcn UI `Avatar` с инициалами (устранена 404 ошибка `/default-avatar.png`). Увеличен размер аватарок в чате для лучшей читаемости.
-  - **Deep-linking**: Исправлены битые ссылки «Перейти к заказу» в заголовке чата. Теперь ссылки строятся по полной SEO-структуре `/orders/[city]/[category]/[slug]`.
-  - **Type Safety**: Устранены ошибки типизации в `MessageBubble.tsx` (импорты DTO и форматирование даты).
-  - **Тестирование**: Сервис чата покрыт Unit-тестами (16/16 тестов проходят: шифрование, блокировки, unread count, security).
-  - **VPS Readiness**: Исправлен запуск сервера на VPS. `tsx` перенесен в `dependencies`, `startup.js` использует `tsx server.ts`. CSP обновлен для поддержки WebSocket.
-- **Online Presence (Telegram Style)**: Внедрена система отслеживания онлайн-статуса и времени последнего визита (`lastSeenAt`).
-  - Статус хранится в Redis (TTL) + DB.
-  - Реализована автоматическая рассылка статуса участникам чата.
-  - **NEW**: Статус "В сети" теперь отображается в реальном времени и в списке всех чатов (`ConversationList`).
-  - Исправлен UX индикатора печати (скрывается сразу при получении сообщения).
-  - UI: Статус в заголовке чата перенесен в одну строку с именем для компактности.
-
-## Известные TODO / открытые вопросы
-
-- ⚠️ **[Фаза 11 / Вариант Б]** Модерация объявлений отключена: новые объявления сразу получают статус `ACTIVE` без проверки администратором. Решение принято осознанно для MVP — меньше трения для первых исполнителей. Когда база вырастет → включить `MODERATION` статус по умолчанию в `createListingAction` + уведомлять админа. `ListingStatus.MODERATION` в схеме уже есть.
-- Email — mock, пишет в `apps/web/email-debug.log`
-- `Прямое приглашение` кнопка «Предложить задачу» — заглушка → `/orders/new?provider=<id>`
+| Тип | Статус |
+|-----|--------|
+| Unit (Vitest) | ✅ 16/16 — crypto.ts, chat.service.ts |
+| E2E (Playwright) | ✅ 6/6 PASSED — чат, редиректы, API |
+| TypeScript | ✅ 0 ошибок в модуле чата |
 
 ---
 

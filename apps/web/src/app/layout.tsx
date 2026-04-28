@@ -8,6 +8,7 @@ import { ProfileSync } from "@/features/auth/ui/ProfileSync";
 import { GlobalHaptics } from "@/shared/lib/telegram/GlobalHaptics";
 import { ThemeProvider } from "@/shared/ui/theme-provider";
 import { GeoToastListener } from "@/features/geo-search/ui/GeoToastListener";
+import { ChatNotificationListener } from "@/features/chat/ui/ChatNotificationListener";
 
 const geistSans = Geist({
   subsets: ["latin", "cyrillic"],
@@ -48,6 +49,7 @@ export default function RootLayout({
           <ProfileSync />
           <GlobalHaptics />
           <GeoToastListener />
+          <ChatNotificationListener />
 
           <main className="min-h-screen">{children}</main>
 

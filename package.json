@@ -10,6 +10,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "dev:full": "npm run dev:full --workspace=@uslugi/web",
     "lint": "turbo run lint",
     "test": "turbo run test"
   },

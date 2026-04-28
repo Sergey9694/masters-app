@@ -43,8 +43,10 @@ export async function proxy(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Иначе редирект на главную
-    return NextResponse.redirect(new URL("/", request.url));
+    // Иначе редирект на логин
+    const loginUrl = new URL("/auth/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   const userRole = session?.user?.role || apiSession?.role;
@@ -78,6 +80,10 @@ export const config = {
     "/my-reviews",
     "/notifications",
     "/notifications/:path*",
+    "/chat",
+    "/chat/:path*",
+    "/my-listings",
+    "/my-listings/:path*",
     "/become-provider",
     "/providers/:path*",
     "/admin",

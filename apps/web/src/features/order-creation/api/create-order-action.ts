@@ -8,6 +8,7 @@ import { orderSchema } from "../model/order-schema";
 import { authActionClient } from "@/shared/lib/safe-action";
 
 import { orderService } from "@/services/order.service";
+import { getIO } from "@/shared/lib/get-io";
 
 /**
  * Server Action: Create a new order request
@@ -28,6 +29,8 @@ export const createOrderAction = authActionClient
 
       revalidatePath("/orders");
       revalidatePath("/my-orders");
+
+      getIO()?.emit("new:order", { orderId: order.id });
 
       return { success: true, redirect: `/orders/${order.city.slug}/${order.category.slug}/${order.slug || order.id}`, orderId: order.id };
     } catch (error: unknown) {
