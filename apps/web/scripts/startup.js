@@ -167,65 +167,26 @@ async function main() {
         console.log(`[STARTUP] Warning during asset linking: ${e.message}`);
     }
 
-    // Настройка путей для поиска модулей
-    const rootNodeModules = path.join(__dirname, "node_modules");
-    const standaloneNodeModules = path.join(__dirname, "apps", "web", "node_modules");
-    process.env.NODE_PATH = `${rootNodeModules}:${standaloneNodeModules}${process.env.NODE_PATH ? ":" + process.env.NODE_PATH : ""}`;
-    require('module').Module._initPaths();
-
     const serverJsPath = path.join(__dirname, "apps", "web", "server.js");
+    const standaloneJs = path.join(__dirname, "server.js");
     
-    console.log(`[STARTUP] Checking entry points: JS=${serverJsPath}`);
+    console.log(`[STARTUP] Entry point check: ${serverJsPath} (Exists: ${fs.existsSync(serverJsPath)})`);
 
     if (fs.existsSync(serverJsPath)) {
-        console.log(`[STARTUP] Launching compiled CUSTOM server.js (Socket.io support)...`);
+        console.log(`[STARTUP] Launching BUNDLED CUSTOM server.js (Socket.io + Redis built-in)...`);
         require(serverJsPath);
+    } else if (fs.existsSync(standaloneJs)) {
+        console.log(`[STARTUP] Fallback: Launching standard standalone server.js...`);
+        require(standaloneJs);
     } else {
-        // Fallback: если структура отличается — ищем server.js или server.ts в корне
-        const fallbackTs = path.join(__dirname, "server.ts");
-        const fallbackJs = path.join(__dirname, "server.js");
-
-        if (fs.existsSync(fallbackTs)) {
-            console.log(`[STARTUP] Found fallback server.ts, launching via tsx`);
-            const child = require("child_process").spawn("tsx", [fallbackTs], {
-                stdio: "inherit",
-                env: { ...process.env, NODE_ENV: "production" }
-            });
-            child.on("exit", (code) => process.exit(code || 0));
-            return;
-        }
-
-        if (fs.existsSync(fallbackJs)) {
-            require(fallbackJs);
-        } else {
-            throw new Error(`Entry point (server.ts/js) not found. Content of /app: ${fs.readdirSync(__dirname).join(", ")}`);
-        }
+        console.error(`[STARTUP] FATAL: No server.js found at ${serverJsPath} or ${standaloneJs}`);
+        console.error(`[STARTUP] Current directory contents: ${fs.readdirSync(__dirname).join(", ")}`);
+        process.exit(1);
     }
 }
 
-/**
- * Рекурсивный поиск файла в директории (ограничен глубиной).
- */
-function findFile(dir, filename, maxDepth) {
-    if (maxDepth <= 0) return null;
-    try {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            if (entry.name === filename && entry.isFile()) {
-                return path.join(dir, entry.name);
-            }
-        }
-        for (const entry of entries) {
-            if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".next") {
-                const found = findFile(path.join(dir, entry.name), filename, maxDepth - 1);
-                if (found) return found;
-            }
-        }
-    } catch (_) {}
-    return null;
-}
-
-main().catch((e) => {
-    console.error("[STARTUP] Критическая ошибка:", e);
+main().catch(err => {
+    console.error("[STARTUP] Fatal error during initialization:");
+    console.error(err);
     process.exit(1);
 });

@@ -40,18 +40,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Собираем только веб-приложение
 RUN npx turbo run build --filter=@uslugi/web
 
-# Компилируем кастомный сервер для продакшена (убирает зависимость от tsx)
+# Компилируем кастомный сервер для продакшена
+# Бандлим всё (включая socket.io и ioredis), КРОМЕ next и prisma
 RUN npx esbuild apps/web/server.ts \
     --bundle \
     --platform=node \
     --target=node20 \
     --outfile=apps/web/server-prod.js \
     --external:next \
-    --external:socket.io \
-    --external:ioredis \
-    --external:@socket.io/redis-adapter \
     --external:sharp \
-    --external:bcryptjs \
     --external:prisma \
     --external:@prisma/client
 
@@ -63,10 +60,10 @@ ENV NODE_ENV="production"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV UPLOADS_DIR="/app/uploads"
 
-# Устанавливаем необходимые системные зависимости и пакеты для кастомного сервера и сидинга
+# Устанавливаем ТОЛЬКО необходимые системные зависимости и bcryptjs для сидинга
 RUN apk add --no-cache openssl libc6-compat curl && \
     npm install -g prisma@5.22.0 && \
-    npm install socket.io@4.8.3 ioredis@5.10.1 @socket.io/redis-adapter@8.3.0 bcryptjs@2.4.3
+    npm install bcryptjs@3.0.3
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -83,7 +80,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/.prisma ./apps/web/node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/@prisma ./apps/web/node_modules/@prisma
 
-# Копируем скомпилированный сервер и скрипт запуска
+# Копируем скомпилированный сервер (поверх стандартного в standalone) и скрипт запуска
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/server-prod.js ./apps/web/server.js
 
