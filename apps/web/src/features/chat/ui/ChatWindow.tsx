@@ -93,10 +93,7 @@ export function ChatWindow({
           setTypingUser(null);
         }
 
-        // Прокрутка вниз при новом сообщении
-        setTimeout(() => {
-          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
+        // Virtuoso с followOutput="smooth" сам прокрутит вниз при добавлении сообщения
       }
     };
 
@@ -171,9 +168,6 @@ export function ChatWindow({
     };
   }, [socket, conversationId, currentUserId, otherUser.id]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
 
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || messages.length === 0) return;
