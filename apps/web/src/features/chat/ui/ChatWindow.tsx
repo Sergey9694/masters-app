@@ -12,6 +12,7 @@ import { ConversationHeader } from "./ConversationHeader";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 
 interface Props {
@@ -46,6 +47,7 @@ export function ChatWindow({
   initialMessages,
   showBack,
 }: Props) {
+  const router = useRouter();
   const { socket } = useSocket(currentUserId);
   const [messages, setMessages] = useState<MessageDTO[]>(initialMessages);
   const [typingUser, setTypingUser] = useState<string | null>(null);
@@ -326,6 +328,10 @@ export function ChatWindow({
           conversationId={conversationId}
           userId={currentUserId}
           onSend={handleSend}
+          onFocus={() => {
+            markAsReadAction({ conversationId });
+            router.refresh();
+          }}
         />
       </div>
     </div>

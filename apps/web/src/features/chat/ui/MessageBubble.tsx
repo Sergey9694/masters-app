@@ -52,7 +52,7 @@ export function MessageBubble({ message, isOwn }: Props) {
         >
           {!isOwn && !isDeleted && (
             <span className="block text-[10px] font-bold uppercase tracking-wider text-primary/80 mb-1">
-              {message.sender.firstName}
+              {message.sender.firstName}{message.sender.lastName ? ` ${message.sender.lastName}` : ""}
             </span>
           )}
           

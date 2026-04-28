@@ -75,7 +75,14 @@ export const chatService = {
     const results = await Promise.all(participations.map(async ({ conversation, lastReadAt }) => {
       const other = conversation.participants.find((p) => p.userId !== userId)!.user;
       const last = conversation.messages[0] ?? null;
-      const unread = last && (!lastReadAt || lastReadAt < last.createdAt) ? 1 : 0;
+      const unread = await db.message.count({
+        where: {
+          conversationId: conversation.id,
+          senderId: { not: userId },
+          deletedAt: null,
+          ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+        },
+      });
       const isOnline = await isUserOnline(other.id);
 
       return {

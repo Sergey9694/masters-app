@@ -70,7 +70,7 @@ async function getUserFromCookie(
 
     const user = await db.user.findUnique({
       where: { id: userId },
-      select: { id: true, firstName: true },
+      select: { id: true, firstName: true, lastName: true },
     });
 
     if (user) {
@@ -143,7 +143,7 @@ export function registerSocketHandlers(
     const user = await getUserFromCookie(cookieHeader);
     if (!user) return next(new Error("Unauthorized"));
     socket.data.userId = user.id;
-    socket.data.userName = user.firstName;
+    socket.data.userName = `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`;
     next();
   });
 
