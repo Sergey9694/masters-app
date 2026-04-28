@@ -20,10 +20,19 @@ export function encryptText(text: string): string {
 }
 
 export function decryptText(stored: string): string {
-  const parts = stored.split(":");
-  if (parts.length !== 3) throw new Error("Invalid encrypted format");
-  const [ivHex, authTagHex, encryptedHex] = parts;
-  const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(ivHex, "hex"));
-  decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
-  return decipher.update(Buffer.from(encryptedHex, "hex")).toString("utf8") + decipher.final("utf8");
+  try {
+    const parts = stored.split(":");
+    if (parts.length !== 3) return stored; // Return as is if not in expected encrypted format
+
+    const [ivHex, authTagHex, encryptedHex] = parts;
+    const decipher = createDecipheriv(ALGORITHM, getKey(), Buffer.from(ivHex, "hex"));
+    decipher.setAuthTag(Buffer.from(authTagHex, "hex"));
+    
+    let decrypted = decipher.update(Buffer.from(encryptedHex, "hex"), undefined, "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  } catch (error) {
+    console.error("❌ Decryption failed:", error);
+    return "[Ошибка расшифровки: сообщение зашифровано другим ключом]";
+  }
 }

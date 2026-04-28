@@ -12,7 +12,7 @@ import { ConversationHeader } from "./ConversationHeader";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 
 interface Props {
   conversationId: string;
@@ -55,6 +55,18 @@ export function ChatWindow({
   const [hasMore, setHasMore] = useState(initialMessages.length === 30);
   const bottomRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
+
+  // Автоматический скролл вниз при получении новых сообщений
+  useEffect(() => {
+    if (virtuosoRef.current && messages.length > 0) {
+      virtuosoRef.current.scrollToIndex({
+        index: messages.length - 1,
+        behavior: "smooth",
+        align: "end"
+      });
+    }
+  }, [messages.length]);
 
   useEffect(() => {
     const join = () => {
@@ -245,9 +257,10 @@ export function ChatWindow({
 
       <div className="flex-1 overflow-hidden relative">
         <Virtuoso
+          ref={virtuosoRef}
           data={messages}
           initialTopMostItemIndex={messages.length - 1}
-          followOutput="smooth"
+          followOutput={(isAtBottom) => (isAtBottom ? "smooth" : false)}
           alignToBottom
           className="scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-primary/30 transition-colors"
           style={{ height: '100%' }}

@@ -10,24 +10,38 @@ if (typeof (globalThis as any).AsyncLocalStorage === "undefined") {
 // --- POLYFILL END ---
 
 /**
- * ARCHITECTURE: Proxy-Bridge
- * This server listens on the PUBLIC_PORT (3000) and:
- * 1. Handles Socket.io traffic locally.
- * 2. Proxies all other HTTP traffic to the Next.js standalone server on NEXT_PORT (3001).
- * 
- * This avoids any dependency conflicts between Next.js standalone and custom server logic.
+ * ARCHITECTURE: Hybrid Proxy-Bridge (STABILIZED v2)
+ * Development: Prepares Next.js and handles it in the same process (standard custom server).
+ * Production: Proxies traffic to Next.js standalone on port 3001 (Proxy-Bridge).
  */
 
 async function startServer() {
   const dev = process.env.NODE_ENV !== "production";
   const hostname = "0.0.0.0";
   const PUBLIC_PORT = parseInt(process.env.PORT ?? "3000", 10);
-  const NEXT_PORT = PUBLIC_PORT + 1; // Usually 3001
+  const NEXT_PORT = PUBLIC_PORT + 1;
 
-  console.log(`[Proxy] Initializing Proxy-Bridge on port ${PUBLIC_PORT} -> ${NEXT_PORT}`);
+  let handler: any;
+  let nextUpgradeHandler: any;
+
+  if (dev) {
+    console.log(`[ANTIGRAVITY_STABLE] Running in DEVELOPMENT mode. Preparing Next.js...`);
+    const { default: next } = await import("next");
+    const app = next({ dev, hostname, port: PUBLIC_PORT });
+    handler = app.getRequestHandler();
+    await app.prepare();
+    nextUpgradeHandler = app.getUpgradeHandler();
+    console.log(`[ANTIGRAVITY_STABLE] Next.js is READY on port ${PUBLIC_PORT}`);
+  } else {
+    console.log(`[ANTIGRAVITY_STABLE] Running in PRODUCTION mode. Proxying 3000 -> 3001`);
+  }
 
   const httpServer = createServer((req, res) => {
-    // 1. Simple HTTP Proxy to Next.js
+    if (dev) {
+      return handler(req, res);
+    }
+
+    // Production Proxy Logic
     const proxyReq = request({
       hostname: "localhost",
       port: NEXT_PORT,
@@ -35,25 +49,22 @@ async function startServer() {
       method: req.method,
       headers: req.headers
     }, (proxyRes) => {
-      // Forward status and headers
       res.writeHead(proxyRes.statusCode!, proxyRes.headers);
-      // Pipe the body
       proxyRes.pipe(res, { end: true });
     });
 
     proxyReq.on('error', (err) => {
-      console.error(`[Proxy Error] Failed to reach Next.js on port ${NEXT_PORT}:`, err.message);
+      console.error(`[ANTIGRAVITY_ERROR] Proxy connection failed to port ${NEXT_PORT}:`, err.message);
       if (!res.headersSent) {
         res.writeHead(502, { 'Content-Type': 'text/plain' });
         res.end("Bad Gateway: Next.js server is starting or unreachable.");
       }
     });
 
-    // Pipe the incoming request body to the proxy request
     req.pipe(proxyReq, { end: true });
   });
 
-  // 2. Socket.io initialization
+  // Socket.io initialization
   const io = new Server(httpServer, {
     cors: {
       origin: true, 
@@ -64,18 +75,16 @@ async function startServer() {
     transports: ["websocket", "polling"]
   });
 
-  // Global access for internal modules
   (global as any)._io = io;
   
-  // Redis Adapter setup
+  // Redis Adapter & Bridge
   try {
     const { getRedis } = await import("./src/shared/lib/redis");
     const pubClient = getRedis();
     const subClient = pubClient.duplicate();
     io.adapter(createAdapter(pubClient, subClient));
-    console.log("▶ [Proxy] Socket.io Redis Adapter enabled");
+    console.log("[ANTIGRAVITY_STABLE] Redis Adapter enabled");
 
-    // Redis Bridge for Server Actions
     const bridgeSub = pubClient.duplicate();
     await bridgeSub.subscribe("socket-bridge");
     bridgeSub.on("message", (channel, message) => {
@@ -90,7 +99,15 @@ async function startServer() {
       }
     });
   } catch (e) {
-    console.warn("⚠ [Proxy] Redis not available, running without Redis adapter");
+    console.warn("⚠ [ANTIGRAVITY_STABLE] Redis not available, running without adapter");
+  }
+
+  // Upgrade handler for HMR (Development)
+  if (dev) {
+    httpServer.on("upgrade", (req, socket, head) => {
+      if (req.url?.startsWith("/socket.io")) return;
+      nextUpgradeHandler(req, socket, head);
+    });
   }
 
   // Register handlers
@@ -98,19 +115,11 @@ async function startServer() {
   registerSocketHandlers(io);
 
   httpServer.listen(PUBLIC_PORT, hostname, () => {
-    console.log(`▶ [Proxy] Public Gateway Ready: http://${hostname}:${PUBLIC_PORT}`);
-    console.log(`▶ [Proxy] Forwarding traffic to Next.js on port ${NEXT_PORT}`);
-  });
-
-  // Handle process signals
-  process.on("SIGTERM", () => {
-    console.log("SIGTERM received, shutting down Proxy-Bridge...");
-    httpServer.close();
-    process.exit(0);
+    console.log(`▶ [ANTIGRAVITY_STABLE] Server listening on http://${hostname}:${PUBLIC_PORT}`);
   });
 }
 
 startServer().catch((err) => {
-  console.error("⨯ [Proxy] Fatal startup error:", err);
+  console.error("⨯ [ANTIGRAVITY_STABLE] Fatal error:", err);
   process.exit(1);
 });
