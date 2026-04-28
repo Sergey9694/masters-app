@@ -11,7 +11,7 @@ import { setUserOnline, setUserOffline } from "./redis";
  */
 async function getUserFromCookie(
   cookieHeader: string
-): Promise<{ id: string; firstName: string } | null> {
+): Promise<{ id: string; firstName: string; lastName: string | null } | null> {
   try {
     const cookies = Object.fromEntries(
       cookieHeader.split(";").map((c) => {
