@@ -41,7 +41,12 @@ async function startServer() {
       return handler(req, res);
     }
 
-    // Production Proxy Logic
+    // 1. Skip proxying for Socket.io (handled by the io instance attached to this server)
+    if (req.url?.startsWith("/socket.io")) {
+      return;
+    }
+
+    // 2. Production Proxy Logic for all other requests
     const proxyReq = request({
       hostname: "localhost",
       port: NEXT_PORT,
@@ -91,6 +96,7 @@ async function startServer() {
       if (channel === "socket-bridge") {
         try {
           const { room, event, data } = JSON.parse(message);
+          console.log(`[Redis Bridge] Relaying ${event} to room ${room || 'global'}`);
           if (room) io.to(room).emit(event, data);
           else io.emit(event, data);
         } catch (e) {
