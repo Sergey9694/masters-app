@@ -55,8 +55,8 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
       }
     };
 
-    const onUserStatus = (data: { userId: string; isOnline: boolean }) => {
-      setOnlineUsers(prev => ({ ...prev, [data.userId]: data.isOnline }));
+    const onUserStatus = (data: { userId: string; status: "online" | "offline"; lastSeenAt: string }) => {
+      setOnlineUsers(prev => ({ ...prev, [data.userId]: data.status === "online" }));
     };
 
     socket.on("new:message", onMessage);
