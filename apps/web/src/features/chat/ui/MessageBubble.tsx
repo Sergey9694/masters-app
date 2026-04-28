@@ -23,9 +23,9 @@ export function MessageBubble({ message, isOwn }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15, ease: "linear" }}
       className={cn(
         "flex gap-3 max-w-[85%] sm:max-w-[75%]", 
         isOwn ? "ml-auto flex-row-reverse" : "mr-auto"
@@ -36,7 +36,7 @@ export function MessageBubble({ message, isOwn }: Props) {
           {message.sender.avatar && (
             <AvatarImage src={message.sender.avatar} alt={message.sender.firstName} />
           )}
-          <AvatarFallback>{message.sender.firstName[0]}</AvatarFallback>
+          <AvatarFallback delayMs={600}>{message.sender.firstName[0]}</AvatarFallback>
         </Avatar>
       )}
       

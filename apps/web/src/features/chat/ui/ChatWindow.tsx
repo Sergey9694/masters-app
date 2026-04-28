@@ -20,6 +20,7 @@ interface Props {
   otherUser: { 
     id: string; 
     firstName: string; 
+    lastName: string | null; 
     avatar: string | null; 
     lastSeenAt?: string | null; 
     status?: "online" | "offline" 

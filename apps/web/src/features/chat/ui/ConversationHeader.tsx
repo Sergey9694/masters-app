@@ -5,7 +5,13 @@ import { formatSmartDate } from "@/shared/lib/date";
 import { cn } from "@/shared/lib/cn";
 
 interface Props {
-  otherUser: { id: string; firstName: string; avatar: string | null };
+  otherUser: { 
+    id: string; 
+    firstName: string; 
+    lastName: string | null; 
+    avatar: string | null;
+    lastSeenAt?: string | null;
+  };
   context: { 
     orderId: string | null; 
     orderSlug?: string | null;
@@ -38,7 +44,7 @@ export function ConversationHeader({ otherUser, context, showBack, status, lastS
       <div className="relative">
         <Avatar size="default">
           {otherUser.avatar && <AvatarImage src={otherUser.avatar} alt={`${otherUser.firstName} ${otherUser.lastName || ""}`} />}
-          <AvatarFallback>{otherUser.firstName[0]}</AvatarFallback>
+          <AvatarFallback delayMs={600}>{otherUser.firstName[0]}</AvatarFallback>
         </Avatar>
         {isOnline && (
           <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-surface" />
