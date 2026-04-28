@@ -108,7 +108,7 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
                 {conv.otherUser.avatar && (
                   <AvatarImage 
                     src={conv.otherUser.avatar} 
-                    alt={conv.otherUser.firstName} 
+                    alt={`${conv.otherUser.firstName} ${conv.otherUser.lastName || ""}`} 
                     className="transition group-hover:scale-105"
                   />
                 )}
@@ -126,7 +126,7 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
                   "font-semibold text-sm truncate",
                   conv.unreadCount > 0 ? "text-foreground" : "text-foreground/80"
                 )}>
-                  {conv.otherUser.firstName}
+                  {conv.otherUser.firstName} {conv.otherUser.lastName || ""}
                 </span>
                 {conv.lastMessage && (
                   <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">
