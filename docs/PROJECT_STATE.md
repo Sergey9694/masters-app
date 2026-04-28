@@ -110,12 +110,16 @@ ENCRYPTION_KEY=<64 hex символа>
 
 ---
 
-## Обновление 2026-04-28: стабилизация `masters_app` на VPS
-
-- На VPS `/root/masters_app` подтверждена причина падения `uslugi_web`: proxy-бандл импортировал `auth.ts`, а через него `next/server` / `next/headers`; Next standalone runtime падал на отсутствии `next/dist/compiled/ua-parser-js`.
-- Постоянное исправление в коде: custom JWT `encrypt`/`decrypt` вынесены в `src/shared/lib/session-token.ts`, а `socket-handlers.ts` использует этот чистый модуль вместо `auth.ts`.
-- Docker bootstrap усилен: `startup.js` проверяется через `node --check` на этапе сборки, а esbuild получает явный entrypoint `./apps/web/server.ts`.
-- Проверки после фикса: `node --check apps/web/scripts/startup.js`, `tsc --noEmit --project apps/web/tsconfig.json`.
+## Обновление 2026-04-28: стабилизация `uslugi_ryadom`
+- **Hybrid Server**: `server.ts` переведен в гибридный режим. В `dev` запускает Next.js внутри (HMR), в `prod` работает как Proxy-Bridge. Исправлена ошибка инициализации `app.prepare()`.
+- **Graceful Decryption**: В `crypto.ts` добавлен `try-catch` для `decryptText`. При ошибке ключа или повреждении данных возвращается уведомление вместо сбоя сервера.
+- **UI/UX Fixes**:
+  - **Auto-scroll**: В `ChatWindow.tsx` реализован надежный авто-скролл вниз через `VirtuosoHandle`.
+  - **Asset 404s**: Подтверждено, что 404 для загрузок — это отсутствие файлов на диске, инфраструктура роутинга исправна.
+- **Validation**:
+  - Полный `next build` успешно пройден (0 ошибок пререндеринга).
+  - Unit-тесты (`vitest`) актуализированы и проходят (16/16).
+- **Sync**: Ветка `refactor/uslugi-ryadom` полностью синхронизирована с `phase7-chat`.
 
 ---
 
