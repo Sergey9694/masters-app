@@ -9,6 +9,8 @@ import { GlobalHaptics } from "@/shared/lib/telegram/GlobalHaptics";
 import { ThemeProvider } from "@/shared/ui/theme-provider";
 import { GeoToastListener } from "@/features/geo-search/ui/GeoToastListener";
 import { ChatNotificationListener } from "@/features/chat/ui/ChatNotificationListener";
+import { auth } from "@/auth";
+import { getSession } from "@/shared/lib/auth";
 
 const geistSans = Geist({
   subsets: ["latin", "cyrillic"],
@@ -26,11 +28,30 @@ export const metadata: Metadata = {
     "Доска объявлений услуг в вашем городе. Найдите исполнителя или предложите свои услуги.",
 };
 
-export default function RootLayout({
+async function getRealtimeUserId() {
+  try {
+    const session = await auth();
+    if (session?.user?.id) return session.user.id;
+  } catch (error) {
+    console.error("[RootLayout] Failed to read Auth.js session for realtime", error);
+  }
+
+  try {
+    const session = await getSession();
+    return session?.userId ?? undefined;
+  } catch (error) {
+    console.error("[RootLayout] Failed to read custom session for realtime", error);
+    return undefined;
+  }
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const realtimeUserId = await getRealtimeUserId();
+
   return (
     <html lang="ru" suppressHydrationWarning>
       <body
@@ -49,7 +70,7 @@ export default function RootLayout({
           <ProfileSync />
           <GlobalHaptics />
           <GeoToastListener />
-          <ChatNotificationListener />
+          <ChatNotificationListener userId={realtimeUserId} />
 
           <main className="min-h-screen">{children}</main>
 

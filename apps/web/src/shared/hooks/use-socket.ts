@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { ServerToClientEvents, ClientToServerEvents } from "@/shared/lib/socket-events";
 
 type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 let _socket: AppSocket | null = null;
+let _socketUserId: string | null = null;
 
 function getSocket(): AppSocket {
   if (!_socket) {
     _socket = io({
       path: "/socket.io",
-      autoConnect: true,
+      addTrailingSlash: false,
+      autoConnect: false,
       withCredentials: true,
       transports: ["websocket", "polling"],
     });
@@ -23,14 +25,27 @@ function getSocket(): AppSocket {
 export function useSocket(userId?: string) {
   const [connected, setConnected] = useState(false);
   const socket = getSocket();
-  const prevUserIdRef = useRef<string | undefined>(userId);
 
   useEffect(() => {
-    if (userId && prevUserIdRef.current !== userId) {
-      console.log(`[Socket] User ID changed from ${prevUserIdRef.current} to ${userId}. Reconnecting...`);
+    if (!userId) {
+      if (_socketUserId !== null) {
+        _socketUserId = null;
+        socket.disconnect();
+      }
+      setConnected(false);
+      return;
+    }
+
+    const userChanged = _socketUserId !== null && _socketUserId !== userId;
+    if (userChanged) {
+      console.log(`[Socket] User ID changed from ${_socketUserId} to ${userId}. Reconnecting...`);
       socket.disconnect();
+    }
+
+    _socketUserId = userId;
+
+    if (!socket.connected) {
       socket.connect();
-      prevUserIdRef.current = userId;
     }
   }, [socket, userId]);
 

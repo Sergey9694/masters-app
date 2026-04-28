@@ -26,7 +26,7 @@ export function ChatNotificationListener({ userId }: Props) {
   }, [pathname]);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!userId) return;
 
     const handler = (data: { conversationId: string; message: MessageDTO }) => {
       const convId = data.conversationId;
@@ -62,7 +62,7 @@ export function ChatNotificationListener({ userId }: Props) {
     return () => {
       socket.off("new:message", handler);
     };
-  }, [socket, router]);
+  }, [socket, router, userId]);
 
   return null;
 }
