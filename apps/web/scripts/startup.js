@@ -168,8 +168,8 @@ async function main() {
     }
 
     const { spawn } = require("child_process");
-    const nextServerPath = path.join(__dirname, "server-next.js");
-    const proxyServerPath = path.join(__dirname, "server.js");
+    const nextServerPath = path.join(__dirname, "apps", "web", "server-next.js");
+    const proxyServerPath = path.join(__dirname, "apps", "web", "server.js");
     
     console.log(`[STARTUP] Entry point check:`);
     console.log(` - Next.js: ${nextServerPath} (Exists: ${fs.existsSync(nextServerPath)})`);
@@ -180,13 +180,19 @@ async function main() {
         process.exit(1);
     }
 
+    // Change directory to the app root so Next.js can find .next folder
+    const appDir = path.join(__dirname, "apps", "web");
+    console.log(`[STARTUP] Changing working directory to: ${appDir}`);
+    process.chdir(appDir);
+
     // 1. Spawn Next.js on port 3001
     console.log(`[STARTUP] Spawning Next.js on port 3001...`);
     const nextEnv = { ...process.env, PORT: "3001", NODE_ENV: "production" };
     const nextProcess = spawn("node", ["server-next.js"], {
         env: nextEnv,
         stdio: "inherit",
-        shell: false
+        shell: false,
+        cwd: appDir
     });
 
     nextProcess.on("error", (err) => {
