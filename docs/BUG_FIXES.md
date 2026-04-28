@@ -4,6 +4,27 @@
 
 ---
 
+## [2026-04-28] Стабилизация Фазы 7 (Чат и Real-time)
+
+### 1. Чат не работал на VPS (Dockerfile & Startup)
+**Причина:** Dockerfile запускал `server.js` (скомпилированный Next.js), который не содержал логику Socket.io из `server.ts`. Кроме того, `tsx` находился в `devDependencies` и отсутствовал при `npm install --omit=dev`.
+**Решение:** 
+- `tsx` перенесен в `dependencies`.
+- `startup.js` переписан для запуска `tsx server.ts`.
+- В `next.config.mjs` добавлена поддержка `ws:` и `wss:` в CSP.
+
+### 2. Ошибки типизации Socket.io (get-io.ts)
+**Причина:** Глобальный объект `_io` не имел корректной типизации, что вызывало ошибки TS при обращении к методам Socket.io в Server Actions.
+**Решение:** Внедрено `declare global` с правильными типами `Server` и `DefaultEventsMap`. Все `any` заменены на строгие типы.
+
+### 3. Безопасность комнат чата (Security Breach Risk)
+**Причина:** Отсутствовала проверка участника при подключении к комнате через сокеты — любой авторизованный пользователь мог "подслушать" чужую комнату, зная её ID.
+**Решение:** В `socket-handlers.ts` добавлена проверка `isParticipant` через Prisma перед выполнением `socket.join(roomId)`.
+
+### 4. Ошибки ссылок "Перейти к заказу" (404 Error)
+**Причина:** Ссылки в чате строились по старому формату `/orders/[id]`, в то время как архитектура требует `/orders/[citySlug]/[categorySlug]/[orderSlug]`.
+**Решение:** В `MessageBubble.tsx` внедрена логика сборки полного SEO-пути на основе метаданных заказа.
+
 ## [2026-04-26] Баги в форме создания объявления (ListingForm + ensureCityAction)
 
 ### 1. `Cannot read properties of undefined (reading 'user')` на `/my-listings`

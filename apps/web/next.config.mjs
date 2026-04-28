@@ -35,7 +35,7 @@ const nextConfig = {
             "style-src 'self' 'unsafe-inline'",
             "img-src 'self' data: blob: https://t.me https://*.telegram.org https://*.telesco.pe",
             "font-src 'self' data: https://*.telegram.org https://fonts.gstatic.com",
-            "connect-src 'self' https://telegram.org https://*.telegram.org",
+            "connect-src 'self' ws: wss: https://telegram.org https://*.telegram.org",
             "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org",
           ].join("; "),
         },

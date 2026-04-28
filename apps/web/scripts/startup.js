@@ -167,27 +167,45 @@ async function main() {
         console.log(`[STARTUP] Warning during asset linking: ${e.message}`);
     }
 
-    const serverPath = path.join(__dirname, "apps", "web", "server.js");
-    console.log(`[STARTUP] Запускаем сервер Next.js... (${serverPath})`);
+    const serverTsPath = path.join(__dirname, "apps", "web", "server.ts");
+    const serverJsPath = path.join(__dirname, "apps", "web", "server.js");
+    
+    console.log(`[STARTUP] Checking entry points: TS=${serverTsPath}, JS=${serverJsPath}`);
 
-    if (!fs.existsSync(serverPath)) {
-        // Fallback: если структура отличается — ищем server.js рядом
-        const fallbackPath = path.join(__dirname, "server.js");
-        console.log(`[STARTUP] server.js не найден по основному пути, пробуем fallback: ${fallbackPath}`);
-        if (fs.existsSync(fallbackPath)) {
-            require(fallbackPath);
-        } else {
-            // Последний шанс — найти автоматически
-            const found = findFile(__dirname, "server.js", 4);
-            if (found) {
-                console.log(`[STARTUP] server.js найден автоматически: ${found}`);
-                require(found);
-            } else {
-                throw new Error(`server.js не найден ни по одному из путей. Содержимое /app:\n${fs.readdirSync(__dirname).join(", ")}`);
-            }
-        }
+    if (fs.existsSync(serverTsPath)) {
+        console.log(`[STARTUP] >>> Launching CUSTOM server.ts via tsx (Socket.io support)`);
+        // Используем spawnSync для запуска tsx, чтобы он не упал при require (так как это TS)
+        const child = require("child_process").spawn("npx", ["tsx", serverTsPath], {
+            stdio: "inherit",
+            env: { ...process.env, NODE_ENV: "production" }
+        });
+        child.on("exit", (code) => process.exit(code || 0));
+        return; // Выходим из main, так как сервер запущен в дочернем процессе
+    }
+
+    if (fs.existsSync(serverJsPath)) {
+        console.log(`[STARTUP] Launching Next.js standalone server.js...`);
+        require(serverJsPath);
     } else {
-        require(serverPath);
+        // Fallback: если структура отличается — ищем server.js или server.ts в корне
+        const fallbackTs = path.join(__dirname, "server.ts");
+        const fallbackJs = path.join(__dirname, "server.js");
+
+        if (fs.existsSync(fallbackTs)) {
+            console.log(`[STARTUP] Found fallback server.ts, launching via tsx`);
+            const child = require("child_process").spawn("npx", ["tsx", fallbackTs], {
+                stdio: "inherit",
+                env: { ...process.env, NODE_ENV: "production" }
+            });
+            child.on("exit", (code) => process.exit(code || 0));
+            return;
+        }
+
+        if (fs.existsSync(fallbackJs)) {
+            require(fallbackJs);
+        } else {
+            throw new Error(`Entry point (server.ts/js) not found. Content of /app: ${fs.readdirSync(__dirname).join(", ")}`);
+        }
     }
 }
 
