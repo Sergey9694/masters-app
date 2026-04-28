@@ -110,16 +110,12 @@ ENCRYPTION_KEY=<64 hex символа>
 
 ---
 
-## Обновление 2026-04-28: стабилизация `uslugi_ryadom`
-- **Hybrid Server**: `server.ts` переведен в гибридный режим. В `dev` запускает Next.js внутри (HMR), в `prod` работает как Proxy-Bridge. Исправлена ошибка инициализации `app.prepare()`.
-- **Graceful Decryption**: В `crypto.ts` добавлен `try-catch` для `decryptText`. При ошибке ключа или повреждении данных возвращается уведомление вместо сбоя сервера.
-- **UI/UX Fixes**:
-  - **Auto-scroll**: В `ChatWindow.tsx` реализован надежный авто-скролл вниз через `VirtuosoHandle`.
-  - **Asset 404s**: Подтверждено, что 404 для загрузок — это отсутствие файлов на диске, инфраструктура роутинга исправна.
-- **Validation**:
-  - Полный `next build` успешно пройден (0 ошибок пререндеринга).
-  - Unit-тесты (`vitest`) актуализированы и проходят (16/16).
-- **Sync**: Ветка `refactor/uslugi-ryadom` полностью синхронизирована с `phase7-chat`.
+## Обновление 2026-04-28 (Fix): Стабилизация Production WebSocket & Presence
+- **Redis Name Collision Fix**: Сервис Redis переименован в `uslugi_redis` в `docker-compose.yml`. Это устранило DNS-конфликт на VPS, где несколько проектов использовали имя `redis` в одной сети `proxy_network`.
+- **WebSocket Proxy Restore**: В `server.ts` внедрен байпас для маршрута `/socket.io`. Теперь Socket.io-запросы обрабатываются напрямую Proxy-Bridge (порт 3000) и не проксируются в Next.js, что восстановило работоспособность чата в продакшене.
+- **Next.js Upgrade**: Версия Next.js обновлена до `16.2.2`. Это исправило баг пустых `middleware-manifest.json` в `standalone` сборке, из-за которого не работал `src/proxy.ts` (замена Middleware).
+- **Redis Adapter**: В `server.ts` интегрирован `@socket.io/redis-adapter` (и `ioredis`). Это обеспечивает синхронизацию WebSocket-событий между всеми Node.js процессами.
+- **Presence Verified**: Статус "Online" теперь корректно отображается в UI (Sergei, Ирина). Ключи `user:status:*` успешно создаются в изолированном контейнере `uslugi_redis`.
 
 ---
 

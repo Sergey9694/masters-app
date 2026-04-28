@@ -26,7 +26,7 @@ services:
             - proxy_network
 
     # --- REDIS (кэш и адаптер Socket.io) ---
-    redis:
+    uslugi_redis:
         image: redis:7-alpine
         restart: unless-stopped
         # ports:
@@ -63,7 +63,7 @@ services:
             DADATA_API_KEY: ${DADATA_API_KEY}
             ADMIN_EMAIL: ${ADMIN_EMAIL}
             ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-            REDIS_URL: "redis://redis:6379"
+            REDIS_URL: "redis://uslugi_redis:6379"
         volumes:
             - ./uploads:/app/uploads
         networks:
@@ -71,7 +71,7 @@ services:
         depends_on:
             db:
                 condition: service_healthy
-            redis:
+            uslugi_redis:
                 condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]

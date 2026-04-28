@@ -57,16 +57,28 @@ export function ChatWindow({
   const topRef = useRef<HTMLDivElement>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
-  // Автоматический скролл вниз при получении новых сообщений
+  // Автоматический скролл вниз при изменении количества сообщений или статуса печати
+  const displayMessages = typingUser 
+    ? [...messages, { 
+        id: 'typing-indicator', 
+        isTyping: true, 
+        text: '', 
+        senderId: 'typing', 
+        createdAt: new Date().toISOString(),
+        attachments: [],
+        sender: { id: 'typing', firstName: typingUser, avatar: null }
+      } as any] 
+    : messages;
+
   useEffect(() => {
-    if (virtuosoRef.current && messages.length > 0) {
+    if (virtuosoRef.current && displayMessages.length > 0) {
       virtuosoRef.current.scrollToIndex({
-        index: messages.length - 1,
+        index: displayMessages.length - 1,
         behavior: "smooth",
         align: "end"
       });
     }
-  }, [messages.length]);
+  }, [displayMessages.length]);
 
   useEffect(() => {
     const join = () => {
@@ -258,8 +270,8 @@ export function ChatWindow({
       <div className="flex-1 overflow-hidden relative">
         <Virtuoso
           ref={virtuosoRef}
-          data={messages}
-          initialTopMostItemIndex={messages.length - 1}
+          data={displayMessages}
+          initialTopMostItemIndex={displayMessages.length - 1}
           followOutput={(isAtBottom) => (isAtBottom ? "smooth" : false)}
           alignToBottom
           className="scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-primary/30 transition-colors"
@@ -276,22 +288,23 @@ export function ChatWindow({
               </div>
             ),
             Footer: () => (
-              <div className="flex flex-col">
-                {typingUser && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="px-4 py-2"
-                  >
-                    <TypingIndicator userName={typingUser} />
-                  </motion.div>
-                )}
-                <div ref={bottomRef} className="h-4 shrink-0" />
-              </div>
+              <div ref={bottomRef} className="h-4 shrink-0" />
             )
           }}
           itemContent={(index, msg) => {
-            const prevMsg = messages[index - 1];
+            if (msg.isTyping) {
+              return (
+                <motion.div 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="px-4 py-2"
+                >
+                  <TypingIndicator userName={typingUser!} />
+                </motion.div>
+              );
+            }
+
+            const prevMsg = displayMessages[index - 1];
             const showDate = !prevMsg || 
               new Date(msg.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString();
             
