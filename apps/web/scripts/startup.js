@@ -172,19 +172,8 @@ async function main() {
     
     console.log(`[STARTUP] Checking entry points: TS=${serverTsPath}, JS=${serverJsPath}`);
 
-    if (fs.existsSync(serverTsPath)) {
-        console.log(`[STARTUP] >>> Launching CUSTOM server.ts via tsx (Socket.io support)`);
-        // Используем spawnSync для запуска tsx, чтобы он не упал при require (так как это TS)
-        const child = require("child_process").spawn("tsx", [serverTsPath], {
-            stdio: "inherit",
-            env: { ...process.env, NODE_ENV: "production" }
-        });
-        child.on("exit", (code) => process.exit(code || 0));
-        return; // Выходим из main, так как сервер запущен в дочернем процессе
-    }
-
     if (fs.existsSync(serverJsPath)) {
-        console.log(`[STARTUP] Launching Next.js standalone server.js...`);
+        console.log(`[STARTUP] Launching compiled CUSTOM server.js (Socket.io support)...`);
         require(serverJsPath);
     } else {
         // Fallback: если структура отличается — ищем server.js или server.ts в корне

@@ -40,6 +40,21 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Собираем только веб-приложение
 RUN npx turbo run build --filter=@uslugi/web
 
+# Компилируем кастомный сервер для продакшена (убирает зависимость от tsx)
+RUN npx esbuild apps/web/server.ts \
+    --bundle \
+    --platform=node \
+    --target=node20 \
+    --outfile=apps/web/server-prod.js \
+    --external:next \
+    --external:socket.io \
+    --external:ioredis \
+    --external:@socket.io/redis-adapter \
+    --external:sharp \
+    --external:bcryptjs \
+    --external:prisma \
+    --external:@prisma/client
+
 # 3. Production Runner
 FROM base AS runner
 WORKDIR /app
@@ -47,11 +62,10 @@ WORKDIR /app
 ENV NODE_ENV="production"
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV UPLOADS_DIR="/app/uploads"
-ENV NODE_PATH="/usr/local/lib/node_modules"
 
 # Устанавливаем необходимые системные зависимости и Prisma CLI для startup.js
 RUN apk add --no-cache openssl libc6-compat curl && \
-    npm install -g prisma@5.22.0 bcryptjs tsx@4.21.0 socket.io@4.8.3 @socket.io/redis-adapter@8.3.0 ioredis@5.10.1 typescript@5.5.4 next@16.1.7 react@19.2.3 react-dom@19.2.3
+    npm install -g prisma@5.22.0 bcryptjs
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
@@ -64,14 +78,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
 
 # Prisma - копируем схему и сгенерированный клиент
-# Клиент генерируется в apps/web/node_modules (prisma-client установлен там)
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/.prisma ./apps/web/node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/@prisma ./apps/web/node_modules/@prisma
 
+# Копируем скомпилированный сервер и скрипт запуска
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/server.ts ./apps/web/server.ts
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src ./apps/web/src
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/server-prod.js ./apps/web/server.js
 
 USER nextjs
 
