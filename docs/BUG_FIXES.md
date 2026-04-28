@@ -13,6 +13,10 @@
 - `startup.js` переписан для запуска `tsx server.ts`.
 - В `next.config.mjs` добавлена поддержка `ws:` и `wss:` в CSP.
 
+### 2. Ошибка пререндеринга /auth/login (CI/CD Failure)
+**Причина:** Использование `useSearchParams()` в `LoginForm` без `Suspense` вызывало ошибку `prerender-error` во время сборки Next.js 16.
+**Решение:** Компонент `LoginForm` обёрнут в `<Suspense>` в `src/app/auth/login/page.tsx`.
+
 ### 2. Ошибки типизации Socket.io (get-io.ts)
 **Причина:** Глобальный объект `_io` не имел корректной типизации, что вызывало ошибки TS при обращении к методам Socket.io в Server Actions.
 **Решение:** Внедрено `declare global` с правильными типами `Server` и `DefaultEventsMap`. Все `any` заменены на строгие типы.
@@ -27,7 +31,7 @@
 
 ### 5. Мигание аватарок при загрузке (UX Glitch)
 **Причина:** `AvatarFallback` показывался мгновенно до загрузки изображения, создавая визуальный шум.
-**Решение:** Добавлен `delayMs={600}` во все компоненты `AvatarFallback` (Header, List, MessageBubble).
+- **Решение:** Добавлен `delay={600}` во все компоненты `AvatarFallback` (Header, List, MessageBubble).
 
 ### 6. "Тягучая" анимация сообщений (Performance/UX)
 **Причина:** Использование `framer-motion` с тяжелыми трансформациями (`y`, `scale`) на каждом сообщении создавало задержки на мобильных устройствах.
