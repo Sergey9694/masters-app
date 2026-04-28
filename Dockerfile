@@ -37,8 +37,9 @@ ENV NEXT_PUBLIC_BOT_NAME="$NEXT_PUBLIC_BOT_NAME"
 ENV NEXT_PUBLIC_BOT_ID="$NEXT_PUBLIC_BOT_ID"
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Собираем только веб-приложение
-RUN npx turbo run build --filter=@uslugi/web
+# Собираем только веб-приложение и подготавливаем имена файлов для прокси
+RUN npx turbo run build --filter=@uslugi/web && \
+    mv apps/web/.next/standalone/server.js apps/web/.next/standalone/server-next.js
 
 # Компилируем кастомный сервер для продакшена
 # Бандлим всё (включая socket.io и ioredis), КРОМЕ next и prisma
@@ -70,7 +71,7 @@ RUN adduser --system --uid 1001 nextjs
 
 RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 
-# Копируем standalone сборку
+# Копируем standalone сборку (там уже лежит server-next.js)
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
@@ -80,9 +81,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/.prisma ./apps/web/node_modules/.prisma
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/node_modules/@prisma ./apps/web/node_modules/@prisma
 
-# Подготовка серверов: наш прокси и оригинальный Next
+# Подготовка серверов: наш прокси и скрипт запуска
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/scripts/startup.js ./startup.js
-COPY --from=builder --chown=nextjs:nodejs /app/server.js ./server-next.js
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/server-prod.js ./server.js
 
 USER nextjs
