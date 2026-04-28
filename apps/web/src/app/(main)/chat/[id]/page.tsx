@@ -55,7 +55,7 @@ export default async function ConversationPage({
   const isOnline = await isUserOnline(otherParticipant.userId);
 
   return (
-    <div className="flex w-full h-[calc(100vh-120px)] lg:h-[calc(100vh-40px)] overflow-hidden bg-background/30 rounded-2xl border border-border/50 shadow-xl">
+    <div className="flex w-full h-[calc(100vh-180px)] lg:h-[calc(100vh-150px)] overflow-hidden bg-background/30 rounded-2xl border border-border/50 shadow-xl">
       <aside className="hidden md:flex w-80 shrink-0 border-r border-border/60 flex-col bg-surface/30 backdrop-blur-md">
         <div className="px-5 py-4 border-b border-border/60 bg-background/40">
           <h1 className="font-bold text-lg tracking-tight">Сообщения</h1>
