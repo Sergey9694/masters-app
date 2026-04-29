@@ -19,7 +19,7 @@ export const submitProposalAction = authActionClient
   .action(async ({ parsedInput: { orderId, price, message }, ctx }) => {
     const { userId } = ctx;
 
-    const rl = checkRateLimit({ key: `respond:${userId}`, limit: 15, windowSec: 60 });
+    const rl = await checkRateLimit({ key: `respond:${userId}`, limit: 15, windowSec: 60 });
     if (!rl.allowed) {
       throw new Error(`Слишком часто. Подождите ${rl.retryAfterSec} сек.`);
     }

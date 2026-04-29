@@ -33,7 +33,7 @@ export async function uploadImagesAction(formData: FormData): Promise<{ urls?: s
       return { error: "Вы должны быть авторизованы" };
     }
 
-    const rl = checkRateLimit({ key: `upload:${user.id}`, limit: 15, windowSec: 60 });
+    const rl = await checkRateLimit({ key: `upload:${user.id}`, limit: 15, windowSec: 60 });
     if (!rl.allowed) {
       return { error: `Слишком часто. Подожтите ${rl.retryAfterSec} сек.` };
     }

@@ -19,7 +19,7 @@ export const createOrderAction = authActionClient
   .action(async ({ parsedInput: validated, ctx }) => {
     const { userId } = ctx;
 
-    const rl = checkRateLimit({ key: `createOrder:${userId}`, limit: 5, windowSec: 60 });
+    const rl = await checkRateLimit({ key: `createOrder:${userId}`, limit: 5, windowSec: 60 });
     if (!rl.allowed) {
       throw new Error(`Слишком часто. Подождите ${rl.retryAfterSec} сек.`);
     }

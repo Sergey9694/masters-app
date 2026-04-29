@@ -15,7 +15,7 @@ const schema = z.object({
 export const sendMessageAction = authActionClient
   .schema(schema)
   .action(async ({ parsedInput, ctx }) => {
-    const rl = checkRateLimit({
+    const rl = await checkRateLimit({
       key: `chat:send:${ctx.userId}`,
       limit: 30,
       windowSec: 60,

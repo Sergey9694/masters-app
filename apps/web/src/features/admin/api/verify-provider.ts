@@ -1,32 +1,48 @@
 "use server";
 
-import { getSession } from "@/shared/lib/auth";
+import { adminActionClient } from "@/shared/lib/safe-action";
 import { db } from "@/shared/lib/db";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { logAudit } from "@/shared/lib/audit";
 
-export async function verifyProvider(providerId: string) {
-  const session = await getSession();
-  if (!session || session.role !== "ADMIN") {
-    throw new Error("Forbidden");
-  }
+const schema = z.object({
+  providerId: z.string().cuid(),
+});
 
-  await db.providerProfile.update({
-    where: { id: providerId },
-    data: { isVerified: true },
+export const verifyProviderAction = adminActionClient
+  .schema(schema)
+  .action(async ({ parsedInput: { providerId }, ctx }) => {
+    await db.providerProfile.update({
+      where: { id: providerId },
+      data: { isVerified: true },
+    });
+
+    await logAudit({
+      userId: ctx.userId,
+      action: "VERIFY_PROVIDER",
+      entity: "ProviderProfile",
+      entityId: providerId,
+    });
+
+    revalidatePath("/admin/provider-applications");
+    return { success: true };
   });
 
-  revalidatePath("/admin/provider-applications");
-}
+export const rejectProviderAction = adminActionClient
+  .schema(schema)
+  .action(async ({ parsedInput: { providerId }, ctx }) => {
+    await db.providerProfile.delete({
+      where: { id: providerId },
+    });
 
-export async function rejectProvider(providerId: string) {
-  const session = await getSession();
-  if (!session || session.role !== "ADMIN") {
-    throw new Error("Forbidden");
-  }
+    await logAudit({
+      userId: ctx.userId,
+      action: "REJECT_PROVIDER",
+      entity: "ProviderProfile",
+      entityId: providerId,
+    });
 
-  await db.providerProfile.delete({
-    where: { id: providerId },
+    revalidatePath("/admin/provider-applications");
+    return { success: true };
   });
-
-  revalidatePath("/admin/provider-applications");
-}

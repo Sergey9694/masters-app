@@ -49,7 +49,7 @@ export async function POST(
   const { id } = await params;
 
   // B6: Rate limit (30 messages per 60s)
-  const rl = checkRateLimit({ 
+  const rl = await checkRateLimit({ 
     key: `chat:api:${session.userId}`, 
     limit: 30, 
     windowSec: 60 

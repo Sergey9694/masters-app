@@ -19,7 +19,7 @@ export const uploadImagesAction = authActionClient
   .schema(z.instanceof(FormData))
   .action(async ({ parsedInput: formData, ctx: { userId } }) => {
     try {
-      const rl = checkRateLimit({ key: `upload:${userId}`, limit: 15, windowSec: 60 });
+      const rl = await checkRateLimit({ key: `upload:${userId}`, limit: 15, windowSec: 60 });
       if (!rl.allowed) {
         throw new Error(`Слишком часто. Подожтите ${rl.retryAfterSec} сек.`);
       }

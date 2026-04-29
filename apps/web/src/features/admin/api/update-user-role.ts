@@ -1,20 +1,33 @@
 "use server";
 
-import { getSession } from "@/shared/lib/auth";
+import { adminActionClient } from "@/shared/lib/safe-action";
 import { db } from "@/shared/lib/db";
 import { Role } from "@/shared/types/auth";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { logAudit } from "@/shared/lib/audit";
 
-export async function updateUserRole(userId: string, role: Role) {
-  const session = await getSession();
-  if (!session || session.role !== "ADMIN") {
-    throw new Error("Forbidden");
-  }
+const schema = z.object({
+  userId: z.string().cuid(),
+  role: z.enum(["USER", "PROVIDER", "ADMIN"]),
+});
 
-  await db.user.update({
-    where: { id: userId },
-    data: { role },
+export const updateUserRoleAction = adminActionClient
+  .schema(schema)
+  .action(async ({ parsedInput: { userId, role }, ctx }) => {
+    await db.user.update({
+      where: { id: userId },
+      data: { role },
+    });
+
+    await logAudit({
+      userId: ctx.userId,
+      action: "UPDATE_USER_ROLE",
+      entity: "User",
+      entityId: userId,
+      metadata: { newRole: role },
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
   });
-
-  revalidatePath("/admin/users");
-}

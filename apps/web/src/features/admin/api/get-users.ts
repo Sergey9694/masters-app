@@ -1,11 +1,16 @@
 import { db } from "@/shared/lib/db";
 import { Role } from "@/shared/types/auth";
+import { getSession } from "@/shared/lib/auth";
 
 export async function getUsers(params: {
   page?: number;
   search?: string;
   role?: Role;
 }) {
+  const session = await getSession();
+  if (!session || session.role !== "ADMIN") {
+    throw new Error("Forbidden: Admin access required");
+  }
   const page = params.page ?? 1;
   const pageSize = 10;
   const skip = (page - 1) * pageSize;
