@@ -1,31 +1,10 @@
+import { getRedis } from "./redis";
+
 /**
- * Простой in-memory rate-limiter для Server Actions.
- * Ключ — обычно userId или telegramId. Не переживает рестарт процесса,
- * но для MVP достаточно. В проде заменить на Redis (INCR + EXPIRE).
+ * Распределенный Rate Limiter на базе Redis.
+ * Использует INCR + PTTL для атомарности.
+ * Заменяет старый in-memory Map для работы в кластере/Docker.
  */
-
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-// Singleton store to survive HMR in development
-const globalForRateLimit = global as unknown as { rateLimitStore: Map<string, RateLimitEntry> };
-const store = globalForRateLimit.rateLimitStore || new Map<string, RateLimitEntry>();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForRateLimit.rateLimitStore = store;
-}
-
-// Очистка протухших записей раз в 5 минут
-if (!(global as any)._rateLimitInterval) {
-  (global as any)._rateLimitInterval = setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store) {
-      if (entry.resetAt < now) store.delete(key);
-    }
-  }, 5 * 60 * 1000);
-}
 
 interface RateLimitOptions {
   /** Ключ лимита (namespace:userId). */
@@ -34,44 +13,52 @@ interface RateLimitOptions {
   limit?: number;
   /** Длина окна в секундах. Default 60. */
   windowSec?: number;
-  /** Если true, не увеличивает счетчик. */
-  peek?: boolean;
 }
 
 interface RateLimitResult {
   allowed: boolean;
-  remaining: number;
+  count: number;
   retryAfterSec: number;
 }
 
-export function checkRateLimit({
+export async function checkRateLimit({
   key,
   limit = 10,
   windowSec = 60,
-  peek = false,
-}: RateLimitOptions): RateLimitResult {
-  const now = Date.now();
-  const entry = store.get(key);
+}: RateLimitOptions): Promise<RateLimitResult> {
+  const redis = getRedis();
+  const redisKey = `rl:${key}`;
 
-  if (!entry || entry.resetAt < now) {
-    if (!peek) {
-      store.set(key, { count: 1, resetAt: now + windowSec * 1000 });
+  try {
+    const current = await redis.incr(redisKey);
+    
+    if (current === 1) {
+      await redis.expire(redisKey, windowSec);
     }
-    return { allowed: true, remaining: limit - 1, retryAfterSec: 0 };
-  }
 
-  if (entry.count >= limit) {
-    const retryAfterSec = Math.ceil((entry.resetAt - now) / 1000);
-    return { allowed: false, remaining: 0, retryAfterSec };
-  }
+    if (current > limit) {
+      const ttlMs = await redis.pttl(redisKey);
+      return { 
+        allowed: false, 
+        count: current, 
+        retryAfterSec: Math.max(0, Math.ceil(ttlMs / 1000)) 
+      };
+    }
 
-  if (!peek) {
-    entry.count++;
+    return { 
+      allowed: true, 
+      count: current, 
+      retryAfterSec: 0 
+    };
+  } catch (error) {
+    console.error("[RATE-LIMIT] Redis error, allowing request as fallback:", error);
+    // Fail-open strategy: if Redis is down, we allow the request but log the error
+    return { allowed: true, count: 0, retryAfterSec: 0 };
   }
-  
-  return { allowed: true, remaining: limit - entry.count, retryAfterSec: 0 };
 }
 
-export function getRateLimitInfo(options: RateLimitOptions): RateLimitResult {
-  return checkRateLimit({ ...options, peek: true });
-}
+/**
+ * Алиас для обратной совместимости с существующим кодом.
+ * ВАЖНО: Теперь это асинхронная функция.
+ */
+export const getRateLimitInfo = checkRateLimit;

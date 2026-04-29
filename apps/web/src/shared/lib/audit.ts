@@ -1,14 +1,20 @@
+import { headers } from "next/headers";
 import { db } from "./db";
 import type { Prisma } from "@prisma/client";
 
-type AuditAction =
+export type AuditAction =
   | "CREATE"
   | "UPDATE"
   | "DELETE"
   | "APPROVE"
   | "REJECT"
   | "BAN"
-  | "LOGIN";
+  | "LOGIN"
+  | "ADMIN_LOGIN"
+  | "DELETE_USER"
+  | "UPDATE_USER_ROLE"
+  | "VERIFY_PROVIDER"
+  | "REJECT_PROVIDER";
 
 interface LogParams {
   userId: string | null;
@@ -18,6 +24,9 @@ interface LogParams {
   metadata?: Prisma.InputJsonValue;
 }
 
+/**
+ * Записывает действие в журнал аудита
+ */
 export async function logAudit({
   userId,
   action,
@@ -26,13 +35,22 @@ export async function logAudit({
   metadata,
 }: LogParams) {
   try {
+    let ipAddress: string | null = null;
+    try {
+      const headerList = await headers();
+      ipAddress = headerList.get("x-forwarded-for")?.split(",")[0] || null;
+    } catch {
+      // headers() might fail outside of request context
+    }
+
     await db.auditLog.create({
       data: {
         userId,
         action,
         entity,
         entityId,
-        metadata,
+        metadata: metadata || {},
+        ipAddress,
       },
     });
   } catch (error) {
