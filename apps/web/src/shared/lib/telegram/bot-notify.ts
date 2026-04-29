@@ -1,4 +1,5 @@
 import { db } from "@/shared/lib/db";
+import { emitToSocket } from "@/shared/lib/socket-emit";
 import type { NotificationType } from "@prisma/client";
 
 function getBotToken() {
@@ -24,13 +25,25 @@ interface NotifyParams {
 export async function notify(params: NotifyParams) {
   try {
     // 1. Save to DB
-    await db.notification.create({
+    const notification = await db.notification.create({
       data: {
         userId: params.userId,
         type: params.type,
         title: params.title,
         body: params.body,
         referenceId: params.referenceId ?? null,
+      },
+    });
+
+    // 1.1 Emit to Socket for real-time UI update
+    await emitToSocket({
+      room: `user:${params.userId}`,
+      event: "new:notification",
+      data: {
+        notification: {
+          ...notification,
+          createdAt: notification.createdAt.toISOString(),
+        },
       },
     });
 
@@ -112,15 +125,35 @@ export async function notifyProvidersInCategories(
 
     // Batch create notifications
     if (userIds.length > 0) {
-      await db.notification.createMany({
-        data: userIds.map((uid) => ({
-          userId: uid,
-          type: "NEW_ORDER" as const,
-          title: "Новая заявка",
-          body: taskTitle,
-          referenceId,
-        })),
-      });
+      const data = userIds.map((uid) => ({
+        userId: uid,
+        type: "NEW_ORDER" as const,
+        title: "Новая заявка",
+        body: taskTitle,
+        referenceId,
+      }));
+
+      await db.notification.createMany({ data });
+
+      // Notify via socket for each user (optional, but good for real-time)
+      // Since it's a batch, we do it in a loop
+      await Promise.allSettled(
+        userIds.map((uid) =>
+          emitToSocket({
+            room: `user:${uid}`,
+            event: "new:notification",
+            data: {
+              notification: {
+                id: "batch-" + referenceId, // Placeholder ID or fetch real IDs if needed
+                type: "NEW_ORDER",
+                title: "Новая заявка",
+                body: taskTitle,
+                createdAt: new Date().toISOString(),
+              },
+            },
+          })
+        )
+      );
     }
 
     // Send Telegram pushes (non-blocking)

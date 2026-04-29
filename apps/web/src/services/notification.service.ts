@@ -48,5 +48,14 @@ export const notificationService = {
       where: { userId, read: false },
       data: { read: true },
     });
+  },
+
+  /**
+   * Get unread notification count
+   */
+  async getUnreadCount(userId: string) {
+    return db.notification.count({
+      where: { userId, read: false },
+    });
   }
 };

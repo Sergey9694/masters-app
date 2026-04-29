@@ -9,5 +9,5 @@ export default async function LegacyOrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  redirect(`/orders/${id}`);
+  redirect(`/orders/v/${id}`);
 }

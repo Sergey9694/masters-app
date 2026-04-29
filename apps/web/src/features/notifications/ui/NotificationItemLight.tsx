@@ -70,7 +70,7 @@ export function NotificationItemLight({
       });
     }
     if (n.referenceId) {
-      router.push(`/orders/${n.referenceId}`);
+      router.push(`/orders/v/${n.referenceId}`);
     }
   };
 
