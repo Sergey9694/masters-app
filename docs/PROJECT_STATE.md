@@ -3,7 +3,7 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-29 (Trust/Safety Plan Refresh)
+> 🕓 Последнее обновление: 2026-04-29 (Security Gatekeeper Protocol)
 
 ---
 
@@ -116,6 +116,15 @@ ENCRYPTION_KEY=<64 hex символа>
 - **Codex Integration**: Добавлен `AGENTS.md` — входной файл для Codex, который подключает существующие `.agent/skills/` без дублирования правил.
 - **Instruction Integrity**: `CLAUDE.md`, `GEMINI.md` и `agent-protocol/SKILL.md` теперь явно включают `AGENTS.md` в список синхронизируемых инструкций.
 - **Cheatsheet**: `docs/CHEATSHEET.md` обновлен, чтобы Codex-сессии начинались с правильного входного файла.
+
+---
+
+## Обновление 2026-04-29 (Agent System): Security Gatekeeper Protocol
+- **Existing Security Agent Confirmed**: `agent-security` уже существовал, поэтому дубль не создавался; файл усилен до роли главного Security Gatekeeper / AppSec-DevSecOps, а подробные чеклисты вынесены в `agent-security/references/security-checklists.md`.
+- **Security Gate Before Code**: `agent-protocol`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `agent-orchestrator` и `docs/CHEATSHEET.md` синхронизированы: любой runtime-код сначала проходит Security Gate, а CRITICAL/HIGH риск блокирует работу.
+- **Frontend/Backend Boundary**: Зафиксировано правило `Frontend is untrusted`: на клиенте только UI/UX, публичные данные и временное состояние; secrets, permissions, ownership, бизнес-правила безопасности, rate limits и доступ к БД остаются только на backend.
+- **API Abuse Controls**: В Security Gate явно добавлены `Idempotency-Key`, per-endpoint rate limits и API throttling/backpressure для дорогих или non-idempotent операций.
+- **Current Documentation Rule**: Для security-sensitive решений агент обязан сверяться с актуальными источниками через `context7`/`ref` или официальную документацию (OWASP ASVS/Cheat Sheets, Next.js/Auth.js/Prisma/Socket.io/Docker/npm) и фиксировать источники в verdict.
 
 ---
 

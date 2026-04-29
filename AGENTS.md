@@ -30,7 +30,7 @@ Codex может пользоваться ими напрямую: читать 
 Если пользователь пишет:
 - `как оркестратор` — прочитай `agent-protocol`, затем `agent-orchestrator`.
 - `как архитектор` — прочитай `agent-protocol`, затем `agent-architect`.
-- `как security-агент` — прочитай `agent-protocol`, затем `agent-security`.
+- `как security-агент`, `как безопасник` или `как devsecops` — прочитай `agent-protocol`, затем `agent-security`.
 - `как SEO-агент` — прочитай `agent-protocol`, затем `agent-seo`.
 - `как code-quality` или `как ревьюер` — прочитай `agent-protocol`, затем `agent-code-quality`.
 - `как QA` — прочитай `agent-protocol`, затем `agent-qa` и при E2E-задачах `playwright-testing`.
@@ -47,6 +47,8 @@ Codex может пользоваться ими напрямую: читать 
 
 - Общение, отчеты, комментарии и коммиты — на русском языке.
 - Кодовые идентификаторы — на английском языке.
+- Security Gate обязателен перед планированием и написанием любого runtime-кода; при auth/PII/API/Server Actions/uploads/cookies/CSP/secrets/Docker/CI/CD/dependencies/Prisma/rate-limits/API throttling/Idempotency-Key читай `agent-security`.
+- Frontend считается недоверенной средой: там только UI/UX, публичные данные и временное состояние; secrets, permissions, ownership, бизнес-правила безопасности, rate limits и доступ к БД — только на backend.
 - FSD-иерархия: `shared -> features -> widgets -> app`; зависимости идут только вверх по слоям потребления.
 - БД менять только через Prisma Migrate; перед изменением `schema.prisma` спросить владельца.
 - `any` запрещен; используй `unknown`, Zod и type guards.
@@ -66,6 +68,7 @@ Codex может пользоваться ими напрямую: читать 
 - Unit/logic: `npm run test` или точечный `npx vitest run <path>`
 - E2E/UI: `npm run test:e2e` или точечный `npx playwright test <path>`
 - UI: desktop и mobile 375px, loading/empty/error states
+- Security: для runtime-кода зафиксируй verdict `PASS`, `PASS_WITH_NOTES`, `BLOCKED` или `OWNER_DECISION`; CRITICAL/HIGH риск не пропускается.
 
 Для документационных изменений достаточно проверить diff и `git status`.
 

@@ -47,7 +47,7 @@
 | agent-protocol | `.agent/skills/agent-protocol/SKILL.md` | **ОБЯЗАТЕЛЬНО** — читать первым |
 | agent-orchestrator | `.agent/skills/agent-orchestrator/SKILL.md` | Координация задач |
 | agent-architect | `.agent/skills/agent-architect/SKILL.md` | FSD, структура |
-| agent-security | `.agent/skills/agent-security/SKILL.md` | Безопасность |
+| agent-security | `.agent/skills/agent-security/SKILL.md` | Главный Security Gatekeeper: безопасность, PII, auth, permissions, API, secrets, DevSecOps |
 | agent-seo | `.agent/skills/agent-seo/SKILL.md` | SEO, метаданные |
 | agent-code-quality | `.agent/skills/agent-code-quality/SKILL.md` | Качество кода |
 | agent-qa | `.agent/skills/agent-qa/SKILL.md` | Тестирование |
@@ -99,15 +99,17 @@ uslugi_ryadom/
 - **Чистота репозитория**: ПЕРЕД коммитом ОБЯЗАТЕЛЬНО проверять `git status` на наличие технического мусора (логи, временные файлы тестов, отчеты агентов). В коммит должен попадать только чистый код и необходимая документация.
 - **No Spaghetti**: Если файл > 200 строк — предлагай рефакторинг. Разделяй логику на более мелкие, сфокусированные модули.
 1. 💰 **Экономия токенов**: Читай только нужные части файлов, сжатые ответы, grep вместо чтения всего файла.
-2. 🗄️ **БД** — все изменения через `prisma migrate dev --name <name>`, никакого прямого SQL
-3. 🏆 **Всегда рекомендуй лучший вариант** — при выборе всегда объясняй ПОЧЕМУ один вариант лучше
-4. 🏗️ **FSD**: `app → widgets → features → shared` (только вниз)
-5. 🔐 **Auth**: JWT в httpOnly cookies, никакого localStorage
-6. 🛡️ **Типы**: `any` — ЗАПРЕЩЁН, только `unknown` + Zod
-7. ⚛️ **Server Components** по умолчанию, `'use client'` только для интерактивности
-8. 🧪 **Тестирование**: Каждое изменение ОБЯЗАНО проходить проверку (`tsc`, `vitest`, `playwright`).
-9. 📝 **Коммиты**: ТОЛЬКО на РУССКОМ языке. Максимально развернутые, логически сгруппированные и БЕЗ технического мусора.
-10. 📖 **Инструкции**: ВСЕГДА читай `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` и `agent-protocol/SKILL.md` в начале сессии. При изменении правил обновляй все входные файлы и общий протокол.
+2. 🔒 **Security Gate**: Перед планированием и написанием runtime-кода прочитай `agent-security`, если затронуты auth/PII/API/Server Actions/uploads/cookies/CSP/secrets/Docker/CI/CD/dependencies/Prisma/rate-limits/API throttling/Idempotency-Key. CRITICAL/HIGH риск блокирует работу.
+3. 🔐 **Frontend is untrusted**: На фронтенде только UI/UX, публичные данные и временное состояние. Secrets, permissions, ownership, бизнес-правила безопасности, rate limits и доступ к БД — только на backend.
+4. 🗄️ **БД** — все изменения через `prisma migrate dev --name <name>`, никакого прямого SQL
+5. 🏆 **Всегда рекомендуй лучший вариант** — при выборе всегда объясняй ПОЧЕМУ один вариант лучше
+6. 🏗️ **FSD**: `app → widgets → features → shared` (только вниз)
+7. 🔐 **Auth**: JWT в httpOnly cookies, никакого localStorage
+8. 🛡️ **Типы**: `any` — ЗАПРЕЩЁН, только `unknown` + Zod
+9. ⚛️ **Server Components** по умолчанию, `'use client'` только для интерактивности
+10. 🧪 **Тестирование**: Каждое изменение ОБЯЗАНО проходить проверку (`tsc`, `vitest`, `playwright`).
+11. 📝 **Коммиты**: ТОЛЬКО на РУССКОМ языке. Максимально развернутые, логически сгруппированные и БЕЗ технического мусора.
+12. 📖 **Инструкции**: ВСЕГДА читай `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` и `agent-protocol/SKILL.md` в начале сессии. При изменении правил обновляй все входные файлы и общий протокол.
 
 ## Стек (Build vs Buy defaults)
 
@@ -144,6 +146,8 @@ npm run dev:full
 
 ### 🏁 Definition of Done (Критерии готовности)
 - [ ] Код соответствует FSD-архитектуре.
+- [ ] Security Gate выполнен для runtime-кода; нет незакрытых CRITICAL/HIGH рисков.
+- [ ] Доверенная логика и секреты не вынесены на фронтенд.
 - [ ] Нет `any`, `tsc` прошел.
 - [ ] Новая логика покрыта тестами.
 - [ ] Регрессия не сломана.
