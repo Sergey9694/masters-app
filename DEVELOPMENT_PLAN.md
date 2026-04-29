@@ -2417,18 +2417,42 @@ SSR:            Leaflet только через dynamic import с ssr: false
 [ ] 11.5.3.4  Страница /dashboard/favorites — список избранного с табами
 ```
 
-### 11.5.4 — Жалобы и модерация чата
+### 11.5.4 — Trust/Safety: жалобы, блокировки и модерация чата
 
 ```
-[ ] 11.5.4.1  Prisma: модель Report { id, reporterId, targetType, targetId, reason, description, status, createdAt, resolvedAt, resolvedBy }
+[ ] 11.5.4.1  Prisma: модели Trust/Safety:
+              - UserBlock { blockerId, blockedId, conversationId?, reason?, createdAt }
+                @@unique([blockerId, blockedId]), индексы по blockerId/blockedId/conversationId
+              - Report { id, reporterId, targetType, targetId, targetUserId?, reason, description,
+                evidence, status, adminNotes, actionTaken, createdAt, resolvedAt, resolvedBy }
+              - enum ReportTargetType { USER, MESSAGE, CONVERSATION, ORDER, LISTING, REVIEW, PROVIDER }
               - enum ReportStatus { PENDING, REVIEWED, ACTIONED, DISMISSED }
-              - enum ReportReason { SPAM, FRAUD, INAPPROPRIATE, CONTACT_EXCHANGE, OTHER }
+              - enum ReportReason { SPAM, HARASSMENT, FRAUD, INAPPROPRIATE_CONTENT, CONTACT_EXCHANGE, SAFETY_THREAT, OTHER }
+              - В User добавить relation-поля для Blocker/Blocked, Reporter/ReportTargetUser/ReportResolver
               
-[ ] 11.5.4.2  Кнопка «Пожаловаться» на каждой карточке/сообщении чата
+[ ] 11.5.4.2  Service layer: apps/web/src/services/trust.service.ts
+              - blockUser / unblockUser / getBlockState / assertCanMessage
+              - createReport с evidence snapshot последних сообщений без plaintext
+              - listReports / resolveReport для admin-only модерации
               
-[ ] 11.5.4.3  Admin-страница /admin/reports — очередь жалоб с фильтрами
+[ ] 11.5.4.3  Интеграция с чатом:
+              - chatService.startConversation и sendMessage проверяют UserBlock
+              - ConversationPreview или отдельный loader возвращает blockState
+              - Socket event user:blocked содержит { blockerId, blockedId, conversationId? }
+              - BlockedState заменяет MessageInput в заблокированном диалоге
               
-[ ] 11.5.4.4  Автомодерация чата (MVP): regex-фильтр на телефоны/email/telegram-ссылки
+[ ] 11.5.4.4  UI:
+              - features/trust/ui/ReportModal.tsx
+              - features/trust/ui/BlockUserButton.tsx
+              - actions в features/trust/api/actions.ts, не в features/chat/api
+              - пункты «Пожаловаться» и «Заблокировать» в ConversationHeader
+
+[ ] 11.5.4.5  Admin-страница /admin/reports — очередь жалоб с фильтрами
+              - Фильтры по статусу, причине, targetType
+              - Просмотр evidence и быстрые переходы к пользователю/чату/заказу/объявлению
+              - Решения модератора пишутся в AuditLog
+              
+[ ] 11.5.4.6  Автомодерация чата (MVP): regex-фильтр на телефоны/email/telegram-ссылки
               - Детект попытки увода заказа «за периметр» платформы
               - Блюр или [скрыто модерацией] вместо контакта
 ```
@@ -2569,14 +2593,16 @@ SSR:            Leaflet только через dynamic import с ssr: false
 [ ] 11.5.11.4  Cron-задача: сброс истёкших акций (expiresAt < now → activePromotion = null)
 ```
 
-### 11.5.12 — Блэклист заказчиков 🟡 средний приоритет
+### 11.5.12 — Блэклист заказчиков через Trust/Safety 🟡 средний приоритет
 
 ```
-[ ] 11.5.12.1  Prisma: модель ProviderBlockedClient
-               { providerId String; clientId String; createdAt DateTime }
-               @@id([providerId, clientId])
+[ ] 11.5.12.1  Использовать UserBlock из 11.5.4 вместо отдельной ProviderBlockedClient:
+               - blockerId = userId исполнителя
+               - blockedId = userId заказчика
+               - reason/source хранит контекст блокировки
 
 [ ] 11.5.12.2  Server Action: blockClientAction(clientId) / unblockClientAction(clientId)
+               - Обертка над trustService.blockUser / unblockUser
                - Только для пользователей с ProviderProfile
 
 [ ] 11.5.12.3  providerService.list() — фильтровать: исполнители у которых clientId в блэклисте

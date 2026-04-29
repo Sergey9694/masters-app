@@ -3,7 +3,7 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-29 (Codex Agent Entry Point)
+> 🕓 Последнее обновление: 2026-04-29 (Trust/Safety Plan Refresh)
 
 ---
 
@@ -116,6 +116,13 @@ ENCRYPTION_KEY=<64 hex символа>
 - **Codex Integration**: Добавлен `AGENTS.md` — входной файл для Codex, который подключает существующие `.agent/skills/` без дублирования правил.
 - **Instruction Integrity**: `CLAUDE.md`, `GEMINI.md` и `agent-protocol/SKILL.md` теперь явно включают `AGENTS.md` в список синхронизируемых инструкций.
 - **Cheatsheet**: `docs/CHEATSHEET.md` обновлен, чтобы Codex-сессии начинались с правильного входного файла.
+
+---
+
+## Обновление 2026-04-29 (Planning): Trust/Safety Plan Refresh
+- **Trust/Safety Architecture**: `docs/trust_system_implementation_plan.md` переписан как отдельный слой платформы: личные блокировки, универсальные жалобы, evidence snapshot без plaintext и admin-очередь `/admin/reports`.
+- **Development Plan Sync**: В `DEVELOPMENT_PLAN.md` обновлены пункты 11.5.4 и 11.5.12, чтобы не плодить отдельные модели блокировок и использовать единый `UserBlock`.
+- **Chat Architecture Clarification**: В `docs/CHAT_ARCHITECTURE.md` уточнено, что текущий AES-256-GCM — это server-side at-rest encryption, а не end-to-end encryption.
 
 ---
 
