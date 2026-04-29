@@ -93,8 +93,10 @@
 `20260427000000_add_chat_models` — все модели (Conversation, Message) добавлены в БД.
 
 **2. Добавить переменные окружения** в `.env`:
-```
-REDIS_URL=redis://localhost:6379
+```bash
+# Локально: порт 6380 (проброшен из Docker для избежания конфликтов на хосте)
+# Внутри Docker (на VPS): redis://uslugi_redis:6379
+REDIS_URL=redis://localhost:6380
 ENCRYPTION_KEY=<64 hex символа>
 ```
 
@@ -163,3 +165,10 @@ ENCRYPTION_KEY=<64 hex символа>
 - **UI Sync**: Компоненты `NotificationItem` и `NotificationItemLight` обновлены для использования нового редиректора.
 - **Legacy Support**: Устаревшие редиректы в `/dashboard/order/[id]` также переведены на новый механизм.
 - **Verification**: Пройден полный цикл QC: L1 (TSC), L3 (Playwright E2E с проверкой редиректа на реальных данных), L4 (Manual/Browser).
+
+---
+
+## Обновление 2026-04-29 (Infrastructure): Релокация портов Redis
+- **Local Port Conflict Fix**: Для локальной разработки порт Redis проброшен на **6380** (в `docker-compose.yml` и `.env`). Это позволяет держать запущенными несколько проектов с Redis на одной машине без конфликтов.
+- **Service Name Fix**: Внутреннее имя сервиса теперь `uslugi_redis`. В коде и Docker-сети используется стандартный порт **6379**.
+- **Env Loading**: Исправлена критическая ошибка загрузки переменных в `server.ts` — теперь `dotenv` инициализируется ПЕРЕД запуском Redis-адаптера.
