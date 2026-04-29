@@ -8,19 +8,24 @@ export interface DadataSuggestion {
   value: string;
   unrestricted_value: string;
   data: {
+    region?: string;
+    region_with_type?: string;
     city?: string;
     city_with_type?: string;
     city_fias_id?: string;
+    settlement?: string;
+    settlement_with_type?: string;
+    settlement_fias_id?: string;
     geo_lat?: string;
     geo_lon?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
 /**
  * Подсказки адресов
  */
-export async function suggestAddress(query: string, locations?: any[]): Promise<DadataSuggestion[]> {
+export async function suggestAddress(query: string, locations?: Record<string, unknown>[]): Promise<DadataSuggestion[]> {
   if (!DADATA_TOKEN || !query.trim()) return [];
 
   try {

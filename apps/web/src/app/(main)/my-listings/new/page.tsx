@@ -24,7 +24,7 @@ export default async function NewListingPage() {
     orderBy: { name: "asc" },
   });
 
-  const rl = getRateLimitInfo({ key: `listing:create:${user.id}`, limit: 3, windowSec: 3600 });
+  const rl = await getRateLimitInfo({ key: `listing:create:${user.id}`, limit: 3, windowSec: 3600 });
 
   return (
     <div className="flex flex-col gap-6">

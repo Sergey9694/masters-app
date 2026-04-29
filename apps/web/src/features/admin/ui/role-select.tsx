@@ -1,7 +1,7 @@
 "use client";
 
 import { Role } from "@/shared/types/auth";
-import { updateUserRole } from "../api/update-user-role";
+import { updateUserRoleAction } from "../api/update-user-role";
 import { toast } from "sonner";
 import { useTransition, useState } from "react";
 import {
@@ -27,14 +27,16 @@ export function RoleSelect({ userId, currentRole }: RoleSelectProps) {
   const confirmChange = () => {
     if (!pendingRole) return;
     startTransition(async () => {
-      try {
-        await updateUserRole(userId, pendingRole);
+      const result = await updateUserRoleAction({ userId, role: pendingRole });
+      
+      if (result?.serverError) {
+        toast.error(result.serverError);
+      } else if (result?.validationErrors) {
+        toast.error("Ошибка валидации");
+      } else {
         toast.success(`Роль изменена на ${pendingRole}`);
-      } catch {
-        toast.error("Ошибка обновления");
-      } finally {
-        setPendingRole(null);
       }
+      setPendingRole(null);
     });
   };
 

@@ -29,6 +29,9 @@ import {
 import { ReviewModal } from "@/features/review/ui/ReviewModal";
 import { OrderFeedCard, OrderStatusPill } from "@/entities/order";
 import type { OrderCardData } from "@/shared/types/domain";
+import type { OrderWithDetails } from "@/services/order.service";
+
+type ProposalWithProvider = OrderWithDetails["proposals"][number];
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +84,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
   const isProvider = Boolean(user.providerProfile);
   const alreadyResponded =
     isProvider &&
-    order.proposals.some((p: any) => p.providerId === user.providerProfile!.id);
+    order.proposals.some((p: ProposalWithProvider) => p.providerId === user.providerProfile!.id);
   const canRespond =
     !isOwner && isProvider && order.status === "OPEN" && !alreadyResponded;
   const isAssignedProvider = order.assignedProviderId === user.providerProfile?.id;
@@ -112,13 +115,13 @@ export default async function OrderDetailPage({ params }: PageProps) {
     take: 3,
   });
 
-  const similarNormalized: OrderCardData[] = similarOrders.map((o: any) => ({
+  const similarNormalized: OrderCardData[] = similarOrders.map((o) => ({
     ...o,
     proposalCount: o._count.proposals,
   }));
 
   const visibleProposals = order.proposals.filter(
-    (p: any) => isOwner || p.providerId === user.providerProfile?.id
+    (p: ProposalWithProvider) => isOwner || p.providerId === user.providerProfile?.id
   );
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
@@ -368,7 +371,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                 </span>
               </div>
               <div className="flex flex-col gap-3">
-                {visibleProposals.map((p: any) => (
+                {visibleProposals.map((p: ProposalWithProvider) => (
                   <article
                     key={p.id}
                     className="rounded-2xl border border-border/60 bg-surface p-5"

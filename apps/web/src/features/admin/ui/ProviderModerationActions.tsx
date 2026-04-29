@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { verifyProvider, rejectProvider } from "../api/verify-provider";
+import { verifyProviderAction, rejectProviderAction } from "../api/verify-provider";
 import { Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { toast } from "sonner";
@@ -17,26 +17,26 @@ export function ProviderModerationActions({ providerId, providerName }: Props) {
 
   const handleVerify = () => {
     startTransition(async () => {
-      try {
-        await verifyProvider(providerId);
+      const result = await verifyProviderAction({ providerId });
+      if (result?.serverError) {
+        toast.error(result.serverError);
+      } else {
         toast.success(`Исполнитель ${providerName} верифицирован`, {
           description: "Теперь он может откликаться на заказы.",
         });
-      } catch (e) {
-        toast.error("Ошибка верификации");
       }
     });
   };
 
   const handleReject = () => {
     startTransition(async () => {
-      try {
-        await rejectProvider(providerId);
+      const result = await rejectProviderAction({ providerId });
+      if (result?.serverError) {
+        toast.error(result.serverError);
+      } else {
         toast.success(`Заявка ${providerName} отклонена`, {
           description: "Профиль исполнителя удален.",
         });
-      } catch (e) {
-        toast.error("Ошибка при отклонении");
       }
     });
   };

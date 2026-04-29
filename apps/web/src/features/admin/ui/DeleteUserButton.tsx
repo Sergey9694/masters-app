@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { deleteUser } from "../api/delete-user";
+import { deleteUserAction } from "../api/delete-user";
 import { ConfirmDialog } from "@/shared/ui/custom/confirm-dialog";
 import { Button } from "@/shared/ui/button";
 
@@ -12,11 +12,14 @@ export function DeleteUserButton({ userId, userName }: { userId: string; userNam
 
   const handleDelete = () => {
     startTransition(async () => {
-      try {
-        await deleteUser(userId);
+      const result = await deleteUserAction({ userId });
+      
+      if (result?.serverError) {
+        toast.error(result.serverError);
+      } else if (result?.validationErrors) {
+        toast.error("Ошибка валидации");
+      } else {
         toast.success(`Пользователь «${userName}» удалён`);
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Ошибка удаления");
       }
     });
   };
