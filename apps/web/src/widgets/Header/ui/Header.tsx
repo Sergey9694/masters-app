@@ -4,7 +4,9 @@ import { Sparkles, Heart } from "lucide-react";
 
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { chatService } from "@/services/chat.service";
+import { notificationService } from "@/services/notification.service";
 import { NotificationBellClient } from "@/features/chat/ui/NotificationBellClient";
+import { MessageNotificationClient } from "@/features/chat/ui/MessageNotificationClient";
 
 import { ThemeToggle } from "@/shared/ui/theme-toggle";
 import { HeaderSearch } from "./HeaderSearch";
@@ -14,7 +16,13 @@ import { HeaderCatalogLinks } from "./HeaderCatalogLinks";
 export async function Header() {
   const user = await getCurrentUser();
   const botId = process.env.TELEGRAM_BOT_ID;
-  const unreadCount = user ? await chatService.getUnreadCount(user.id) : 0;
+  
+  const [unreadMessages, unreadNotifications] = user 
+    ? await Promise.all([
+        chatService.getUnreadCount(user.id),
+        notificationService.getUnreadCount(user.id)
+      ])
+    : [0, 0];
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-lg backdrop-saturate-150">
@@ -43,8 +51,12 @@ export async function Header() {
           {/* Правый блок */}
           <div className="ml-auto flex items-center gap-2 pr-4 sm:pr-6">
             {user && (
-              <div className="flex items-center gap-1 rounded-xl border border-border/60 bg-muted/40 p-1">
-                <NotificationBellClient initialUnread={unreadCount} userId={user.id} />
+              <div className="flex items-center gap-1.5 rounded-2xl border border-border/60 bg-muted/30 p-1.5 shadow-sm transition-all hover:bg-muted/50">
+                <div className="flex items-center gap-0.5">
+                  <MessageNotificationClient initialUnread={unreadMessages} userId={user.id} />
+                  <NotificationBellClient initialUnread={unreadNotifications} userId={user.id} />
+                </div>
+                <div className="h-4 w-px bg-border/60 mx-1" />
                 <Link
                   href="/favorites"
                   aria-label="Избранное"

@@ -2,11 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { cn } from "@/shared/lib/cn";
-import { usePathname } from "next/navigation";
-import type { MessageDTO } from "@uslugi/shared-types";
 
 interface Props {
   initialUnread: number;
@@ -17,55 +15,46 @@ export function NotificationBellClient({ initialUnread, userId }: Props) {
   const [count, setCount] = useState(initialUnread);
   const { socket } = useSocket(userId);
   const router = useRouter();
-
   const pathname = usePathname();
 
-  const pathnameRef = useRef(pathname);
   useEffect(() => {
-    pathnameRef.current = pathname;
+    if (pathname === "/notifications") {
+      setCount(0);
+    }
   }, [pathname]);
 
   useEffect(() => {
     if (!socket) return;
 
-    const handler = (data: { conversationId: string; message: MessageDTO }) => {
-      console.log("[NotificationBell] Received new:message", data);
-      
-      const convId = data.conversationId;
-      if (!convId) {
-        console.warn("[NotificationBell] No conversationId found in event data", data);
-        return;
-      }
-
-      // Инкрементируем счетчик только если мы НЕ в этом чате
-      const isCurrentChat = pathnameRef.current === `/chat/${convId}`;
-      
-      if (!isCurrentChat) {
+    const handleNotification = (data: unknown) => {
+      console.log("[Socket Debug] Client received new:notification:", data);
+      // Инкрементируем счетчик, если мы не на странице уведомлений
+      if (pathname !== "/notifications") {
         setCount((c) => c + 1);
       }
     };
 
-    socket.on("new:message", handler);
+    socket.on("new:notification", handleNotification);
     return () => {
-      socket.off("new:message", handler);
+      socket.off("new:notification", handleNotification);
     };
-  }, [socket, router]);
+  }, [socket, pathname]);
 
   return (
     <button
       onClick={() => {
         setCount(0);
-        router.push("/chat");
+        router.push("/notifications");
       }}
       className="relative inline-flex size-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-background hover:text-foreground hover:shadow-sm"
-      aria-label="Сообщения"
+      aria-label="Уведомления"
     >
       <Bell className="size-3.5" />
       {count > 0 && (
         <span
           className={cn(
             "absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center",
-            "rounded-full bg-primary text-[8px] font-bold text-primary-foreground"
+            "rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground"
           )}
         >
           {count > 9 ? "9+" : count}

@@ -44,7 +44,7 @@ export function MessageInput({ conversationId, userId, onSend, onFocus, disabled
   };
 
   return (
-    <div className="flex items-end gap-3">
+    <div className="flex items-end gap-2.5">
       <div className="relative flex-1">
         <textarea
           ref={textareaRef}
@@ -67,7 +67,7 @@ export function MessageInput({ conversationId, userId, onSend, onFocus, disabled
           disabled={disabled}
           rows={1}
           className={cn(
-            "flex-1 w-full resize-none rounded-2xl border border-border/40 bg-background/50 px-4 py-3 text-sm transition-all",
+            "flex-1 w-full resize-none rounded-2xl border border-border/40 bg-background/50 px-4 py-[11px] text-sm transition-all",
             "focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10",
             "placeholder:text-muted-foreground/60 scrollbar-none",
             "disabled:opacity-60 disabled:cursor-not-allowed max-h-[120px]"
@@ -79,11 +79,11 @@ export function MessageInput({ conversationId, userId, onSend, onFocus, disabled
         onClick={handleSend}
         disabled={!text.trim() || sending || disabled}
         className={cn(
-          "shrink-0 rounded-2xl bg-primary p-3 text-primary-foreground transition-all duration-200 active:scale-95 shadow-md",
+          "shrink-0 flex items-center justify-center size-[44px] rounded-2xl bg-primary text-primary-foreground transition-all duration-200 active:scale-95 shadow-md",
           "hover:shadow-primary/20 hover:brightness-110 disabled:opacity-40 disabled:scale-100 disabled:shadow-none"
         )}
       >
-        <Send className={cn("size-5 transition-transform", !text.trim() ? "translate-x-0" : "translate-x-0.5 -translate-y-0.5")} />
+        <Send className="size-5 translate-x-[1px] -translate-y-[0.5px]" />
       </button>
     </div>
   );
