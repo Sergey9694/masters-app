@@ -35,6 +35,9 @@ Codex может пользоваться ими напрямую: читать 
 - `как code-quality` или `как ревьюер` — прочитай `agent-protocol`, затем `agent-code-quality`.
 - `как QA` — прочитай `agent-protocol`, затем `agent-qa` и при E2E-задачах `playwright-testing`.
 - `как performance-агент` — прочитай `agent-protocol`, затем `agent-performance`.
+- `как mobile-эксперт` — прочитай `agent-protocol`, затем `agent-mobile-expert`.
+- `как monorepo-мастер` — прочитай `agent-protocol`, затем `agent-monorepo-master`.
+- `как devops-инженер` — прочитай `agent-protocol`, затем `agent-devops-cicd`.
 - `как docker-эксперт` — прочитай `agent-protocol`, затем `docker-expert`.
 - `как postgres-эксперт` — прочитай `agent-protocol`, затем `postgresql-optimization`.
 - `как shadcn-эксперт` — прочитай `agent-protocol`, затем `shadcn-ui-mastery`.
@@ -56,6 +59,7 @@ Codex может пользоваться ими напрямую: читать 
 - Server Components по умолчанию; `'use client'` только для интерактивности.
 - Файлы больше 200 строк — сигнал предложить рефакторинг.
 - Новые зависимости, изменения auth/security, `.env`, `docker-compose`, `next.config` и архитектурные решения на много файлов требуют согласования.
+- **Docs First**: Перед написанием кода ОБЯЗАТЕЛЬНО проверь актуальность API библиотек через `context7`, `ref` или `search_web`. При любых сомнениях в синтаксисе или поведении — используй инструменты исследования немедленно.
 - Коммит делать только после явного разрешения владельца.
 
 ---

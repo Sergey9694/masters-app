@@ -3,7 +3,18 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-29 (Security Gatekeeper Protocol)
+> 🕓 Последнее обновление: 2026-04-29 (Multi-agent System Deep Upgrade)
+
+---
+
+## 🔥 Обновление 2026-04-29: Multi-agent System Deep Upgrade
+- **Deep Upgrade**: Все существующие агенты (Orchestrator, Architect, Code Quality, Performance, QA, SEO) прошли «глубокую прокачку» инструкций. Теперь они ориентированы на Enterprise-стандарты 2026 года, DDD, Clean Architecture и нативную производительность.
+- **New Specialized Agents**:
+    - `agent-mobile-expert`: Специалист по React Native (Expo) и мобильному UX.
+    - `agent-monorepo-master`: Мастер Turborepo и синергии воркспейсов.
+    - `agent-devops-cicd`: Эксперт по автоматизации деплоя, GitHub Actions и Sentry.
+- **Protocol Expansion**: Внедрены принципы "Proactive Refactoring", "Context Management" и "Conflict Resolution" на уровне Оркестратора.
+- **Preparation for Phase 9**: Система полностью готова к разработке мобильного приложения с общим кодом через `packages/shared`.
 
 ---
 
@@ -213,3 +224,11 @@ ENCRYPTION_KEY=<64 hex символа>
 - **Zero Any Compliance**: Последние вхождения `any` удалены из интеграции Dadata и страниц управления заказами.
 - **Quality Control**: Все изменения верифицированы через `npx tsc --noEmit` и `npm run test` (16 тестов).
 - **Report**: Детальный отчет доступен в `docs/agent-reports/security-audit-report.md`.
+
+---
+
+## Обновление 2026-04-29 (Agent Protocol): Docs First Implementation
+- **Docs First Mandatory**: В `agent-protocol/SKILL.md` добавлено правило №7: обязательная проверка актуальной документации через `context7`, `ref` или `search_web` перед написанием кода и при любых сомнениях.
+- **Pre-flight Update**: В чеклист перед написанием кода добавлен пункт: "Сверился ли я с актуальной документацией?".
+- **Instruction Sync**: Правило синхронизировано во всех входных файлах проекта: `AGENTS.md`, `GEMINI.md` и `CLAUDE.md`.
+- **Goal**: Исключить ошибки из-за устаревших знаний LLM и обеспечить использование лучших практик 2026 года.

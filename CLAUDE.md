@@ -54,7 +54,10 @@
 | `.agent/skills/agent-code-quality/SKILL.md` | Типизация, DRY, мёртвый код |
 | `.agent/skills/agent-qa/SKILL.md` | E2E тесты, a11y, edge-cases |
 | `.agent/skills/agent-performance/SKILL.md` | N+1, бандл, кэширование |
-| `.agent/skills/docker-expert/SKILL.md` | Docker, CI/CD |
+| `.agent/skills/agent-mobile-expert/SKILL.md` | Mobile разработка (React Native/Expo) |
+| `.agent/skills/agent-monorepo-master/SKILL.md` | Управление Turborepo и Shared пакетами |
+| `.agent/skills/agent-devops-cicd/SKILL.md` | DevOps, CI/CD, Infrastructure |
+| `.agent/skills/docker-expert/SKILL.md` | Docker, контейнеризация |
 | `.agent/skills/figma-to-code-mastery/SKILL.md` | Figma → код |
 | `.agent/skills/karpathy-guidelines/SKILL.md` | Принципы написания кода |
 | `.agent/skills/playwright-testing/SKILL.md` | E2E тесты |
@@ -88,11 +91,12 @@ uslugi_ryadom/
     └── agent-reports/      — Отчёты агентов
 ```
 
-## Завершённые фазы
+## Статус проекта
 
 - ✅ Фаза 1–5: Фундамент, Auth, Модель данных, REST API, Desktop UI
-- 🟡 Фаза 6: ServiceListing (объявления от исполнителей) — ~70%
-- ❌ Фазы 7–12: Чат, Тесты, Mobile, Geo, Монетизация
+- ✅ Фаза 6: ServiceListing (объявления от исполнителей)
+- ✅ Фаза 7: Чат и уведомления (Socket.io, Crypto, E2E)
+- ❌ Фазы 8–12: Тесты, Mobile, Geo, Монетизация
 
 ## Критические правила
 
@@ -110,6 +114,7 @@ uslugi_ryadom/
 12. 📖 **Инструкции**: ВСЕГДА читай `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` и `agent-protocol/SKILL.md` в начале сессии. При изменении правил обновляй все входные файлы и общий протокол.
 13. 🇷🇺 **Язык**: Все сообщения и документация — ТОЛЬКО на РУССКОМ языке.
 14. 🧹 **Гигиена**: ПЕРЕД коммитом проверять `git status` на наличие лишних файлов (логи, временные отчеты).
+15. 📚 **Docs First**: Перед написанием кода ОБЯЗАТЕЛЬНО сверяйся с актуальной документацией через `context7`, `ref` или `search_web`.
 
 ## Локальный запуск
 

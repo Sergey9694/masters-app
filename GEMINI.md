@@ -52,6 +52,9 @@
 | agent-code-quality | `.agent/skills/agent-code-quality/SKILL.md` | Качество кода |
 | agent-qa | `.agent/skills/agent-qa/SKILL.md` | Тестирование |
 | agent-performance | `.agent/skills/agent-performance/SKILL.md` | Производительность |
+| agent-mobile-expert | `.agent/skills/agent-mobile-expert/SKILL.md` | Mobile (RN/Expo) |
+| agent-monorepo-master | `.agent/skills/agent-monorepo-master/SKILL.md` | Monorepo/Turbo |
+| agent-devops-cicd | `.agent/skills/agent-devops-cicd/SKILL.md` | DevOps/CI/CD |
 | docker-expert | `.agent/skills/docker-expert/SKILL.md` | Docker |
 | figma-to-code-mastery | `.agent/skills/figma-to-code-mastery/SKILL.md` | Figma → код |
 | karpathy-guidelines | `.agent/skills/karpathy-guidelines/SKILL.md` | Принципы кода |
@@ -110,6 +113,7 @@ uslugi_ryadom/
 10. 🧪 **Тестирование**: Каждое изменение ОБЯЗАНО проходить проверку (`tsc`, `vitest`, `playwright`).
 11. 📝 **Коммиты**: ТОЛЬКО на РУССКОМ языке. Максимально развернутые, логически сгруппированные и БЕЗ технического мусора.
 12. 📖 **Инструкции**: ВСЕГДА читай `CLAUDE.md`, `GEMINI.md`, `AGENTS.md` и `agent-protocol/SKILL.md` в начале сессии. При изменении правил обновляй все входные файлы и общий протокол.
+13. 📚 **Docs First**: Перед написанием кода ОБЯЗАТЕЛЬНО сверяйся с актуальной документацией через `context7`, `ref` или `search_web`, особенно при любых сомнениях.
 
 ## Стек (Build vs Buy defaults)
 
