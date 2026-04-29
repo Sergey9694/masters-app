@@ -3,7 +3,7 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-29 (Notification Decoupling, UI Polish & Mandatory QC Protocol)
+> 🕓 Последнее обновление: 2026-04-29 (Codex Agent Entry Point)
 
 ---
 
@@ -109,6 +109,13 @@ ENCRYPTION_KEY=<64 hex символа>
 | Unit (Vitest) | ✅ 16/16 — crypto.ts, chat.service.ts |
 | E2E (Playwright) | ✅ 3/3 PASSED — чат, редиректы (UUID/Slug) |
 | TypeScript | ✅ 0 ошибок в проекте |
+
+---
+
+## Обновление 2026-04-29 (Agent System): Codex Entry Point
+- **Codex Integration**: Добавлен `AGENTS.md` — входной файл для Codex, который подключает существующие `.agent/skills/` без дублирования правил.
+- **Instruction Integrity**: `CLAUDE.md`, `GEMINI.md` и `agent-protocol/SKILL.md` теперь явно включают `AGENTS.md` в список синхронизируемых инструкций.
+- **Cheatsheet**: `docs/CHEATSHEET.md` обновлен, чтобы Codex-сессии начинались с правильного входного файла.
 
 ---
 
