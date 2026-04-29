@@ -49,7 +49,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # 2. Start Database & Redis
 Write-Host "--- Starting Database & Redis ---" -ForegroundColor Cyan
-docker-compose up -d db redis
+docker-compose up -d db uslugi_redis
 
 Write-Host "Waiting for Postgres engine to be fully ready..." -ForegroundColor Yellow
 $dbTimeout = 60
@@ -81,6 +81,9 @@ Write-Host "Enabling PostGIS extension..." -ForegroundColor Cyan
 $env:PGPASSWORD = "admin_pass"
 # Use 'uslugi_db' as per docker-compose default
 docker exec uslugi_db psql -U admin -d uslugi_db -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+
+# Ensure dependencies are installed for Prisma
+npm install --silent
 
 npx prisma db push --schema=prisma/schema.prisma
 if ($LASTEXITCODE -ne 0) {

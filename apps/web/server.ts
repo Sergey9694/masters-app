@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createServer, request } from "node:http";
 import { Server } from "socket.io";
@@ -96,9 +97,14 @@ async function startServer() {
       if (channel === "socket-bridge") {
         try {
           const { room, event, data } = JSON.parse(message);
-          console.log(`[Redis Bridge] Relaying ${event} to room ${room || 'global'}`);
-          if (room) io.to(room).emit(event, data);
-          else io.emit(event, data);
+          console.log(`[Redis Bridge] [PID:${process.pid}] Relaying ${event} to room ${room || 'global'}. Payload size: ${message.length}`);
+          if (room) {
+            const count = io.sockets.adapter.rooms.get(room)?.size ?? 0;
+            console.log(`[Redis Bridge] Room ${room} has ${count} active connections.`);
+            io.to(room).emit(event, data);
+          } else {
+            io.emit(event, data);
+          }
         } catch (e) {
           console.error("[Redis Bridge] Error:", e);
         }

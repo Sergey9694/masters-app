@@ -5,7 +5,7 @@ node_modules
 
 # testing
 /coverage
-/test-results
+**/test-results/
 /playwright-report
 
 # next.js

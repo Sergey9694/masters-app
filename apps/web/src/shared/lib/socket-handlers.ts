@@ -23,6 +23,10 @@ async function getUserFromCookie(
     let userId: string | null = null;
     let authSource = "none";
 
+    if (!process.env.AUTH_SECRET) {
+      console.error("[Socket Auth] CRITICAL: AUTH_SECRET is not defined in environment variables!");
+    }
+
     // 1. Try Auth.js session (Main Web/Telegram users) - Higher priority
     const authJsCookieName = 
       cookies["authjs.session-token"] ? "authjs.session-token" :
@@ -138,12 +142,17 @@ export function registerSocketHandlers(
   io.use(async (socket: Socket<ClientToServerEvents, ServerToClientEvents, object, SocketData>, next: (err?: Error) => void) => {
     const cookieHeader = socket.handshake.headers.cookie ?? "";
     const cookieNames = cookieHeader.split(";").map((c: string) => c.trim().split("=")[0]);
-    console.log(`[Socket Auth] Handshake cookies:`, cookieNames);
+    console.log(`[Socket Auth] Initializing handshake. ID: ${socket.id}. Cookies:`, cookieNames);
 
     const user = await getUserFromCookie(cookieHeader);
-    if (!user) return next(new Error("Unauthorized"));
+    if (!user) {
+      console.warn(`[Socket Auth] REJECTED. No user found for socket ${socket.id}`);
+      return next(new Error("Unauthorized"));
+    }
+    
     socket.data.userId = user.id;
     socket.data.userName = `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`;
+    console.log(`[Socket Auth] ACCEPTED. User ${socket.data.userName} (${user.id}) for socket ${socket.id}`);
     next();
   });
 
