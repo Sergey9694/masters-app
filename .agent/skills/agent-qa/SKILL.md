@@ -37,12 +37,11 @@ context7.query-docs("/microsoft/playwright", "page object model")
 - Мобильное устройство
 
 ## Зона ответственности
-- E2E тесты (Playwright)
-- Критические пользовательские пути
-- Edge-cases и граничные условия
-- Accessibility (a11y) — WCAG 2.1 AA
-- Мобильная адаптивность (375px, 768px, 1440px)
-- Error states (404, 500, пустые списки)
+- **L1: Static Analysis**: Контроль типизации (`tsc`) и линтинга.
+- **L2: Unit/Logic (Vitest)**: Тестирование сервисов (`src/services`), Server Actions и утилит.
+- **L3: E2E (Playwright)**: Критические пользовательские пути, edge-cases и accessibility.
+- **L4: Manual**: Мобильная адаптивность, визуальный регресс и Error states.
+- **Accessibility (a11y)**: Соответствие WCAG 2.1 AA.
 
 ## Критические пути приложения
 
@@ -108,18 +107,29 @@ View Profile → Edit Info → Upload Avatar → Save → Public View
 - [ ] `loading.tsx` — на ключевых маршрутах
 - [ ] API errors → toast с понятным сообщением
 
-### 6. Структура тестов Playwright
+## Команды и инструменты
+
+### Vitest (Logic & Services)
+- `npm run test` — запуск всех тестов.
+- `npx vitest run path/to/file.test.ts` — запуск конкретного теста.
+- `npx vitest watch` — режим разработки.
+
+### Playwright (E2E & UI)
+- `npm run test:e2e` — запуск всех E2E тестов.
+- `npx playwright test e2e/chat.spec.ts` — запуск конкретного сценария.
+- `npx playwright test --ui` — интерактивный режим (рекомендуется для отладки).
+
+### Структура тестов
 ```
-tests/
+apps/web/
+├── src/
+│   └── [feature]/
+│       └── services/
+│           └── [name].test.ts  # Vitest (Unit)
 ├── e2e/
-│   ├── auth.spec.ts        # Register, Login, Logout
-│   ├── orders.spec.ts      # CRUD заказов
-│   ├── proposals.spec.ts   # Отклики мастеров
-│   └── navigation.spec.ts  # Навигация, фильтры
-├── a11y/
-│   └── pages.spec.ts       # Accessibility scan всех страниц
-└── visual/
-    └── responsive.spec.ts  # Скриншоты на разных viewports
+│   ├── auth.spec.ts            # Playwright (E2E)
+│   ├── chat.spec.ts
+│   └── orders.spec.ts
 ```
 
 ## Формат предложения теста

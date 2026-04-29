@@ -103,6 +103,8 @@ uslugi_ryadom/
 5. **Auth**: JWT в httpOnly cookies, никакого localStorage
 6. **Типы**: `any` — ЗАПРЕЩЁН, только `unknown` + Zod
 7. **Server Components** по умолчанию, `'use client'` только для интерактивности
+8. **Тестирование**: Каждое изменение ОБЯЗАНО проходить проверку (`tsc`, `vitest`, `playwright`).
+9. **Инструкции**: ВСЕГДА читай `CLAUDE.md`, `GEMINI.md` и `agent-protocol/SKILL.md` в начале сессии. При изменении правил обновляй все три файла.
 
 ## Локальный запуск
 
@@ -112,3 +114,21 @@ npm run dev:full  # чистит порты 3000/4040, поднимает Postgr
 ```
 
 БД: `uslugi_db` | Email: mock → `apps/web/email-debug.log`
+
+---
+
+## 🧪 Тестирование и Качество (Mandatory)
+
+Агент ОБЯЗАН провести проверку по следующим уровням:
+
+1. **L1: Static (TypeScript)**: `npx tsc --noEmit`. 0 ошибок в затронутых файлах.
+2. **L2: Unit/Logic (Vitest)**: `npm run test` или `npx vitest run [path]`. Для сервисов и actions.
+3. **L3: E2E (Playwright)**: `npm run test:e2e` или `npx playwright test [path]`. Для UI и сценариев.
+4. **L4: Manual**: Проверка Desktop/Mobile (375px), Loading и Empty states.
+
+### 🏁 Definition of Done (Критерии готовности)
+- [ ] Код соответствует FSD-архитектуре.
+- [ ] Нет `any`, `tsc` прошел.
+- [ ] Новая логика покрыта тестами.
+- [ ] Регрессия не сломана.
+- [ ] `PROJECT_STATE.md` обновлен.
