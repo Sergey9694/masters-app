@@ -72,6 +72,7 @@
 ├── agent-mobile-expert/ ← React Native, Expo, Mobile UX
 ├── agent-monorepo-master/ ← Turborepo, Workspace synergy
 ├── agent-devops-cicd/   ← CI/CD, Sentry, Docker
+├── agent-notary/        ← документация, отчеты, PROJECT_STATE.md
 ├── agent-code-quality/  ← качество кода, TS Wizardry
 ├── agent-performance/   ← производительность, Prisma N+1
 ├── agent-qa/            ← тестирование, Chaos Engineering

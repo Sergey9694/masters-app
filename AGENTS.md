@@ -38,8 +38,7 @@ Codex может пользоваться ими напрямую: читать 
 - `как mobile-эксперт` — прочитай `agent-protocol`, затем `agent-mobile-expert`.
 - `как monorepo-мастер` — прочитай `agent-protocol`, затем `agent-monorepo-master`.
 - `как devops-инженер` — прочитай `agent-protocol`, затем `agent-devops-cicd`.
-- `как docker-эксперт` — прочитай `agent-protocol`, затем `docker-expert`.
-- `как postgres-эксперт` — прочитай `agent-protocol`, затем `postgresql-optimization`.
+- `как нотариус` или `как документалист` — прочитай `agent-protocol`, затем `agent-notary`.
 - `как shadcn-эксперт` — прочитай `agent-protocol`, затем `shadcn-ui-mastery`.
 
 В Codex реальные параллельные субагенты запускай только когда текущие системные правила и запрос пользователя это разрешают. Если запуск субагентов недоступен или неуместен, выполняй роли последовательно через чтение соответствующих skill-файлов.

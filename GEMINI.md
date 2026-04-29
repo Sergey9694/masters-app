@@ -55,6 +55,7 @@
 | agent-mobile-expert | `.agent/skills/agent-mobile-expert/SKILL.md` | Mobile (RN/Expo) |
 | agent-monorepo-master | `.agent/skills/agent-monorepo-master/SKILL.md` | Monorepo/Turbo |
 | agent-devops-cicd | `.agent/skills/agent-devops-cicd/SKILL.md` | DevOps/CI/CD |
+| agent-notary | `.agent/skills/agent-notary/SKILL.md` | Документалист, отчеты |
 | docker-expert | `.agent/skills/docker-expert/SKILL.md` | Docker |
 | figma-to-code-mastery | `.agent/skills/figma-to-code-mastery/SKILL.md` | Figma → код |
 | karpathy-guidelines | `.agent/skills/karpathy-guidelines/SKILL.md` | Принципы кода |

@@ -27,7 +27,7 @@
    - Активировать `agent-qa` для верификации выполнения всех сценариев.
    - Активировать `agent-security` для финального подтверждения безопасности.
 
-7. **Финальный отчет**:
-   - Подготовить подробный отчет о проделанной работе.
-   - Сохранить отчет в `docs/agent-reports/[task-name]-[date].md`.
-   - Обновить `docs/PROJECT_STATE.md`.
+7. **Финальный отчет и Документирование**:
+   - Активировать `agent-notary`.
+   - Подготовить подробный отчет в `docs/agent-reports/[task-name]-[date].md`.
+   - Обновить `docs/PROJECT_STATE.md`, `DEVELOPMENT_PLAN.md` и `docs/BUG_FIXES.md`.
