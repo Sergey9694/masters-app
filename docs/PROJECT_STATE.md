@@ -3,7 +3,17 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-30 (Deploy CI/CD cache fix)
+> 🕓 Последнее обновление: 2026-04-30 (CI Redis service)
+
+---
+
+## Обновление 2026-04-30 (CI Redis service)
+- **Redis topology confirmed**: локально Redis доступен как `redis://localhost:6380`, внутри Docker-сети приложение использует `redis://uslugi_redis:6379`.
+- **CI/E2E Redis**: в `.github/workflows/ci.yml` для job `e2e` добавлен service `redis:7-alpine` с пробросом `6380:6379`; `REDIS_URL` в CI переведён на `redis://127.0.0.1:6380`.
+- **Deploy verify Redis**: в `.github/workflows/deploy.yml` для job `verify` добавлен такой же Redis service, чтобы unit/build checks не зависели от отсутствующего localhost Redis.
+- **Env examples**: `.env.example` и `apps/web/.env.example` синхронизированы с локальным портом `6380`.
+- **Dev script**: `apps/web/scripts/dev.ps1` теперь чистит порт `6380`, а не старый `6379`.
+- **Security verdict**: PASS_WITH_NOTES. Секреты и runtime-логика не менялись; изменения ограничены CI/local config и документацией.
 
 ---
 

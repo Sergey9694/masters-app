@@ -1755,7 +1755,7 @@ order:{id}:proposals     — новый отклик на заказ (для в�
          }
          export { getRedis };
 
-       - .env: REDIS_URL=redis://localhost:6379
+       - .env: REDIS_URL=redis://localhost:6380 (локально host-порт; внутри Docker — redis://uslugi_redis:6379)
 
 7.0.2  Создать apps/web/src/shared/lib/pubsub.ts:
        
@@ -2956,8 +2956,9 @@ SSR:            Leaflet только через dynamic import с ssr: false
          - держать cache-to type=gha non-blocking, чтобы падение cache export не блокировало прод-деплой;
          - добавить post-deploy healthcheck /api/health и, позже, staging/canary перед production rollout.
 
-[ ] A.7  CI services for integration tests:
-         - когда появятся тесты с реальной БД/Redis, добавить PostgreSQL и Redis services в GitHub Actions;
+[~] A.7  CI services for integration tests:
+         - Redis service добавлен в GitHub Actions для E2E/verify: host 6380 -> container 6379;
+         - когда появятся тесты с реальной БД, добавить PostgreSQL service;
          - миграции и seed для CI запускать явно, без доступа к production secrets.
 ```
 

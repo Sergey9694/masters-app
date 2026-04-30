@@ -16,13 +16,23 @@ env:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6380:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       AUTH_SECRET: "ci_auth_secret_32_chars_minimum_value"
       AUTH_URL: "http://127.0.0.1:3000"
       AUTH_TRUST_HOST: "true"
       DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:5432/uslugi_ci?schema=public"
-      REDIS_URL: "redis://127.0.0.1:6379"
+      REDIS_URL: "redis://127.0.0.1:6380"
       ENCRYPTION_KEY: "a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
       NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3000"
       NEXT_PUBLIC_BOT_NAME: "ci_bot"

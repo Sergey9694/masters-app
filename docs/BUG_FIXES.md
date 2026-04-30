@@ -4,6 +4,22 @@
 
 ---
 
+## [2026-04-30] CI/CD E2E: Redis `ECONNREFUSED 127.0.0.1:6379`
+
+**Симптом:** Playwright E2E запускал `tsx server.ts`, сервер поднимался, но Redis adapter постоянно логировал `connect ECONNREFUSED 127.0.0.1:6379`, после чего появлялись `MaxRetriesPerRequestError` и unhandled rejection.
+
+**Причина:** локальная конфигурация проекта уже использует Redis на host-порту `6380` (`docker-compose.yml`: `6380:6379`, service name `uslugi_redis`), но CI задавал `REDIS_URL=redis://127.0.0.1:6379` и не поднимал Redis service.
+
+**Решение:**
+- В `ci.yml` для job `e2e` добавлен service `redis:7-alpine` с пробросом `6380:6379` и healthcheck `redis-cli ping`.
+- В `deploy.yml` для job `verify` добавлен такой же Redis service.
+- `REDIS_URL` в CI/deploy verify переведён на `redis://127.0.0.1:6380`.
+- `.env.example`, `apps/web/.env.example` и `apps/web/scripts/dev.ps1` синхронизированы с локальным портом `6380`.
+
+**Security verdict:** PASS_WITH_NOTES — runtime-код и secrets не менялись; изменения ограничены CI/local config.
+
+---
+
 ## [2026-04-30] CI/CD build: отсутствует `@tailwindcss/oxide-linux-x64-gnu`
 
 **Симптом:** deploy verify job доходил до `npm run build --workspace=@uslugi/web`, но Next/Turbopack падал на `globals.css` с ошибкой `Cannot find native binding` и `Cannot find module '@tailwindcss/oxide-linux-x64-gnu'`.

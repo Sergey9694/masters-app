@@ -2,8 +2,8 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 # 0. Cleanup old processes (only on specific ports to avoid killing self)
-Write-Host "--- Cleaning up old processes on ports 3000, 4040 ---" -ForegroundColor Cyan
-$ports = @(3000, 4040, 6379)
+Write-Host "--- Cleaning up old processes on ports 3000, 4040, 6380 ---" -ForegroundColor Cyan
+$ports = @(3000, 4040, 6380)
 foreach ($port in $ports) {
     $processId = (Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue).OwningProcess
     if ($processId) {
