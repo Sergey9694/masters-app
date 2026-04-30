@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = process.env.BASE_URL ?? "http://127.0.0.1:3000";
+const webServerURL =
+  process.env.PLAYWRIGHT_WEB_SERVER_URL ??
+  new URL("/api/health", baseURL).toString();
 const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? "npm run dev";
 
 export default defineConfig({
@@ -31,7 +34,7 @@ export default defineConfig({
   ],
   webServer: {
     command: webServerCommand,
-    url: baseURL,
+    url: webServerURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     stdout: "pipe",

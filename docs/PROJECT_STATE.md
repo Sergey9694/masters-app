@@ -3,7 +3,17 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-30 (CI Redis service)
+> 🕓 Последнее обновление: 2026-04-30 (CI E2E healthcheck)
+
+---
+
+## Обновление 2026-04-30 (CI E2E healthcheck)
+- **GitHub check**: свежий CI run `25183625449` на `d838449` упал только в job `E2E Smoke`; lint/typecheck/unit прошли, deploy run `25183625038` завершился success.
+- **Root cause**: Playwright `webServer.url` проверял `/`, а главная страница использует DB-backed `PopularCategories`; в CI PostgreSQL service не поднят, поэтому readiness мог ждать 120 секунд и падать до запуска smoke-сценариев.
+- **Fix**: `apps/web/playwright.config.ts` теперь проверяет readiness через `PLAYWRIGHT_WEB_SERVER_URL` или fallback `/api/health`, который уже предназначен для healthcheck и не зависит от БД.
+- **CI env**: в `.github/workflows/ci.yml` для E2E явно задан `PLAYWRIGHT_WEB_SERVER_URL=http://127.0.0.1:3000/api/health`.
+- **CI warning cleanup**: `actions/upload-artifact` обновлён с `v5` до `v7`, чтобы убрать Node 20 deprecation warning из GitHub annotations.
+- **Security verdict**: PASS_WITH_NOTES. Runtime-код и secrets не менялись; изменение ограничено тестовой конфигурацией CI.
 
 ---
 

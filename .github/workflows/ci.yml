@@ -96,8 +96,9 @@ jobs:
       - run: npm run test:e2e --workspace=@uslugi/web
         env:
           BASE_URL: "http://127.0.0.1:3000"
+          PLAYWRIGHT_WEB_SERVER_URL: "http://127.0.0.1:3000/api/health"
           PLAYWRIGHT_WEB_SERVER_COMMAND: "npm run dev"
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report

@@ -4,6 +4,21 @@
 
 ---
 
+## [2026-04-30] CI/CD E2E: Playwright webServer ждал `/` вместо healthcheck
+
+**Симптом:** свежий CI run `25183625449` на коммите `d838449` падал только в job `E2E Smoke`; шаг `npm run test:e2e --workspace=@uslugi/web` завершался примерно через 120 секунд.
+
+**Причина:** Playwright `webServer.url` был равен `BASE_URL`, то есть `http://127.0.0.1:3000/`. Главная страница рендерит `PopularCategories` через БД, а CI E2E job не поднимает PostgreSQL service, потому что текущие smoke-тесты проверяют auth/protected/API-guards и не требуют главной страницы. В итоге readiness endpoint был слишком тяжёлым для smoke-окружения.
+
+**Решение:**
+- В `apps/web/playwright.config.ts` добавлен `PLAYWRIGHT_WEB_SERVER_URL` с fallback на `${BASE_URL}/api/health`.
+- В `.github/workflows/ci.yml` E2E job явно задаёт `PLAYWRIGHT_WEB_SERVER_URL=http://127.0.0.1:3000/api/health`.
+- `actions/upload-artifact` обновлён с `v5` до `v7`, чтобы убрать Node 20 deprecation warning из annotations.
+
+**Security verdict:** PASS_WITH_NOTES — runtime-код и secrets не менялись; изменение ограничено тестовой конфигурацией.
+
+---
+
 ## [2026-04-30] CI/CD E2E: Redis `ECONNREFUSED 127.0.0.1:6379`
 
 **Симптом:** Playwright E2E запускал `tsx server.ts`, сервер поднимался, но Redis adapter постоянно логировал `connect ECONNREFUSED 127.0.0.1:6379`, после чего появлялись `MaxRetriesPerRequestError` и unhandled rejection.

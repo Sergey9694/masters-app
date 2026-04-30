@@ -2958,6 +2958,7 @@ SSR:            Leaflet только через dynamic import с ssr: false
 
 [~] A.7  CI services for integration tests:
          - Redis service добавлен в GitHub Actions для E2E/verify: host 6380 -> container 6379;
+         - Playwright readiness переведён на /api/health, чтобы smoke-тесты не зависели от главной страницы и БД;
          - когда появятся тесты с реальной БД, добавить PostgreSQL service;
          - миграции и seed для CI запускать явно, без доступа к production secrets.
 ```
