@@ -68,22 +68,24 @@ export function ConversationHeader({
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium leading-tight">
-          {otherUser.firstName} {otherUser.lastName || ""}
-        </p>
-        <p className={cn(
-          "mt-0.5 truncate text-[11px] leading-tight",
-          isOnline ? "font-medium text-green-500" : "text-muted-foreground"
-        )}>
-          {isOnline ? "в сети" : lastSeenAt ? `был(а) в сети ${formatSmartDate(lastSeenAt)}` : "был(а) в сети недавно"}
-        </p>
+        <div className="min-w-0 sm:flex sm:items-center sm:gap-2">
+          <p className="truncate text-sm font-medium leading-tight sm:min-w-0">
+            {otherUser.firstName} {otherUser.lastName || ""}
+          </p>
+          <p className={cn(
+            "mt-0.5 truncate text-[11px] leading-tight sm:mt-0 sm:shrink-0 sm:text-[10px]",
+            isOnline ? "font-medium text-green-500" : "text-muted-foreground"
+          )}>
+            {isOnline ? "в сети" : lastSeenAt ? `был(а) в сети ${formatSmartDate(lastSeenAt)}` : "был(а) в сети недавно"}
+          </p>
+        </div>
         {contextLink && (
           <Link href={contextLink.href} className="mt-0.5 block truncate text-xs text-primary hover:underline">
             {contextLink.label}
           </Link>
         )}
       </div>
-      <div className="-mr-1 ml-auto flex shrink-0 items-center gap-0 self-start">
+      <div className="-mr-1 ml-auto flex shrink-0 items-center gap-0 self-start sm:self-center">
         <ReportModal
           targetType="USER"
           targetId={otherUser.id}
