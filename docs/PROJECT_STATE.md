@@ -10,7 +10,8 @@
 ## Обновление 2026-04-30 (Deploy CI/CD cache fix)
 - **Prisma CLI in CI**: все workflow-команды `npx prisma generate --schema=apps/web/prisma/schema.prisma` заменены на workspace-вызов `npm exec --workspace=@uslugi/web -- prisma generate --schema=prisma/schema.prisma`, потому что `prisma` объявлен в `apps/web/package.json`, а не в root package.
 - **Playwright CLI in CI**: `npx playwright install --with-deps chromium` заменён на workspace-вызов, чтобы E2E job не упал следующим по той же причине.
-- **CI dev tooling**: `npm ci` в verify/CI jobs заменён на `npm ci --include=dev`, потому что проверки требуют dev CLI (`prisma`, `typescript`, `vitest`, `playwright`).
+- **CI dev/native tooling**: `npm ci` в verify/CI jobs заменён на `npm ci --include=dev --include=optional`, потому что проверки требуют dev CLI (`prisma`, `typescript`, `vitest`, `playwright`) и native optional bindings.
+- **Tailwind Oxide lockfile**: в `package-lock.json` добавлена недостающая запись `apps/web/node_modules/@tailwindcss/oxide-linux-x64-gnu`, чтобы Linux runner мог поставить native binding для Tailwind CSS 4.
 - **Deploy workflow**: для job `build-and-push` добавлены минимальные `permissions: contents: read, actions: write`, чтобы Docker Buildx мог работать с GitHub Actions cache backend `type=gha`.
 - **GitHub Actions refresh**: deploy workflow обновлён до `actions/checkout@v6`, `docker/login-action@v4`, `docker/setup-buildx-action@v4`, `docker/build-push-action@v7`.
 - **Reliability**: `cache-to: type=gha` сделан non-blocking через `ignore-error=true`, чтобы сбой экспорта cache layers не ронял production deploy.

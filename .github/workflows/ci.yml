@@ -38,7 +38,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --include=dev
+      - run: npm ci --include=dev --include=optional
       - run: npm exec --workspace=@uslugi/web -- prisma generate --schema=prisma/schema.prisma
       - run: npm run lint
 
@@ -52,7 +52,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --include=dev
+      - run: npm ci --include=dev --include=optional
       - run: npm exec --workspace=@uslugi/web -- prisma generate --schema=prisma/schema.prisma
       - run: npm run typecheck
 
@@ -66,7 +66,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --include=dev
+      - run: npm ci --include=dev --include=optional
       - run: npm exec --workspace=@uslugi/web -- prisma generate --schema=prisma/schema.prisma
       - run: npm run test:run
 
@@ -80,7 +80,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: package-lock.json
-      - run: npm ci --include=dev
+      - run: npm ci --include=dev --include=optional
       - run: npm exec --workspace=@uslugi/web -- prisma generate --schema=prisma/schema.prisma
       - run: npm exec --workspace=@uslugi/web -- playwright install --with-deps chromium
       - run: npm run test:e2e --workspace=@uslugi/web

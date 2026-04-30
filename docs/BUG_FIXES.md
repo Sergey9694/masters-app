@@ -4,6 +4,20 @@
 
 ---
 
+## [2026-04-30] CI/CD build: отсутствует `@tailwindcss/oxide-linux-x64-gnu`
+
+**Симптом:** deploy verify job доходил до `npm run build --workspace=@uslugi/web`, но Next/Turbopack падал на `globals.css` с ошибкой `Cannot find native binding` и `Cannot find module '@tailwindcss/oxide-linux-x64-gnu'`.
+
+**Причина:** `package-lock.json` был зафиксирован с Windows-записью `@tailwindcss/oxide-win32-x64-msvc`, но без Linux-записи `@tailwindcss/oxide-linux-x64-gnu`. Это известный класс npm-проблем с platform-specific optional dependencies: на другой ОС lockfile может не содержать нужный native package.
+
+**Решение:**
+- В `package-lock.json` добавлена недостающая transitive optional-запись `apps/web/node_modules/@tailwindcss/oxide-linux-x64-gnu@4.2.1`.
+- В CI/deploy jobs `npm ci --include=dev` заменён на `npm ci --include=dev --include=optional`, чтобы optional native bindings не отбрасывались конфигурацией runner.
+
+**Security verdict:** PASS_WITH_NOTES — runtime-код, secrets и package.json не менялись; lockfile фиксирует уже объявленную optional-зависимость Tailwind.
+
+---
+
 ## [2026-04-30] CI/CD verify: `prisma: not found`
 
 **Симптом:** deploy verify job падал на шаге `npx prisma generate --schema=apps/web/prisma/schema.prisma` с ошибкой `sh: 1: prisma: not found`.
@@ -11,7 +25,7 @@
 **Причина:** Prisma CLI объявлен в workspace `@uslugi/web`, а не в root `package.json`. В GitHub Actions root-вызов `npx prisma` не гарантирует доступ к бинарю из workspace.
 
 **Решение:**
-- `npm ci` в verify/CI jobs заменён на `npm ci --include=dev`, чтобы dev CLI гарантированно устанавливались в CI.
+- `npm ci` в verify/CI jobs заменён на `npm ci --include=dev --include=optional`, чтобы dev CLI и optional native bindings гарантированно устанавливались в CI.
 - В `deploy.yml` и `ci.yml` Prisma generation переведён на `npm exec --workspace=@uslugi/web -- prisma generate --schema=prisma/schema.prisma`.
 - E2E-шаг `npx playwright install --with-deps chromium` также переведён на workspace-вызов, потому что Playwright CLI тоже установлен в `@uslugi/web`.
 
