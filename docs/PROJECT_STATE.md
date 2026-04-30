@@ -3,7 +3,14 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-29 (Trust/Safety MVP)
+> 🕓 Последнее обновление: 2026-04-30 (Agent Workflow Sync)
+
+---
+
+## Обновление 2026-04-30 (Agent Workflow Sync)
+- **Delegate Workflow Restored**: `.agent/workflows/delegate.md` восстановлен как канонический workflow `/delegate` с обязательными этапами Security Gate, Code Quality, QA, финального Security Audit и Notary-отчетности.
+- **Workflow Mirror Sync**: `workflows/delegate.md` синхронизирован как удобное зеркало канонического workflow, чтобы IDE-вкладки и агентная система не расходились.
+- **Instruction Hygiene**: `AGENTS.md`, `agent-orchestrator` и `docs/CHEATSHEET.md` уточняют правила запуска `/delegate`, режимы с/без реальных субагентов и подключение специализированных skills.
 
 ---
 

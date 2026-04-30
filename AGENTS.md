@@ -18,6 +18,8 @@
 - `CLAUDE.md`
 - `GEMINI.md`
 - `.agent/skills/agent-protocol/SKILL.md`
+- `.agent/workflows/delegate.md`
+- `workflows/delegate.md` (зеркало workflow для удобства)
 
 ---
 
@@ -28,7 +30,8 @@ Codex может пользоваться ими напрямую: читать 
 Копировать эти файлы в отдельную Codex-структуру не нужно: `.agent/skills/` остается единым источником истины.
 
 Если пользователь пишет:
-- `как оркестратор` — прочитай `agent-protocol`, затем `agent-orchestrator`.
+- `/delegate ...` — прочитай `.agent/workflows/delegate.md`, затем `agent-protocol` и `agent-orchestrator`; действуй по workflow.
+- `как оркестратор` — прочитай `.agent/workflows/delegate.md`, затем `agent-protocol` и `agent-orchestrator`.
 - `как архитектор` — прочитай `agent-protocol`, затем `agent-architect`.
 - `как security-агент`, `как безопасник` или `как devsecops` — прочитай `agent-protocol`, затем `agent-security`.
 - `как SEO-агент` — прочитай `agent-protocol`, затем `agent-seo`.

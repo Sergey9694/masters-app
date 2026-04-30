@@ -13,11 +13,12 @@
 > "как оркестратор — [задача]" или используй команду `/delegate [задача]`
 
 Тогда:
-1. Прочитай `.agent/workflows/delegate.md` и `.agent/skills/agent-orchestrator/SKILL.md`
+1. Прочитай `.agent/workflows/delegate.md`, `.agent/skills/agent-protocol/SKILL.md` и `.agent/skills/agent-orchestrator/SKILL.md`
 2. Проанализируй задачу, разбей на подзадачи
 3. Покажи план — **дождись одобрения владельца**
-4. Выполни подзадачи через специализированные скиллы
-5. Дай сводный отчёт, обнови `docs/PROJECT_STATE.md`
+4. Выполни подзадачи через специализированные скиллы; реальных субагентов запускай только если это разрешено текущими правилами и запросом
+5. Проведи Code Quality, QA и финальный Security Audit там, где это применимо
+6. Дай сводный отчёт, обнови `docs/PROJECT_STATE.md`
 
 **Примеры:**
 ```

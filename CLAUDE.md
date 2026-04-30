@@ -14,12 +14,12 @@
 > "как оркестратор — [задача]" или используй команду `/delegate [задача]`
 
 Тогда я:
-1. Читаю `.agent/workflows/delegate.md` и `.agent/skills/agent-orchestrator/SKILL.md`
+1. Читаю `.agent/workflows/delegate.md`, `.agent/skills/agent-protocol/SKILL.md` и `.agent/skills/agent-orchestrator/SKILL.md`
 2. Анализирую задачу, разбиваю на подзадачи
 3. Показываю план — **жду твоего одобрения**
-4. Запускаю нужных субагентов (параллельно если возможно)
-5. Собираю результаты, задаю вопросы если нужно
-6. Даю сводный отчёт
+4. Выполняю роли через нужные скиллы; реальных субагентов запускаю только если это разрешено текущими правилами и запросом
+5. Провожу Code Quality, QA и финальный Security Audit там, где это применимо
+6. Даю сводный отчёт и обновляю документацию по правилам проекта
 
 **Примеры:**
 ```
@@ -57,6 +57,7 @@
 | `.agent/skills/agent-mobile-expert/SKILL.md` | Mobile разработка (React Native/Expo) |
 | `.agent/skills/agent-monorepo-master/SKILL.md` | Управление Turborepo и Shared пакетами |
 | `.agent/skills/agent-devops-cicd/SKILL.md` | DevOps, CI/CD, Infrastructure |
+| `.agent/skills/agent-notary/SKILL.md` | Документирование, отчеты, PROJECT_STATE.md |
 | `.agent/skills/docker-expert/SKILL.md` | Docker, контейнеризация |
 | `.agent/skills/figma-to-code-mastery/SKILL.md` | Figma → код |
 | `.agent/skills/karpathy-guidelines/SKILL.md` | Принципы написания кода |
