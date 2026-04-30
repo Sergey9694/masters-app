@@ -4,16 +4,49 @@ on:
   push:
     branches: ["master", "refactor/uslugi-ryadom"]
 
+permissions:
+  contents: read
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: "20"
   DOCKER_IMAGE_NAME: masters-app
   TARGET_DIR: masters_app
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      AUTH_SECRET: "ci_auth_secret_32_chars_minimum_value"
+      AUTH_URL: "http://127.0.0.1:3000"
+      AUTH_TRUST_HOST: "true"
+      DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:5432/uslugi_ci?schema=public"
+      REDIS_URL: "redis://127.0.0.1:6379"
+      ENCRYPTION_KEY: "a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
+      NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3000"
+      NEXT_PUBLIC_BOT_NAME: "ci_bot"
+      NEXT_PUBLIC_BOT_ID: "123456789"
+      TELEGRAM_BOT_TOKEN: "ci:telegram-token"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/web/prisma/schema.prisma
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:run
+      - run: npm run build --workspace=@uslugi/web
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: verify
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -43,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Ensure Target Directory Exists
         uses: appleboy/ssh-action@v1.0.3
@@ -95,15 +128,19 @@ jobs:
 
   notify:
     runs-on: ubuntu-latest
-    needs: [build-and-push, deploy]
+    needs: [verify, build-and-push, deploy]
     if: always()
     steps:
       - name: Telegram Notification
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
+          VERIFY_STATUS="${{ needs.verify.result }}"
           BUILD_STATUS="${{ needs.build-and-push.result }}"
           DEPLOY_STATUS="${{ needs.deploy.result }}"
 
-          if [[ "$BUILD_STATUS" == "success" && "$DEPLOY_STATUS" == "success" ]]; then
+          if [[ "$VERIFY_STATUS" == "success" && "$BUILD_STATUS" == "success" && "$DEPLOY_STATUS" == "success" ]]; then
             ICON="✅"
             STATUS_TEXT="Masters App: Деплой успешен 🚀"
           else
@@ -114,12 +151,13 @@ jobs:
           MESSAGE="${ICON} *${{ env.DOCKER_IMAGE_NAME }}*
           ${STATUS_TEXT}
 
+          🧪 Проверки: \`${VERIFY_STATUS}\`
           📦 Ветка: \`${{ github.ref_name }}\`
           🔨 Коммит: \`${{ github.sha }}\`
           👤 Автор: ${{ github.actor }}
           🔗 [Просмотр логов](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
 
-          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="${TELEGRAM_CHAT_ID}" \
             -d parse_mode="Markdown" \
             -d text="$MESSAGE"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { transition } from "@/shared/lib/motion";
 import { useSearchParams } from "next/navigation";
@@ -33,9 +33,9 @@ export function LoginForm({ botId, onSwitchToRegister }: LoginFormProps) {
   const errorParam = searchParams.get("error");
 
   const [mode, setMode] = useState<Mode>("social");
-  const dirRef = useRef(1);
+  const [direction, setDirection] = useState(1);
   const switchMode = (next: Mode) => {
-    dirRef.current = MODE_ORDER.indexOf(next) >= MODE_ORDER.indexOf(mode) ? 1 : -1;
+    setDirection(MODE_ORDER.indexOf(next) >= MODE_ORDER.indexOf(mode) ? 1 : -1);
     setMode(next);
   };
   const [loading, setLoading] = useState(false);
@@ -101,9 +101,9 @@ export function LoginForm({ botId, onSwitchToRegister }: LoginFormProps) {
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={mode}
-            initial={{ opacity: 0, x: dirRef.current * 10 }}
+            initial={{ opacity: 0, x: direction * 10 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: dirRef.current * -10 }}
+            exit={{ opacity: 0, x: direction * -10 }}
             transition={transition.base}
           >
             {/* Mode: social */}

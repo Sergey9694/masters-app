@@ -10,7 +10,6 @@ export async function assertOwnership(entity: "order" | "proposal" | "review", e
   if (!session?.user) throw new Error("Unauthorized");
 
   const userId = session.user.id;
-  // @ts-ignore
   const isAdmin = session.user.role === "ADMIN";
 
   if (isAdmin) return session.user;

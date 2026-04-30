@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { ZodSchema } from "zod";
 import { getSessionFromRequest } from "./auth";
 import { SessionPayload } from "@/shared/types/auth";
@@ -29,12 +29,10 @@ export function apiForbidden() {
  * Wrapper for authenticated API handlers
  */
 export function withAuth(
-  handler: (request: Request, session: SessionPayload) => Promise<Response>
+  handler: (request: NextRequest, session: SessionPayload) => Promise<Response>
 ) {
-  return async (request: Request) => {
-    // We need NextRequest for cookies, but the handler might be generic.
-    // In Next.js App Router, it's usually NextRequest.
-    const session = await getSessionFromRequest(request as any);
+  return async (request: NextRequest) => {
+    const session = await getSessionFromRequest(request);
     if (!session) {
       return apiUnauthorized();
     }
@@ -47,9 +45,9 @@ export function withAuth(
  */
 export function withValidation<T>(
   schema: ZodSchema<T>,
-  handler: (request: Request, data: T, session?: SessionPayload) => Promise<Response>
+  handler: (request: NextRequest, data: T, session?: SessionPayload) => Promise<Response>
 ) {
-  return async (request: Request) => {
+  return async (request: NextRequest) => {
     try {
       const body = await request.json();
       const parsed = schema.safeParse(body);
@@ -59,10 +57,10 @@ export function withValidation<T>(
       }
 
       // Check for session if available
-      const session = await getSessionFromRequest(request as any);
+      const session = await getSessionFromRequest(request);
       
       return handler(request, parsed.data, session || undefined);
-    } catch (e) {
+    } catch {
       return apiError("Invalid JSON body", 400);
     }
   };

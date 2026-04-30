@@ -8,6 +8,27 @@
     "lint": {
       "dependsOn": ["^lint"]
     },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "outputs": []
+    },
+    "test:run": {
+      "dependsOn": ["^test:run"],
+      "outputs": []
+    },
+    "test:coverage": {
+      "dependsOn": ["^test:coverage"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "cache": false,
+      "dependsOn": ["^test:e2e"],
+      "outputs": ["playwright-report/**", "test-results/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

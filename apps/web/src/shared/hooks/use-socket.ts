@@ -23,8 +23,8 @@ function getSocket(): AppSocket {
 }
 
 export function useSocket(userId?: string) {
-  const [connected, setConnected] = useState(false);
   const socket = getSocket();
+  const [connected, setConnected] = useState(() => socket.connected);
 
   useEffect(() => {
     if (!userId) {
@@ -32,7 +32,6 @@ export function useSocket(userId?: string) {
         _socketUserId = null;
         socket.disconnect();
       }
-      setConnected(false);
       return;
     }
 
@@ -66,10 +65,6 @@ export function useSocket(userId?: string) {
     socket.on("disconnect", onDisconnect);
     socket.on("connect_error", onConnectError);
 
-    if (socket.connected) {
-      setConnected(true);
-    }
-
     return () => {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
@@ -77,5 +72,5 @@ export function useSocket(userId?: string) {
     };
   }, [socket]);
 
-  return { socket, connected };
+  return { socket, connected: userId ? connected : false };
 }

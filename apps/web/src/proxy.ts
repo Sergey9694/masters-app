@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
   // 0. Всегда пускаем healthcheck Docker'а
-  if (request.nextUrl.pathname === "/api/health") {
+  if (pathname === "/api/health") {
     return NextResponse.next();
   }
 
@@ -14,8 +16,8 @@ export async function proxy(request: NextRequest) {
   let apiSession = null;
   if (!session) {
     const isCustomJwtRoute =
-      request.nextUrl.pathname.startsWith("/api/v1") ||
-      request.nextUrl.pathname.startsWith("/admin");
+      pathname.startsWith("/api/v1") ||
+      pathname.startsWith("/admin");
     if (isCustomJwtRoute) {
       const { getSessionFromRequest } = await import("@/shared/lib/auth");
       apiSession = await getSessionFromRequest(request);
@@ -24,37 +26,43 @@ export async function proxy(request: NextRequest) {
 
   // 2. Если сессии нет (ни Web, ни API) — проверяем публичные роуты
   if (!session && !apiSession) {
+    const isPublicV1AuthRoute =
+      pathname === "/api/v1/auth/login" ||
+      pathname === "/api/v1/auth/login/telegram" ||
+      pathname === "/api/v1/auth/register";
+
     const isPublic =
-      request.nextUrl.pathname === "/" ||
-      request.nextUrl.pathname === "/login" ||
-      request.nextUrl.pathname === "/admin/login" ||
-      request.nextUrl.pathname.startsWith("/auth") ||
-      request.nextUrl.pathname.startsWith("/api/auth") ||
-      request.nextUrl.pathname.startsWith("/api/uploads") ||
-      request.nextUrl.pathname.startsWith("/orders/v") ||
-      request.nextUrl.pathname.startsWith("/_next") ||
-      request.nextUrl.pathname === "/favicon.ico";
+      pathname === "/" ||
+      pathname === "/login" ||
+      pathname === "/admin/login" ||
+      pathname.startsWith("/auth") ||
+      pathname.startsWith("/api/auth") ||
+      isPublicV1AuthRoute ||
+      pathname.startsWith("/api/uploads") ||
+      pathname.startsWith("/orders/v") ||
+      pathname.startsWith("/_next") ||
+      pathname === "/favicon.ico";
 
     if (isPublic) {
       return NextResponse.next();
     }
 
     // Если это API, но не Auth — блокируем
-    if (request.nextUrl.pathname.startsWith("/api")) {
+    if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Иначе редирект на логин
     const loginUrl = new URL("/auth/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   const userRole = session?.user?.role || apiSession?.role;
 
   // 3. Админ-роуты — только для ADMIN
-  const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const isAdminPath = pathname.startsWith("/admin");
+  const isLoginPage = pathname === "/admin/login";
 
   if (isAdminPath && !isLoginPage && userRole !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard?error=forbidden", request.url));

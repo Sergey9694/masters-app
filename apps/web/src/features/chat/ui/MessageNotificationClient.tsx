@@ -19,16 +19,13 @@ export function MessageNotificationClient({ initialUnread, userId }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const pathnameRef = useRef(pathname);
+  const displayCount = pathname.startsWith("/chat") ? 0 : count;
 
   // Мигание заголовка вкладки
-  useFlashTitle(count, "Новое сообщение");
+  useFlashTitle(displayCount, "Новое сообщение");
 
   useEffect(() => {
     pathnameRef.current = pathname;
-    // Сбрасываем счетчик, если зашли в чат
-    if (pathname.startsWith("/chat")) {
-      setCount(0);
-    }
   }, [pathname]);
 
   useEffect(() => {
@@ -63,14 +60,14 @@ export function MessageNotificationClient({ initialUnread, userId }: Props) {
       aria-label="Сообщения"
     >
       <MessageSquare className="size-3.5" />
-      {count > 0 && (
+      {displayCount > 0 && (
         <span
           className={cn(
             "absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center",
             "rounded-full bg-primary text-[8px] font-bold text-primary-foreground"
           )}
         >
-          {count > 9 ? "9+" : count}
+          {displayCount > 9 ? "9+" : displayCount}
         </span>
       )}
     </button>

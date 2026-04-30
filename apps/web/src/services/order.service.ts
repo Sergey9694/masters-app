@@ -4,7 +4,6 @@ import type { OrderCardData } from "@/shared/types/domain";
 import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
 import { Prisma } from "@prisma/client";
 import { slugify } from "@/shared/lib/slugify";
-import { type OrderStatus } from "@prisma/client";
 
 export type OrderWithDetails = Prisma.OrderGetPayload<{
   include: {
@@ -130,15 +129,15 @@ export const orderService = {
       }
     }
 
-    // Get total count for the SAME where clause
-    const totalCount = await db.order.count({ where });
-
     if (search && search.trim().length >= 2) {
       where.OR = [
         { title: { contains: search.trim(), mode: "insensitive" } },
         { description: { contains: search.trim(), mode: "insensitive" } },
       ];
     }
+
+    // Count uses the final filter set, including search conditions.
+    const totalCount = await db.order.count({ where });
 
     const orderBy: Prisma.OrderOrderByWithRelationInput[] =
       sort === "budget_desc"

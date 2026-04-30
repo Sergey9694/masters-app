@@ -100,7 +100,7 @@ export function OrderWizardLight({
 }: OrderWizardLightProps) {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
-  const dirRef = useRef(1);
+  const [direction, setDirection] = useState(1);
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
   const [previews, setPreviews] = useState<PreviewImage[]>([]);
@@ -139,12 +139,12 @@ export function OrderWizardLight({
 
       if (!ok) return;
     }
-    dirRef.current = 1;
+    setDirection(1);
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   };
 
   const goBack = () => {
-    dirRef.current = -1;
+    setDirection(-1);
     setStepIndex((i) => Math.max(i - 1, 0));
   };
 
@@ -217,9 +217,9 @@ export function OrderWizardLight({
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={stepIndex}
-                initial={{ opacity: 0, x: dirRef.current * 10 }}
+                initial={{ opacity: 0, x: direction * 10 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: dirRef.current * -10 }}
+                exit={{ opacity: 0, x: direction * -10 }}
                 transition={transition.base}
               >
                 {step.key === "category" && (

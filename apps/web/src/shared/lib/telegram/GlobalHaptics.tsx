@@ -2,6 +2,23 @@
 
 import { useEffect } from "react";
 
+type HapticFeedback = {
+  impactOccurred: (style: "light" | "medium" | "heavy" | "rigid" | "soft") => void;
+};
+
+type TelegramWindow = Window &
+  typeof globalThis & {
+    Telegram?: {
+      WebApp?: {
+        HapticFeedback?: HapticFeedback;
+      };
+    };
+  };
+
+function getHapticFeedback(): HapticFeedback | undefined {
+  return (window as unknown as TelegramWindow).Telegram?.WebApp?.HapticFeedback;
+}
+
 /**
  * Глобальный слушатель кликов для добавления виброотклика (Haptic Feedback).
  * Добавляет "Native App" ощущение на все интерактивные элементы.
@@ -11,14 +28,15 @@ export function GlobalHaptics() {
     if (typeof window === "undefined") return;
 
     const handleGlobalClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+      if (!(e.target instanceof Element)) return;
       
       // Поиск ближайшего родителя, который может быть интерактивным
-      const interactive = target.closest('button, a, [role="button"], input[type="submit"], input[type="button"], label');
+      const interactive = e.target.closest('button, a, [role="button"], input[type="submit"], input[type="button"], label');
+      const haptics = getHapticFeedback();
 
-      if (interactive && (window as any).Telegram?.WebApp?.HapticFeedback) {
+      if (interactive && haptics) {
         // Мы используем light impact для обычных кликов
-        (window as any).Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        haptics.impactOccurred('light');
       }
     };
 

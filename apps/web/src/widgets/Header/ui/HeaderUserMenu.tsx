@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,21 +21,30 @@ interface HeaderUserMenuProps {
 }
 
 export function HeaderUserMenu({ user, botId }: HeaderUserMenuProps) {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalRequested, setModalRequested] = useState(false);
+  const [autoOpenDismissed, setAutoOpenDismissed] = useState(false);
   const searchParams = useSearchParams();
+  const shouldAutoOpen = !user && searchParams.get("verified") === "1";
+  const modalOpen = !user && (modalRequested || (shouldAutoOpen && !autoOpenDismissed));
 
-  useEffect(() => {
-    if (!user && searchParams.get("verified") === "1") {
-      setModalOpen(true);
+  const handleModalChange = (open: boolean) => {
+    if (open) {
+      setModalRequested(true);
+      return;
     }
-  }, [user, searchParams]);
+
+    setModalRequested(false);
+    if (shouldAutoOpen) {
+      setAutoOpenDismissed(true);
+    }
+  };
 
   if (!user) {
     return (
       <>
         <button
           type="button"
-          onClick={() => setModalOpen(true)}
+          onClick={() => setModalRequested(true)}
           className="inline-flex h-9 items-center rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
         >
           Войти
@@ -43,7 +52,7 @@ export function HeaderUserMenu({ user, botId }: HeaderUserMenuProps) {
 
         <AuthModal
           open={modalOpen}
-          onOpenChange={setModalOpen}
+          onOpenChange={handleModalChange}
           botId={botId}
         />
       </>

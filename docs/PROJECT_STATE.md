@@ -3,7 +3,17 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-30 (Agent Workflow Sync)
+> 🕓 Последнее обновление: 2026-04-30 (Phase 8 Tests & CI/CD)
+
+---
+
+## Обновление 2026-04-30 (Phase 8 Tests & CI/CD)
+- **Vitest baseline**: `apps/web/vitest.config.ts` расширен под `ts/tsx` тесты и V8 coverage; добавлены unit/integration тесты сервисов `order`, `auth`, `proposal`, `listing` и утилит `auth`, `rate-limit`.
+- **Playwright smoke**: `apps/web/playwright.config.ts` запускает dev-сервер и гоняет Chromium desktop + mobile 375px. E2E покрывают auth, order/listing protection, chat и trust/admin redirects.
+- **CI pipeline**: добавлен `.github/workflows/ci.yml` с jobs `lint`, `typecheck`, `test`, `e2e`; `deploy.yml` теперь блокирует деплой через verify job перед Docker build/push/deploy.
+- **Security fix from tests**: `src/proxy.ts` получил узкий allowlist публичных `/api/v1/auth/login`, `/api/v1/auth/login/telegram`, `/api/v1/auth/register`; остальные `/api/v1` без session/JWT по-прежнему возвращают `401`.
+- **Verification**: `npm run lint`, `npm run typecheck`, `npm run test:run`, `npm run test:e2e --workspace=@uslugi/web`, `npm run build --workspace=@uslugi/web` — PASS. Остались non-blocking warnings: существующие lint warnings, Turbo `safe.directory` в sandbox, Next build warnings по NFT trace/dynamic usage.
+- **Owner decision pending**: новые dev-dependencies для DOM component tests и pre-commit tooling (`@testing-library/*`, `jsdom`, `prettier`, `lint-staged`, `husky`) не добавлялись без отдельного согласования.
 
 ---
 
@@ -49,7 +59,7 @@
 | 1–6 | Фундамент, Auth, БД, UI, Listings | ✅ Завершены |
 | 7 | Чат и уведомления (Redis + Socket.io + Presence) | ✅ Завершена и смержена |
 | 7.1| Security Audit & Remediation (Enterprise Gate) | ✅ Завершена |
-| 8 | Тесты и CI/CD | ❌ Не начата |
+| 8 | Тесты и CI/CD | 🟡 Базовый контур завершён |
 | 9 | React Native (Expo) | ❌ Не начата |
 | 10 | Geo-поиск и карты | ❌ Не начата |
 | 11–12 | Полировка, Монетизация | ❌ Не начата |
@@ -137,9 +147,10 @@ ENCRYPTION_KEY=<64 hex символа>
 
 | Тип | Статус |
 |-----|--------|
-| Unit (Vitest) | ✅ 16/16 — crypto.ts, chat.service.ts |
-| E2E (Playwright) | ✅ 3/3 PASSED — чат, редиректы (UUID/Slug) |
+| Unit (Vitest) | ✅ 49/49 — services + shared lib baseline |
+| E2E (Playwright) | ✅ 26/26 — Chromium desktop + mobile smoke |
 | TypeScript | ✅ 0 ошибок в проекте |
+| Build | ✅ `next build` проходит; есть non-blocking warnings |
 
 ---
 

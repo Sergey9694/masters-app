@@ -17,7 +17,7 @@ export async function expireOldTasks() {
         },
       },
       data: {
-        status: "EXPIRED" as any,
+        status: "EXPIRED",
       },
     });
 

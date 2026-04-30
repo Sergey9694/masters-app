@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "tsx server.ts",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "claude": "powershell -ExecutionPolicy Bypass -File ./scripts/run-claude.ps1",
     "test": "vitest",
     "test:run": "vitest run",

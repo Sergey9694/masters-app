@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: ["master", "refactor/uslugi-ryadom"]
+  pull_request:
+    branches: ["master", "refactor/uslugi-ryadom"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+  NEXT_TELEMETRY_DISABLED: "1"
+  AUTH_SECRET: "ci_auth_secret_32_chars_minimum_value"
+  AUTH_URL: "http://127.0.0.1:3000"
+  AUTH_TRUST_HOST: "true"
+  DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:5432/uslugi_ci?schema=public"
+  REDIS_URL: "redis://127.0.0.1:6379"
+  ENCRYPTION_KEY: "a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
+  NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3000"
+  NEXT_PUBLIC_BOT_NAME: "ci_bot"
+  NEXT_PUBLIC_BOT_ID: "123456789"
+  TELEGRAM_BOT_TOKEN: "ci:telegram-token"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/web/prisma/schema.prisma
+      - run: npm run lint
+
+  typecheck:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/web/prisma/schema.prisma
+      - run: npm run typecheck
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/web/prisma/schema.prisma
+      - run: npm run test:run
+
+  e2e:
+    name: E2E Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/web/prisma/schema.prisma
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e --workspace=@uslugi/web
+        env:
+          BASE_URL: "http://127.0.0.1:3000"
+          PLAYWRIGHT_WEB_SERVER_COMMAND: "npm run dev"
+      - uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 14

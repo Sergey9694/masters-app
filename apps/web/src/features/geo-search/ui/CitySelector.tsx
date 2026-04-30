@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MapPin, ChevronDown, Loader2, Navigation, Search } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useLocation } from "@/shared/lib/hooks/use-location";
@@ -21,15 +21,45 @@ export function CitySelector() {
   const [cities, setCities] = useState<City[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  
+
   const { detect, isLocating } = useLocation();
+
+  const selectCity = useCallback((city: City, shouldToast = true) => {
+    setCurrentCity(city);
+    setCookie("cityId", city.id, 30); // 30 дней
+    setIsOpen(false);
+
+    if (shouldToast) {
+      sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
+    }
+
+    window.location.reload();
+  }, []);
+
+  const handleAutoDetect = useCallback(async (silent = false) => {
+    const result = await detect();
+
+    // Пытаемся определить город через наш экшен (который теперь использует DaData)
+    const city = await detectCityAction(result.coords?.lat, result.coords?.lng);
+
+    if (city) {
+      if (!silent) {
+        sessionStorage.setItem("geo_toast_success", `Город определен: ${city.name}`);
+      }
+      selectCity(city, false);
+    } else if (!silent) {
+      toast.error("Не удалось точно определить город в нашей базе");
+    }
+
+    setIsInitialLoading(false);
+  }, [detect, selectCity]);
 
   // Загрузка города из URL, Cookies или автоопределение
   useEffect(() => {
     // 1. Приоритет URL
     const params = new URLSearchParams(window.location.search);
     const urlCityId = params.get("cityId");
-    
+
     // 2. Фолбек на Cookies
     const savedCityId = getCookie("cityId");
 
@@ -54,7 +84,7 @@ export function CitySelector() {
     };
 
     init();
-  }, []);
+  }, [handleAutoDetect]);
 
   // Загрузка списка городов при открытии
   useEffect(() => {
@@ -75,36 +105,6 @@ export function CitySelector() {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
-
-  const handleAutoDetect = async (silent = false) => {
-    const result = await detect();
-    
-    // Пытаемся определить город через наш экшен (который теперь использует DaData)
-    const city = await detectCityAction(result.coords?.lat, result.coords?.lng);
-    
-    if (city) {
-      if (!silent) {
-        sessionStorage.setItem("geo_toast_success", `Город определен: ${city.name}`);
-      }
-      selectCity(city, false); 
-    } else if (!silent) {
-      toast.error("Не удалось точно определить город в нашей базе");
-    }
-    
-    setIsInitialLoading(false);
-  };
-
-  const selectCity = (city: City, shouldToast = true) => {
-    setCurrentCity(city);
-    setCookie("cityId", city.id, 30); // 30 дней
-    setIsOpen(false);
-    
-    if (shouldToast) {
-      sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
-    }
-    
-    window.location.reload();
-  };
 
   const filteredCities = cities.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase())

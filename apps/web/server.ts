@@ -1,12 +1,33 @@
 import "dotenv/config";
 import { AsyncLocalStorage } from "node:async_hooks";
-import { createServer, request } from "node:http";
+import { createServer, request, type IncomingMessage, type ServerResponse } from "node:http";
+import type { Duplex } from "node:stream";
 import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
+import type { ClientToServerEvents, ServerToClientEvents } from "./src/shared/lib/socket-events";
+
+type HttpHandler = (req: IncomingMessage, res: ServerResponse) => void | Promise<void>;
+type UpgradeHandler = (req: IncomingMessage, socket: Duplex, head: Buffer) => void;
+type NextServer = {
+  getRequestHandler: () => HttpHandler;
+  getUpgradeHandler: () => UpgradeHandler;
+  prepare: () => Promise<void>;
+};
+
+interface SocketBridgePayload {
+  room?: string;
+  event: keyof ServerToClientEvents;
+  data: unknown;
+}
+
+const globals = globalThis as typeof globalThis & {
+  AsyncLocalStorage?: typeof AsyncLocalStorage;
+  _io?: Server<ClientToServerEvents, ServerToClientEvents>;
+};
 
 // --- POLYFILL START ---
-if (typeof (globalThis as any).AsyncLocalStorage === "undefined") {
-  (globalThis as any).AsyncLocalStorage = AsyncLocalStorage;
+if (typeof globals.AsyncLocalStorage === "undefined") {
+  globals.AsyncLocalStorage = AsyncLocalStorage;
 }
 // --- POLYFILL END ---
 
@@ -22,13 +43,13 @@ async function startServer() {
   const PUBLIC_PORT = parseInt(process.env.PORT ?? "3000", 10);
   const NEXT_PORT = PUBLIC_PORT + 1;
 
-  let handler: any;
-  let nextUpgradeHandler: any;
+  let handler: HttpHandler | undefined;
+  let nextUpgradeHandler: UpgradeHandler | undefined;
 
   if (dev) {
     console.log(`[ANTIGRAVITY_STABLE] Running in DEVELOPMENT mode. Preparing Next.js...`);
     const { default: next } = await import("next");
-    const app = next({ dev, hostname, port: PUBLIC_PORT });
+    const app = next({ dev, hostname, port: PUBLIC_PORT }) as NextServer;
     handler = app.getRequestHandler();
     await app.prepare();
     nextUpgradeHandler = app.getUpgradeHandler();
@@ -38,7 +59,7 @@ async function startServer() {
   }
 
   const httpServer = createServer((req, res) => {
-    if (dev) {
+    if (dev && handler) {
       return handler(req, res);
     }
 
@@ -81,7 +102,7 @@ async function startServer() {
     transports: ["websocket", "polling"]
   });
 
-  (global as any)._io = io;
+  globals._io = io;
   
   // Redis Adapter & Bridge
   try {
@@ -96,7 +117,7 @@ async function startServer() {
     bridgeSub.on("message", (channel, message) => {
       if (channel === "socket-bridge") {
         try {
-          const { room, event, data } = JSON.parse(message);
+          const { room, event, data } = JSON.parse(message) as SocketBridgePayload;
           console.log(`[Redis Bridge] [PID:${process.pid}] Relaying ${event} to room ${room || 'global'}. Payload size: ${message.length}`);
           if (room) {
             const count = io.sockets.adapter.rooms.get(room)?.size ?? 0;
@@ -105,12 +126,12 @@ async function startServer() {
           } else {
             io.emit(event, data);
           }
-        } catch (e) {
-          console.error("[Redis Bridge] Error:", e);
+        } catch (error) {
+          console.error("[Redis Bridge] Error:", error);
         }
       }
     });
-  } catch (e) {
+  } catch {
     console.warn("⚠ [ANTIGRAVITY_STABLE] Redis not available, running without adapter");
   }
 
@@ -118,7 +139,7 @@ async function startServer() {
   if (dev) {
     httpServer.on("upgrade", (req, socket, head) => {
       if (req.url?.startsWith("/socket.io")) return;
-      nextUpgradeHandler(req, socket, head);
+      nextUpgradeHandler?.(req, socket, head);
     });
   }
 

@@ -1,19 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/**
- * Playwright config для E2E тестов apps/web.
- * Базовый URL указывает на локальный Next.js dev-сервер.
- * CI/CD: запускать только после `npm run build && npm run start`.
- */
+const baseURL = process.env.BASE_URL ?? "http://127.0.0.1:3000";
+const webServerCommand = process.env.PLAYWRIGHT_WEB_SERVER_COMMAND ?? "npm run dev";
+
 export default defineConfig({
   testDir: "./e2e",
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: "list",
+  reporter: process.env.CI
+    ? [["list"], ["html", { open: "never" }]]
+    : "list",
   use: {
-    baseURL: process.env.BASE_URL ?? "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [
@@ -21,5 +21,20 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "mobile-chrome",
+      use: {
+        ...devices["Pixel 5"],
+        viewport: { width: 375, height: 812 },
+      },
+    },
   ],
+  webServer: {
+    command: webServerCommand,
+    url: baseURL,
+    reuseExistingServer: !process.env.CI,
+    timeout: 120_000,
+    stdout: "pipe",
+    stderr: "pipe",
+  },
 });

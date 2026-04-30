@@ -18,7 +18,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Удаляем чувствительные данные по Правилу 5
-    const { passwordHash, ...safeUser } = user as any;
+    const safeUser = { ...user } as Omit<typeof user, "passwordHash"> & {
+      passwordHash?: unknown;
+    };
+    delete safeUser.passwordHash;
 
     return apiSuccess(safeUser);
   } catch (error) {

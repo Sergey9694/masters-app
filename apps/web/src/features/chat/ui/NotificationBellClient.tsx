@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useSocket } from "@/shared/hooks/use-socket";
@@ -16,12 +16,7 @@ export function NotificationBellClient({ initialUnread, userId }: Props) {
   const { socket } = useSocket(userId);
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    if (pathname === "/notifications") {
-      setCount(0);
-    }
-  }, [pathname]);
+  const displayCount = pathname === "/notifications" ? 0 : count;
 
   useEffect(() => {
     if (!socket) return;
@@ -50,14 +45,14 @@ export function NotificationBellClient({ initialUnread, userId }: Props) {
       aria-label="Уведомления"
     >
       <Bell className="size-3.5" />
-      {count > 0 && (
+      {displayCount > 0 && (
         <span
           className={cn(
             "absolute -top-0.5 -right-0.5 flex size-3.5 items-center justify-center",
             "rounded-full bg-destructive text-[8px] font-bold text-destructive-foreground"
           )}
         >
-          {count > 9 ? "9+" : count}
+          {displayCount > 9 ? "9+" : displayCount}
         </span>
       )}
     </button>

@@ -12,6 +12,46 @@ interface MainButtonOptions {
   onClick?: () => void;
 }
 
+type MainButtonParams = {
+  text: string;
+  color: string;
+  text_color: string;
+  is_visible: boolean;
+  is_active: boolean;
+};
+
+type TelegramMainButton = {
+  setParams: (params: MainButtonParams) => void;
+  showProgress: (leaveActive?: boolean) => void;
+  hideProgress: () => void;
+  onClick: (handler: () => void) => void;
+  offClick: (handler: () => void) => void;
+  show: () => void;
+  hide: () => void;
+  enable: () => void;
+  disable: () => void;
+};
+
+type TelegramWebApp = {
+  MainButton: TelegramMainButton;
+  themeParams: {
+    button_color?: string;
+    button_text_color?: string;
+  };
+};
+
+type TelegramWindow = Window &
+  typeof globalThis & {
+    Telegram?: {
+      WebApp?: TelegramWebApp;
+    };
+  };
+
+function getTelegramWebApp(): TelegramWebApp | undefined {
+  if (typeof window === 'undefined') return undefined;
+  return (window as unknown as TelegramWindow).Telegram?.WebApp;
+}
+
 /**
  * Хук для управления главной кнопкой Telegram (MainButton).
  * Позволяет динамически менять состояние кнопки из любого компонента.
@@ -19,9 +59,9 @@ interface MainButtonOptions {
  */
 export function useMainButton(options: MainButtonOptions, deps: unknown[] = []) {
   useEffect(() => {
-    if (typeof window === 'undefined' || !(window as any).Telegram?.WebApp) return;
+    const tg = getTelegramWebApp();
+    if (!tg) return;
 
-    const tg = (window as any).Telegram.WebApp;
     const mb = tg.MainButton;
 
     // Установка параметров
@@ -64,13 +104,14 @@ export function useMainButton(options: MainButtonOptions, deps: unknown[] = []) 
     options.isVisible, 
     options.isActive, 
     options.isProgressVisible, 
+    options.onClick,
     ...deps
   ]);
 
   return {
-    show: () => (window as any).Telegram?.WebApp?.MainButton.show(),
-    hide: () => (window as any).Telegram?.WebApp?.MainButton.hide(),
-    enable: () => (window as any).Telegram?.WebApp?.MainButton.enable(),
-    disable: () => (window as any).Telegram?.WebApp?.MainButton.disable(),
+    show: () => getTelegramWebApp()?.MainButton.show(),
+    hide: () => getTelegramWebApp()?.MainButton.hide(),
+    enable: () => getTelegramWebApp()?.MainButton.enable(),
+    disable: () => getTelegramWebApp()?.MainButton.disable(),
   };
 }

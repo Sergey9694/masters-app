@@ -1,6 +1,7 @@
 "use client";
 
 import * as Icons from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/shared/lib/cn";
 import { staggerContainer, staggerItem } from "@/shared/lib/motion";
@@ -12,6 +13,8 @@ interface Category {
   name: string;
   icon: string | null;
 }
+
+const categoryIcons = Icons as unknown as Record<string, LucideIcon | undefined>;
 
 export function CategoryGrid({ 
   initialCategories, 
@@ -49,7 +52,7 @@ export function CategoryGrid({
         className="flex items-center gap-3 overflow-x-auto no-scrollbar px-4 -mx-4 sm:px-6 sm:-mx-6 lg:px-8 lg:-mx-8 py-4 scroll-smooth"
       >
         {categoriesToRender.map((cat) => {
-           const Icon = (Icons as any)[cat.icon || "Hammer"] || Icons.Hammer;
+           const Icon = categoryIcons[cat.icon || "Hammer"] || Icons.Hammer;
            const isActive = activeCategoryId === cat.id || (cat.id === 'all' && !activeCategoryId);
            
            return (
