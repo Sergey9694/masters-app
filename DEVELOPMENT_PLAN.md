@@ -2925,6 +2925,44 @@ SSR:            Leaflet только через dynamic import с ssr: false
 
 ---
 
+## Дополнение после фаз — технический долг Фазы 8 / CI/CD / Security
+
+> Добавлено 2026-04-30 после внедрения базового контура тестов и CI/CD. Это не блокирует следующие фазы, но должно быть разобрано до публичного запуска и перед усилением прод-нагрузки.
+
+```
+[ ] A.1  DOM/component tests:
+         - согласовать dev-dependencies @testing-library/react, @testing-library/user-event,
+           @testing-library/jest-dom и jsdom;
+         - после согласования покрыть интерактивные клиентские компоненты без тяжёлого E2E.
+
+[ ] A.2  Formatting и pre-commit:
+         - принять отдельное решение по prettier, lint-staged и husky;
+         - если внедряем, закрепить форматирование в CI и не смешивать с feature-правками.
+
+[ ] A.3  Deploy SSH hardening:
+         - убрать use_insecure_cipher: true из appleboy ssh/scp actions после обновления SSH-алгоритмов на VPS;
+         - до этого оставить как OWNER_DECISION для совместимости текущего прод-сервера.
+
+[ ] A.4  CI security:
+         - добавить gitleaks или truffleHog для secret scanning;
+         - включить Dependabot / Renovate и регулярный npm audit;
+         - отдельно настроить правила реакции на HIGH/CRITICAL findings.
+
+[ ] A.5  Docker supply chain:
+         - держать docker/login-action, docker/setup-buildx-action и docker/build-push-action на актуальных major-версиях;
+         - после стабилизации добавить SBOM/provenance и рассмотреть cosign-подпись образов.
+
+[ ] A.6  Deploy reliability:
+         - держать cache-to type=gha non-blocking, чтобы падение cache export не блокировало прод-деплой;
+         - добавить post-deploy healthcheck /api/health и, позже, staging/canary перед production rollout.
+
+[ ] A.7  CI services for integration tests:
+         - когда появятся тесты с реальной БД/Redis, добавить PostgreSQL и Redis services в GitHub Actions;
+         - миграции и seed для CI запускать явно, без доступа к production secrets.
+```
+
+---
+
 ## KPI и метрики запуска
 
 > Раздел добавлен 2026-04-17. Цель: до начала Фазы 10 определить, что считаем успехом, и подключить трекинг на старте Фазы 11.

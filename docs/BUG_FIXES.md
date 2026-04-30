@@ -4,6 +4,36 @@
 
 ---
 
+## [2026-04-30] CI/CD verify: `prisma: not found`
+
+**Симптом:** deploy verify job падал на шаге `npx prisma generate --schema=apps/web/prisma/schema.prisma` с ошибкой `sh: 1: prisma: not found`.
+
+**Причина:** Prisma CLI объявлен в workspace `@uslugi/web`, а не в root `package.json`. В GitHub Actions root-вызов `npx prisma` не гарантирует доступ к бинарю из workspace.
+
+**Решение:**
+- `npm ci` в verify/CI jobs заменён на `npm ci --include=dev`, чтобы dev CLI гарантированно устанавливались в CI.
+- В `deploy.yml` и `ci.yml` Prisma generation переведён на `npm exec --workspace=@uslugi/web -- prisma generate --schema=prisma/schema.prisma`.
+- E2E-шаг `npx playwright install --with-deps chromium` также переведён на workspace-вызов, потому что Playwright CLI тоже установлен в `@uslugi/web`.
+
+**Security verdict:** PASS_WITH_NOTES — dependencies и secrets не менялись, runtime-код не затронут.
+
+---
+
+## [2026-04-30] Deploy CI/CD: падение Docker Buildx cache export
+
+**Симптом:** production deploy мог падать на этапе `build-and-push` после включения verify gate и Docker Buildx cache `type=gha`.
+
+**Причина:** workflow ограничивал `GITHUB_TOKEN` до `contents: read`, а GitHub Actions cache backend для Buildx использует Actions API. При ошибке cache export сборка падала, хотя сам cache не является обязательным артефактом деплоя.
+
+**Решение:**
+- Для job `build-and-push` добавлены минимальные права `contents: read` и `actions: write`.
+- Docker Actions обновлены до актуальных major-версий: `docker/login-action@v4`, `docker/setup-buildx-action@v4`, `docker/build-push-action@v7`.
+- `cache-to: type=gha` переведён в non-blocking режим через `ignore-error=true`, чтобы сбой cache export не блокировал production rollout.
+
+**Security verdict:** PASS_WITH_NOTES — secrets и runtime-код не менялись; `use_insecure_cipher: true` остаётся отдельным DevOps-решением по совместимости VPS.
+
+---
+
 ## [2026-04-28] Стабилизация Фазы 7 (Чат и Real-time)
 
 ### 1. Чат не работал на VPS (Dockerfile & Startup)
