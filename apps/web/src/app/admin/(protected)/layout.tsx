@@ -2,7 +2,7 @@ import { getSession } from "@/shared/lib/auth";
 import { redirect } from "next/navigation";
 import { db } from "@/shared/lib/db";
 import Link from "next/link";
-import { LayoutDashboard, Users, Award, ClipboardList, MessageSquare, BarChart3, ArrowLeft, LogOut, Megaphone, MessagesSquare } from "lucide-react";
+import { LayoutDashboard, Users, Award, ClipboardList, MessageSquare, BarChart3, ArrowLeft, LogOut, Megaphone, MessagesSquare, ShieldAlert } from "lucide-react";
 import { logoutAction } from "@/features/auth/model/actions";
 import { Button } from "@/shared/ui/button";
 
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/admin/listings", icon: Megaphone, label: "Объявления" },
   { href: "/admin/reviews", icon: MessageSquare, label: "Отзывы" },
   { href: "/admin/chats", icon: MessagesSquare, label: "Чаты" },
+  { href: "/admin/reports", icon: ShieldAlert, label: "Жалобы" },
   { href: "/admin/metrics", icon: BarChart3, label: "Метрики" },
 ];
 

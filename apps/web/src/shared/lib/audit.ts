@@ -14,7 +14,11 @@ export type AuditAction =
   | "DELETE_USER"
   | "UPDATE_USER_ROLE"
   | "VERIFY_PROVIDER"
-  | "REJECT_PROVIDER";
+  | "REJECT_PROVIDER"
+  | "BLOCK_USER"
+  | "UNBLOCK_USER"
+  | "CREATE_REPORT"
+  | "RESOLVE_REPORT";
 
 interface LogParams {
   userId: string | null;

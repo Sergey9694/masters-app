@@ -14,6 +14,12 @@ export interface MessageDTO {
   deletedBy?: string | null;
 }
 
+export interface BlockStateDTO {
+  blockedByMe: boolean;
+  blockedMe: boolean;
+  isBlocked: boolean;
+}
+
 export interface ConversationPreview {
   id: string;
   orderId: string | null;
@@ -28,5 +34,6 @@ export interface ConversationPreview {
     lastSeenAt?: string | null;
     isOnline?: boolean;
   };
+  blockState: BlockStateDTO;
   updatedAt: string; // ISO string
 }

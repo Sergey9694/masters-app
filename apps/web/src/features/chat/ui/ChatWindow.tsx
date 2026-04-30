@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSocket } from "@/shared/hooks/use-socket";
 import { sendMessageAction, getMessagesAction, markAsReadAction } from "@/features/chat";
-import type { MessageDTO } from "@uslugi/shared-types";
+import type { ConversationPreview, MessageDTO } from "@uslugi/shared-types";
 import { MessageBubble } from "./MessageBubble";
 import { DateSeparator } from "./DateSeparator";
 import { TypingIndicator } from "./TypingIndicator";
 import { MessageInput } from "./MessageInput";
 import { ConversationHeader } from "./ConversationHeader";
+import { BlockedState } from "@/features/trust/ui/BlockedState";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
@@ -35,9 +36,12 @@ interface Props {
     listingSlug?: string | null;
   };
   initialMessages: MessageDTO[];
+  initialBlockState: ConversationPreview["blockState"];
   showBack?: boolean;
 }
 
+type TypingMessage = MessageDTO & { isTyping: true };
+type DisplayMessage = MessageDTO | TypingMessage;
 
 export function ChatWindow({
   conversationId,
@@ -45,6 +49,7 @@ export function ChatWindow({
   otherUser,
   context,
   initialMessages,
+  initialBlockState,
   showBack,
 }: Props) {
   const router = useRouter();
@@ -53,14 +58,19 @@ export function ChatWindow({
   const [typingUser, setTypingUser] = useState<string | null>(null);
   const [onlineStatus, setOnlineStatus] = useState<"online" | "offline">(otherUser.status || "offline");
   const [lastSeenAt, setLastSeenAt] = useState<string | null>(otherUser.lastSeenAt || null);
+  const [blockState, setBlockState] = useState(initialBlockState);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(initialMessages.length === 30);
   const bottomRef = useRef<HTMLDivElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
   const virtuosoRef = useRef<VirtuosoHandle>(null);
 
+  useEffect(() => {
+    setBlockState(initialBlockState);
+  }, [initialBlockState]);
+
   // Автоматический скролл вниз при изменении количества сообщений или статуса печати
-  const displayMessages = typingUser 
+  const displayMessages: DisplayMessage[] = typingUser 
     ? [...messages, { 
         id: 'typing-indicator', 
         isTyping: true, 
@@ -69,7 +79,7 @@ export function ChatWindow({
         createdAt: new Date().toISOString(),
         attachments: [],
         sender: { id: 'typing', firstName: typingUser, avatar: null }
-      } as any] 
+      }] 
     : messages;
 
   useEffect(() => {
@@ -180,11 +190,39 @@ export function ChatWindow({
       );
     };
 
+    const onUserBlocked = ({
+      blockerId,
+      blockedId,
+      conversationId: blockedConversationId,
+    }: {
+      blockerId: string;
+      blockedId: string;
+      conversationId?: string;
+    }) => {
+      const affectsCurrentUser = blockerId === currentUserId || blockedId === currentUserId;
+      const affectsOtherUser = blockerId === otherUser.id || blockedId === otherUser.id;
+      const affectsConversation = !blockedConversationId || blockedConversationId === conversationId;
+      if (!affectsCurrentUser || !affectsOtherUser || !affectsConversation) return;
+
+      setBlockState({
+        blockedByMe: blockerId === currentUserId,
+        blockedMe: blockerId === otherUser.id,
+        isBlocked: true,
+      });
+      router.refresh();
+    };
+
+    const onConversationUpdate = ({ conversationId: updatedConversationId }: { conversationId: string }) => {
+      if (updatedConversationId === conversationId) router.refresh();
+    };
+
     socket.on("new:message", onMessage);
     socket.on("typing:start", onTypingStart);
     socket.on("typing:stop", onTypingStop);
     socket.on("message:deleted", onDeleted);
     socket.on("user:status", onUserStatus);
+    socket.on("user:blocked", onUserBlocked);
+    socket.on("conversation:update", onConversationUpdate);
 
     return () => {
       socket.off("new:message", onMessage);
@@ -192,8 +230,10 @@ export function ChatWindow({
       socket.off("typing:stop", onTypingStop);
       socket.off("message:deleted", onDeleted);
       socket.off("user:status", onUserStatus);
+      socket.off("user:blocked", onUserBlocked);
+      socket.off("conversation:update", onConversationUpdate);
     };
-  }, [socket, conversationId, currentUserId, otherUser.id]);
+  }, [socket, conversationId, currentUserId, otherUser.id, router]);
 
 
   const loadMore = useCallback(async () => {
@@ -253,7 +293,7 @@ export function ChatWindow({
       });
     } else {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
-      toast.error("Не удалось отправить сообщение");
+      toast.error(result?.serverError || "Не удалось отправить сообщение");
     }
   };
 
@@ -267,6 +307,9 @@ export function ChatWindow({
         showBack={showBack}
         status={onlineStatus}
         lastSeenAt={lastSeenAt}
+        conversationId={conversationId}
+        blockState={blockState}
+        onBlockStateChange={setBlockState}
       />
 
       <div className="flex-1 overflow-hidden relative">
@@ -294,7 +337,7 @@ export function ChatWindow({
             )
           }}
           itemContent={(index, msg) => {
-            if (msg.isTyping) {
+            if ("isTyping" in msg) {
               return (
                 <motion.div 
                   initial={{ opacity: 0, y: 5 }}
@@ -316,6 +359,8 @@ export function ChatWindow({
                 <MessageBubble
                   message={msg}
                   isOwn={msg.senderId === currentUserId}
+                  conversationId={conversationId}
+                  orderId={context.orderId}
                 />
               </div>
             );
@@ -323,17 +368,29 @@ export function ChatWindow({
         />
       </div>
 
-      <div className="p-4 border-t border-border/40 bg-surface/50 backdrop-blur-md">
-        <MessageInput
+      {blockState.isBlocked ? (
+        <BlockedState
           conversationId={conversationId}
-          userId={currentUserId}
-          onSend={handleSend}
-          onFocus={() => {
-            markAsReadAction({ conversationId });
+          blockedUserId={otherUser.id}
+          blockedByMe={blockState.blockedByMe}
+          onUnblocked={() => {
+            setBlockState({ blockedByMe: false, blockedMe: false, isBlocked: false });
             router.refresh();
           }}
         />
-      </div>
+      ) : (
+        <div className="p-4 border-t border-border/40 bg-surface/50 backdrop-blur-md">
+          <MessageInput
+            conversationId={conversationId}
+            userId={currentUserId}
+            onSend={handleSend}
+            onFocus={() => {
+              markAsReadAction({ conversationId });
+              router.refresh();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

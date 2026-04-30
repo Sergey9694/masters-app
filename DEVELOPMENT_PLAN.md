@@ -2420,7 +2420,7 @@ SSR:            Leaflet только через dynamic import с ssr: false
 ### 11.5.4 — Trust/Safety: жалобы, блокировки и модерация чата
 
 ```
-[ ] 11.5.4.1  Prisma: модели Trust/Safety:
+[x] 11.5.4.1  Prisma: модели Trust/Safety:
               - UserBlock { blockerId, blockedId, conversationId?, reason?, createdAt }
                 @@unique([blockerId, blockedId]), индексы по blockerId/blockedId/conversationId
               - Report { id, reporterId, targetType, targetId, targetUserId?, reason, description,
@@ -2430,24 +2430,24 @@ SSR:            Leaflet только через dynamic import с ssr: false
               - enum ReportReason { SPAM, HARASSMENT, FRAUD, INAPPROPRIATE_CONTENT, CONTACT_EXCHANGE, SAFETY_THREAT, OTHER }
               - В User добавить relation-поля для Blocker/Blocked, Reporter/ReportTargetUser/ReportResolver
               
-[ ] 11.5.4.2  Service layer: apps/web/src/services/trust.service.ts
+[x] 11.5.4.2  Service layer: apps/web/src/services/trust.service.ts
               - blockUser / unblockUser / getBlockState / assertCanMessage
               - createReport с evidence snapshot последних сообщений без plaintext
               - listReports / resolveReport для admin-only модерации
               
-[ ] 11.5.4.3  Интеграция с чатом:
+[x] 11.5.4.3  Интеграция с чатом:
               - chatService.startConversation и sendMessage проверяют UserBlock
               - ConversationPreview или отдельный loader возвращает blockState
               - Socket event user:blocked содержит { blockerId, blockedId, conversationId? }
               - BlockedState заменяет MessageInput в заблокированном диалоге
               
-[ ] 11.5.4.4  UI:
+[x] 11.5.4.4  UI:
               - features/trust/ui/ReportModal.tsx
               - features/trust/ui/BlockUserButton.tsx
               - actions в features/trust/api/actions.ts, не в features/chat/api
               - пункты «Пожаловаться» и «Заблокировать» в ConversationHeader
 
-[ ] 11.5.4.5  Admin-страница /admin/reports — очередь жалоб с фильтрами
+[x] 11.5.4.5  Admin-страница /admin/reports — очередь жалоб с фильтрами
               - Фильтры по статусу, причине, targetType
               - Просмотр evidence и быстрые переходы к пользователю/чату/заказу/объявлению
               - Решения модератора пишутся в AuditLog

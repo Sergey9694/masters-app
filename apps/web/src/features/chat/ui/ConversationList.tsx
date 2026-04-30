@@ -62,11 +62,13 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
     socket.on("new:message", onMessage);
     socket.on("user:status", onUserStatus);
     socket.on("conversation:update", () => router.refresh());
+    socket.on("user:blocked", () => router.refresh());
 
     return () => { 
       socket.off("new:message", onMessage); 
       socket.off("user:status", onUserStatus);
       socket.off("conversation:update");
+      socket.off("user:blocked");
     };
   }, [socket, router, activeId]);
 
@@ -128,6 +130,11 @@ export function ConversationList({ conversations, activeId, currentUserId }: Pro
                 )}>
                   {conv.otherUser.firstName} {conv.otherUser.lastName || ""}
                 </span>
+                {conv.blockState.isBlocked && (
+                  <span className="rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-rose-600">
+                    блок
+                  </span>
+                )}
                 {conv.lastMessage && (
                   <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">
                     {formatDate(conv.lastMessage.createdAt)}

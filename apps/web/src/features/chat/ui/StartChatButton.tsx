@@ -3,6 +3,7 @@
 import { useAction } from "next-safe-action/hooks";
 import { useRouter } from "next/navigation";
 import { MessageCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { startConversationAction } from "../api/start-conversation";
 
@@ -19,6 +20,7 @@ export function StartChatButton({ otherUserId, orderId, listingId, className }: 
     onSuccess: ({ data }) => {
       if (data?.conversationId) router.push(`/chat/${data.conversationId}`);
     },
+    onError: ({ error }) => toast.error(error.serverError || "Не удалось открыть чат"),
   });
 
   return (

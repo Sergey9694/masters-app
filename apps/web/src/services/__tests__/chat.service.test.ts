@@ -4,7 +4,7 @@ process.env.ENCRYPTION_KEY = "a1b2c3d4".repeat(8);
 
 // Mock Prisma
 const mockDb = {
-  conversation: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
+  conversation: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
   message: {
     create: vi.fn(),
     findMany: vi.fn(),
@@ -13,6 +13,9 @@ const mockDb = {
     count: vi.fn(),
   },
   user: { findUnique: vi.fn(), update: vi.fn() },
+  userBlock: { findMany: vi.fn() },
+  report: { create: vi.fn(), update: vi.fn(), findMany: vi.fn(), count: vi.fn() },
+  auditLog: { create: vi.fn() },
   conversationParticipant: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
@@ -30,8 +33,13 @@ beforeEach(() => { vi.clearAllMocks(); });
 
 describe("chatService.sendMessage", () => {
   it("encrypts text before saving to DB", async () => {
-    mockDb.conversationParticipant.findFirst.mockResolvedValue({ userId: "user1" });
-    mockDb.user.findUnique.mockResolvedValue({ chatBlockedAt: null });
+    mockDb.conversation.findUnique.mockResolvedValue({
+      participants: [
+        { userId: "user1", user: { chatBlockedAt: null } },
+        { userId: "user2", user: { chatBlockedAt: null } },
+      ],
+    });
+    mockDb.userBlock.findMany.mockResolvedValue([]);
     mockDb.message.create.mockImplementation(({ data }: { data: Record<string, unknown> }) => ({
       id: "msg1",
       ...data,
@@ -50,7 +58,12 @@ describe("chatService.sendMessage", () => {
   });
 
   it("throws if user is blocked", async () => {
-    mockDb.user.findUnique.mockResolvedValue({ chatBlockedAt: new Date() });
+    mockDb.conversation.findUnique.mockResolvedValue({
+      participants: [
+        { userId: "blocked-user", user: { chatBlockedAt: new Date() } },
+        { userId: "user2", user: { chatBlockedAt: null } },
+      ],
+    });
 
     await expect(
       chatService.sendMessage("conv1", "blocked-user", "текст")
@@ -104,6 +117,7 @@ describe("chatService.deleteMessage", () => {
 describe("chatService.startConversation", () => {
   it("returns existing conversation if found (no duplicates)", async () => {
     const existing = { id: "conv-existing" };
+    mockDb.userBlock.findMany.mockResolvedValue([]);
     mockDb.conversation.findFirst.mockResolvedValue(existing);
 
     const result = await chatService.startConversation("u1", "u2", { orderId: "ord1" });

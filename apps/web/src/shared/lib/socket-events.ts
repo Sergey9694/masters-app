@@ -18,7 +18,7 @@ export interface ServerToClientEvents {
   "typing:start": (data: { conversationId: string; userId: string; userName: string }) => void;
   "typing:stop": (data: { conversationId: string; userId: string }) => void;
   "message:deleted": (data: { conversationId: string; messageId: string }) => void;
-  "user:blocked": () => void;
+  "user:blocked": (data: { blockerId: string; blockedId: string; conversationId?: string }) => void;
   "conversation:update": (data: { conversationId: string }) => void;
   "user:status": (data: { userId: string; status: "online" | "offline"; lastSeenAt: string }) => void;
 }

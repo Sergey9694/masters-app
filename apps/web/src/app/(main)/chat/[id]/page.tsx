@@ -53,6 +53,7 @@ export default async function ConversationPage({
   if (!otherParticipant) notFound();
 
   const isOnline = await isUserOnline(otherParticipant.userId);
+  const activeConversation = conversations.find((item) => item.id === id);
 
   return (
     <div className="flex w-full h-[calc(100vh-180px)] lg:h-[calc(100vh-150px)] overflow-hidden bg-background/30 rounded-2xl border border-border/50 shadow-xl">
@@ -85,6 +86,11 @@ export default async function ConversationPage({
             citySlug: conversation.order?.city?.slug || null,
             listingId: conversation.listingId,
             listingSlug: conversation.listing?.slug || null,
+          }}
+          initialBlockState={activeConversation?.blockState ?? {
+            blockedByMe: false,
+            blockedMe: false,
+            isBlocked: false,
           }}
           initialMessages={messages}
           showBack={true}

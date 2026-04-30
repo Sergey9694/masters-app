@@ -3,7 +3,21 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-29 (Multi-agent System Deep Upgrade)
+> 🕓 Последнее обновление: 2026-04-29 (Trust/Safety MVP)
+
+---
+
+## Обновление 2026-04-29 (Trust/Safety MVP)
+- **Prisma Trust Layer**: Добавлена миграция `20260429181417_add_trust_safety` с `UserBlock`, `Report`, `ReportTargetType`, `ReportReason`, `ReportStatus` и связями в `User`.
+- **Backend Enforcement**: Создан `apps/web/src/services/trust.service.ts`; `chatService.startConversation` и `chatService.sendMessage` теперь проверяют личные блокировки на сервере.
+- **Reports Evidence**: `trust-evidence.ts` собирает snapshot последних сообщений без plaintext: только encrypted text, SHA-256 hash, метаданные, attachments и deletedAt.
+- **User Actions & UI**: Добавлен feature-модуль `features/trust`: блокировка/разблокировка, жалоба на пользователя/сообщение, `BlockedState` в чате, socket payload `user:blocked`.
+- **Admin Queue**: Создана `/admin/reports` с фильтрами, evidence summary и действиями `REVIEWED` / `DISMISSED` / `ACTIONED`, решения пишутся в `AuditLog`.
+- **Verification**:
+  - `npx tsc --noEmit` — PASS.
+  - `npm run test -- --run` — PASS, 4 файла / 19 тестов.
+  - HTTP-smoke `/admin/reports` без auth — PASS, `307 -> /auth/login?callbackUrl=%2Fadmin%2Freports`.
+  - Playwright Chromium не запускался: escalation отклонен авто-ревью из-за лимита доступа.
 
 ---
 

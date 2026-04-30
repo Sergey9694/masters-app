@@ -2,6 +2,7 @@ import { db } from "@/shared/lib/db";
 import { encryptText, decryptText } from "@/shared/lib/crypto";
 import { MessageDTO, ConversationPreview } from "@uslugi/shared-types";
 import { isUserOnline } from "@/shared/lib/redis";
+import { trustService } from "@/services/trust.service";
 
 // Internal Prisma-mapped types with Date objects
 interface InternalMessage {
@@ -30,6 +31,8 @@ export const chatService = {
     targetUserId: string,
     context: { orderId?: string; listingId?: string }
   ) {
+    await trustService.assertCanStartConversation(userId, targetUserId);
+
     const existing = await db.conversation.findFirst({
       where: {
         ...(context.orderId ? { orderId: context.orderId } : {}),
@@ -72,6 +75,11 @@ export const chatService = {
       take: 50, // H2: Limit conversations
     });
 
+    const otherUserIds = participations
+      .map(({ conversation }) => conversation.participants.find((p) => p.userId !== userId)?.user.id)
+      .filter((id): id is string => Boolean(id));
+    const blockStates = await trustService.getBlockStatesForTargets(userId, otherUserIds);
+
     const results = await Promise.all(participations.map(async ({ conversation, lastReadAt }) => {
       const other = conversation.participants.find((p) => p.userId !== userId)!.user;
       const last = conversation.messages[0] ?? null;
@@ -95,6 +103,11 @@ export const chatService = {
           ...other,
           lastSeenAt: other.lastSeenAt?.toISOString() ?? null,
           isOnline,
+        },
+        blockState: blockStates.get(other.id) ?? {
+          blockedByMe: false,
+          blockedMe: false,
+          isBlocked: false,
         },
         updatedAt: conversation.updatedAt.toISOString(),
       };
@@ -152,13 +165,7 @@ export const chatService = {
     text: string,
     attachments: string[] = []
   ): Promise<MessageDTO> {
-    const user = await db.user.findUnique({ where: { id: userId }, select: { chatBlockedAt: true } });
-    if (user?.chatBlockedAt) throw new Error("Ваши сообщения заблокированы администратором");
-
-    const participant = await db.conversationParticipant.findFirst({
-      where: { conversationId, userId },
-    });
-    if (!participant) throw new Error("Нет доступа к диалогу");
+    await trustService.assertCanMessage(conversationId, userId);
 
     const message = await db.message.create({
       data: {

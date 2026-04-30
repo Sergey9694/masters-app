@@ -3,12 +3,15 @@
 import { cn } from "@/shared/lib/cn";
 import { motion } from "framer-motion";
 import type { MessageDTO } from "@uslugi/shared-types";
+import { ReportModal } from "@/features/trust/ui/ReportModal";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/ui/avatar";
 
 interface Props {
   message: MessageDTO;
   isOwn: boolean;
+  conversationId: string;
+  orderId?: string | null;
 }
 
 function formatTime(date: Date | string): string {
@@ -18,7 +21,7 @@ function formatTime(date: Date | string): string {
   });
 }
 
-export function MessageBubble({ message, isOwn }: Props) {
+export function MessageBubble({ message, isOwn, conversationId, orderId }: Props) {
   const isDeleted = !!message.deletedAt;
 
   return (
@@ -67,6 +70,17 @@ export function MessageBubble({ message, isOwn }: Props) {
             "flex items-center gap-1 mt-1 justify-end",
             isOwn ? "text-primary-foreground/60" : "text-muted-foreground/60"
           )}>
+            {!isOwn && !isDeleted && (
+              <ReportModal
+                targetType="MESSAGE"
+                targetId={message.id}
+                targetUserId={message.senderId}
+                conversationId={conversationId}
+                messageId={message.id}
+                orderId={orderId}
+                triggerClassName="size-6 text-muted-foreground/60 hover:text-foreground"
+              />
+            )}
             <span className="text-[10px] font-medium">
               {formatTime(message.createdAt)}
             </span>
