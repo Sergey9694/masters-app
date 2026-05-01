@@ -41,6 +41,9 @@ export interface YMaps2Instance {
   };
   getCenter: () => LngLat;
   getZoom: () => number;
+  cursors?: {
+    push: (cursorName: string) => void;
+  };
 }
 
 export interface YMaps2Object {
@@ -49,6 +52,10 @@ export interface YMaps2Object {
     setCoordinates: (coords: LngLat) => void;
   };
   properties: {
+    set: (key: string, value: unknown) => void;
+    get: (key: string) => unknown;
+  };
+  options: {
     set: (key: string, value: unknown) => void;
     get: (key: string) => unknown;
   };

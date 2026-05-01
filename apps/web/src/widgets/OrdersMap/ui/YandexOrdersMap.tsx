@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, MapPin, SearchX } from "lucide-react";
-import { createYandexLayouts } from "../lib/YandexMapsLayouts";
+import { formatMapBudget, YANDEX_MAP_CSS } from "../lib/YandexMapsLayouts";
 
 import { cn } from "@/shared/lib/cn";
 import {
@@ -31,6 +31,7 @@ interface OrderMapPoint {
   category: {
     name: string;
     slug: string;
+    icon: string | null;
   };
 }
 
@@ -58,12 +59,6 @@ function isMapPointsResponse(value: unknown): value is MapPointsResponse {
     Array.isArray((value as { points?: unknown }).points)
   );
 }
-
-function formatBudget(value: number | null) {
-  return value ? `${value.toLocaleString("ru-RU")} ₽` : "Договорная";
-}
-
-
 export function YandexOrdersMap({
   categoryId,
   cityId,
@@ -145,7 +140,14 @@ export function YandexOrdersMap({
         if (!isMapPointsResponse(payload)) throw new Error("Invalid map points response");
 
         if (!disposed) {
-          setPoints(payload.points);
+          setPoints(current => {
+            // Быстрая проверка по ID, чтобы избежать лишних ререндеров и мерцания
+            if (current.length === payload.points.length && 
+                current.every((p, i) => p.id === payload.points[i].id)) {
+              return current;
+            }
+            return payload.points;
+          });
           setStatus("ready");
         }
       } catch (error: any) {
@@ -183,12 +185,30 @@ export function YandexOrdersMap({
           controls: ["zoomControl", "fullscreenControl", "typeSelector"],
         });
 
+        // Force reset cursor on any mouseup globally to prevent stuck "grabbing"
+        const handleGlobalMouseUp = () => {
+          if (map.cursors) {
+            map.cursors.push('arrow');
+          }
+        };
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+
+        map.events.add('dragend', () => {
+          if (map.cursors) {
+            map.cursors.push('arrow');
+          }
+        });
+
         mapRef.current = map;
         setIsMapLoaded(true);
 
         // Listen for viewport changes
         let boundsTimeout: NodeJS.Timeout;
         map.events.add("boundschange", (e: any) => {
+          // Игнорируем изменения, вызванные авто-панорамированием балуна,
+          // чтобы предотвратить цикл: открытие -> автопан -> рефетч -> removeAll -> закрытие балуна
+          if (map.balloon.isOpen()) return;
+
           clearTimeout(boundsTimeout);
           boundsTimeout = setTimeout(() => {
             const bounds = e.get("newBounds");
@@ -200,6 +220,19 @@ export function YandexOrdersMap({
               maxLat: bounds[1][1],
             });
           }, 500); // 500ms debounce for stability
+        });
+
+        // При закрытии балуна принудительно обновляем вьюпорт, 
+        // так как мы могли пропустить изменения во время его открытия
+        map.events.add("balloonclose", () => {
+          const bounds = map.getBounds();
+          setViewport({
+            minLng: bounds[0][0],
+            minLat: bounds[0][1],
+            maxLng: bounds[1][0],
+            maxLat: bounds[1][1],
+          });
+          setSelectedPointId(null);
         });
         
         // Initial features update
@@ -213,6 +246,16 @@ export function YandexOrdersMap({
 
     initMap();
 
+    // Inject custom marker styles
+    const styleId = "yandex-map-custom-styles";
+    let style = document.getElementById(styleId) as HTMLStyleElement;
+    if (!style) {
+      style = document.createElement("style");
+      style.id = styleId;
+      document.head.appendChild(style);
+    }
+    style.innerHTML = YANDEX_MAP_CSS;
+
     return () => {
       disposed = true;
       if (mapRef.current) {
@@ -223,15 +266,29 @@ export function YandexOrdersMap({
     };
   }, []); // Run only once on mount
 
-  // 3. Sync Location
+  // Track if we've already set the initial view
+  const hasInitializedView = useRef(false);
+
+  // 3. Sync Location (Only on city change or first load)
   useEffect(() => {
     if (!mapRef.current || !isMapLoaded) return;
     
+    // We only want to force the center/zoom if:
+    // 1. It's the first time (hasInitializedView is false)
+    // 2. The lat/lng props changed (explicit city selection)
+    
     const { center, zoom } = getMapLocation(lat, lng, points, initialCenter);
+    
+    // Check if we should skip centering
+    // If we have viewport, it means user is interacting, so don't snap back unless props changed
+    if (hasInitializedView.current && !lat && !lng) return;
+
     mapRef.current.setCenter(center, zoom, {
       duration: 600,
     });
-  }, [lat, lng, initialCenter, isMapLoaded]);
+    
+    hasInitializedView.current = true;
+  }, [lat, lng, isMapLoaded]); // Removed initialCenter from deps to avoid double-triggers, use lat/lng as signals
 
   // 4. Sync Points
   useEffect(() => {
@@ -245,7 +302,7 @@ export function YandexOrdersMap({
     }
     
     refreshFeatures();
-  }, [points, isMapLoaded, selectedPointId]);
+  }, [points, isMapLoaded]);
 
   // 5. Sync BBox to URL
   useEffect(() => {
@@ -265,73 +322,39 @@ export function YandexOrdersMap({
     newPoints: OrderMapPoint[], 
     ymaps: any
   ) {
-    if (clustererRef.current) {
-      map.geoObjects.remove(clustererRef.current);
-      clustererRef.current = null;
+    // If no clusterer yet, create it
+    if (!clustererRef.current) {
+      const clusterer = new ymaps.Clusterer({
+        preset: "islands#violetClusterIcons",
+        groupByCoordinates: false,
+        clusterDisableClickZoom: false,
+        clusterHideIconOnBalloonOpen: false,
+        geoObjectHideIconOnBalloonOpen: false,
+        // Оптимизация для предотвращения залипания курсора
+        interactivityModel: 'default#opaque'
+      });
+      map.geoObjects.add(clusterer);
+      clustererRef.current = clusterer;
     }
+
+    const clusterer = clustererRef.current;
+    
+    // Clear existing objects without destroying the clusterer itself
+    clusterer.removeAll();
 
     if (newPoints.length === 0) return;
 
-    const { PlacemarkLayout, ClusterLayout } = createYandexLayouts(ymaps);
-
-    // Create and configure clusterer
-    const clusterer = new ymaps.Clusterer({
-      clusterIconLayout: ClusterLayout,
-      clusterIconShape: {
-        type: "Rectangle",
-        coordinates: [[-60, -20], [60, 20]],
-      },
-      groupByCoordinates: false,
-      clusterDisableClickZoom: false,
-      clusterHideIconOnBalloonOpen: false,
-      geoObjectHideIconOnBalloonOpen: false,
-      gridSize: 80, // Larger grid for better performance and aggregation
-    });
-
-    // Enriched Cluster properties: calculate minPrice
-    // In v2.1, we listen to the data-layer changes of the clusterer
-    clusterer.events.add("datachange", () => {
-      const clusters = clusterer.getClusters();
-      clusters.forEach((cluster: any) => {
-        const objects = cluster.getGeoObjects();
-        let minPrice = Infinity;
-        
-        objects.forEach((obj: any) => {
-          const pointId = obj.properties.get("id");
-          const point = newPoints.find(p => p.id === pointId);
-          if (point?.budget && point.budget < minPrice) {
-            minPrice = point.budget;
-          }
-        });
-
-        const minPriceLabel = minPrice === Infinity 
-          ? "дог." 
-          : minPrice >= 1000 
-            ? `${(minPrice / 1000).toFixed(minPrice % 1000 === 0 ? 0 : 1)}к` 
-            : `${minPrice}`;
-            
-        cluster.properties.set("minPriceLabel", minPriceLabel);
-      });
-    });
-
     const placemarks = newPoints.map((point) => {
-      const budgetLabel = point.budget 
-        ? point.budget >= 1000 
-          ? `${(point.budget / 1000).toFixed(point.budget % 1000 === 0 ? 0 : 1)}к ₽` 
-          : `${point.budget} ₽`
-        : "дог.";
-
+      const isSelected = selectedPointId === point.id;
       const placemark = new ymaps.Placemark(
         [point.lng, point.lat],
         {
-          id: point.id, // Store ID for reference in cluster aggregation
-          budgetLabel,
-          activeStatus: selectedPointId === point.id ? "active" : "",
+          id: point.id,
           balloonContentHeader: point.title,
           balloonContentBody: `
             <div class="p-2 min-w-[200px]">
               <div class="mb-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">${point.city.name} • ${point.category.name}</div>
-              <div class="mb-3 font-bold text-xl text-primary">${formatBudget(point.budget)}</div>
+              <div class="mb-3 font-bold text-xl text-primary">${formatMapBudget(point.budget)}</div>
               <div class="mb-3 text-sm line-clamp-2">${point.title}</div>
               <a href="${point.href}" class="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
                 Открыть заказ
@@ -341,27 +364,27 @@ export function YandexOrdersMap({
           hintContent: point.title,
         },
         {
-          iconLayout: PlacemarkLayout,
-          iconShape: {
-            type: "Rectangle",
-            coordinates: [[-35, -35], [35, 0]],
-          },
-          hasBalloon: true,
-          hideIconOnBalloonOpen: false,
-          openBalloonOnClick: true,
+          preset: isSelected ? 'islands#redIcon' : 'islands#violetIcon',
+          // Используем стандартную модель для меток
+          interactivityModel: 'default#geoObject',
+          openBalloonOnClick: true
         }
       );
 
-      placemark.events.add("click", () => {
+      placemark.events.add("balloonopen", () => {
+        placemark.options.set('preset', 'islands#redIcon');
         setSelectedPointId(point.id);
+      });
+
+      placemark.events.add("balloonclose", () => {
+        placemark.options.set('preset', 'islands#violetIcon');
+        setSelectedPointId(null);
       });
 
       return placemark;
     });
 
     clusterer.add(placemarks);
-    map.geoObjects.add(clusterer);
-    clustererRef.current = clusterer;
   }
 
   function getMapLocation(
@@ -394,6 +417,7 @@ export function YandexOrdersMap({
 
   return (
     <section className="group relative overflow-hidden rounded-2xl border border-border/60 bg-surface shadow-sm">
+      <style dangerouslySetInnerHTML={{ __html: YANDEX_MAP_CSS }} />
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Карта заказов</h2>
@@ -445,7 +469,7 @@ export function YandexOrdersMap({
             className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border/60 bg-surface px-3 py-2 text-left text-xs transition-colors hover:border-primary/40"
           >
             <span className="min-w-0 truncate font-medium text-foreground">{point.title}</span>
-            <span className="shrink-0 text-muted-foreground">{formatBudget(point.budget)}</span>
+            <span className="shrink-0 text-muted-foreground">{formatMapBudget(point.budget)}</span>
           </button>
         ))}
       </div>

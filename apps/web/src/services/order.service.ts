@@ -83,6 +83,7 @@ export interface OrderMapPoint {
   category: {
     name: string;
     slug: string;
+    icon: string | null;
   };
 }
 
@@ -139,6 +140,7 @@ interface RawOrderMapRow {
   distanceMeters: number | null;
   categoryName: string;
   categorySlug: string;
+  categoryIcon: string | null;
   cityName: string;
   citySlug: string;
 }
@@ -556,6 +558,7 @@ export const orderService = {
         ${distanceSql} AS "distanceMeters",
         cat."name" AS "categoryName",
         cat."slug" AS "categorySlug",
+        cat."icon" AS "categoryIcon",
         city."name" AS "cityName",
         city."slug" AS "citySlug"
       FROM "Order" o
@@ -585,6 +588,7 @@ export const orderService = {
       category: {
         name: row.categoryName,
         slug: row.categorySlug,
+        icon: row.categoryIcon,
       },
     }));
   },

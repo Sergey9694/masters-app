@@ -80,7 +80,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
       />
 
       <Suspense
-        key={`${categoryId ?? ""}-${cityId ?? ""}-${search ?? ""}-${sort ?? ""}-${viewMode}-${geo.lat ?? ""}-${geo.lng ?? ""}-${geo.radiusKm ?? ""}`}
+        key={`${categoryId ?? ""}-${cityId ?? ""}-${search ?? ""}-${sort ?? ""}-${viewMode}`}
         fallback={
           <div className="flex flex-col gap-4">
             {[0, 1, 2].map((i) => (
