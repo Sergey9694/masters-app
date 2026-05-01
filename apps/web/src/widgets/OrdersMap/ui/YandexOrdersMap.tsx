@@ -109,11 +109,6 @@ export function YandexOrdersMap({
           cache: "no-store",
         });
 
-        if (response.status === 401) {
-          if (!disposed) setStatus("unauthorized");
-          return;
-        }
-
         if (!response.ok) throw new Error("Failed to fetch map points");
 
         const payload = await response.json();
@@ -311,17 +306,6 @@ export function YandexOrdersMap({
           </div>
         )}
 
-        {status === "unauthorized" && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80 backdrop-blur-md">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
-              <Lock className="size-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-base font-semibold">Карта доступна после входа</h3>
-            <p className="mt-1 max-w-xs text-center text-sm text-muted-foreground">
-              Точные точки заказов показываются только авторизованным пользователям.
-            </p>
-          </div>
-        )}
 
         {status === "empty" && points.length === 0 && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm">

@@ -39,9 +39,7 @@ function getRequesterKey(request: NextRequest, userId: string) {
 
 export async function GET(request: NextRequest) {
   const session = await getSessionFromRequest(request);
-  if (!session) {
-    return apiUnauthorized();
-  }
+  const userId = session?.userId || "guest";
 
   const parsed = querySchema.safeParse({
     categoryId: request.nextUrl.searchParams.get("categoryId"),
@@ -57,8 +55,8 @@ export async function GET(request: NextRequest) {
   }
 
   const rl = await checkRateLimit({
-    key: `orders-map:${getRequesterKey(request, session.userId)}`,
-    limit: 60,
+    key: `orders-map:${getRequesterKey(request, userId)}`,
+    limit: session ? 60 : 20, // Guests have tighter limits
     windowSec: 60,
   });
 

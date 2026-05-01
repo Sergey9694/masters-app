@@ -33,7 +33,14 @@ export function CitySelector() {
       sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
     }
 
-    window.location.reload();
+    const currentPath = window.location.pathname;
+    
+    // Если мы на главной или на страницах заказов, переходим в ленту нового города
+    if (currentPath === "/" || currentPath.startsWith("/orders")) {
+      window.location.href = `/orders/${city.slug}`;
+    } else {
+      window.location.reload();
+    }
   }, []);
 
   const handleAutoDetect = useCallback(async (silent = false) => {

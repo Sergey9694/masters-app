@@ -3,11 +3,21 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-05-01 (Yandex Maps CSP & Coordinate Fix)
+> 🕓 Последнее обновление: 2026-05-01 (Guest Access & Geo-Navigation Optimized)
 
 ---
 
-## Обновление 2026-05-01 (Yandex Maps & Form Stabilization)
+## Обновление 2026-05-01 (Guest Access & Geo-Navigation Optimized)
+- **Guest Map Access**: Разрешен доступ гостям к точкам на карте через `/api/v1/orders/map-points`. Внедрен уровневый Rate Limiting: 20 запросов/мин для гостей, 60 для авторизованных пользователей.
+- **Order Detail Accessibility**: Страницы заказов теперь доступны неавторизованным пользователям. Кнопки отклика и предложения услуг скрыты или заменены на призыв к авторизации.
+- **Smart City Navigation**: В `CitySelector` внедрена логика перенаправления на `/orders/[citySlug]` при смене города. Это заменяет устаревший `window.location.reload()` и обеспечивает мгновенный переход к релевантному контенту.
+- **Hero Search Context**: Поиск на главной странице теперь учитывает город из кук, если он не задан в URL. Это гарантирует, что пользователи всегда видят заказы в своем регионе.
+- **Map UI Unblocking**: Удалена заглушка "Карта доступна после входа". Карта теперь полностью функциональна для всех посетителей, повышая вовлеченность гостей.
+- **Verification**: `tsc` — PASS. Проверена логика редиректов и работа Rate Limiter в логах.
+
+---
+
+## Обновление 2026-05-01 (Yandex Maps CSP & Coordinate Fix)
 - **Form Context Fix**: Исправлена критическая ошибка `TypeError: Cannot destructure property 'getFieldState' of 'useFormContext()'` в `OrderEditFormLight.tsx`. Теперь форма обернута в провайдер `<Form />` из `shared/ui/form`, что обеспечивает корректную работу `AddressPicker` и других компонентов, использующих `useFormField`.
 - **Coordinate Order Fix**: В `shared/lib/yandex-maps.ts` добавлен параметр `coordorder: "longlat"` при загрузке API. Это исправило проблему некорректного отображения точек на карте (путаница Latitude/Longitude), так как проект использует формат `[lng, lat]`.
 - **CSP Stabilization**: Исправлены ошибки блокировки ресурсов Yandex Maps (img-src, connect-src). Добавлены домены `yastatic.net`, `yandex.ru`, `yandex.net`, а также `*.api-maps.yandex.ru` в белый список Content Security Policy. Устранена блокировка курсоров и логов.

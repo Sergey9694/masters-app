@@ -150,7 +150,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
         >
           {order.category.name}
         </Link>
-        
+
         {/* JSON-LD Breadcrumbs for Google */}
         <Script id="breadcrumb-json-ld" type="application/ld+json">
           {JSON.stringify({

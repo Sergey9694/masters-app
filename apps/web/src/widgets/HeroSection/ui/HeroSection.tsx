@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { Search, Sparkles, TrendingUp, Users, Shield } from "lucide-react";
 
@@ -11,6 +10,7 @@ import { buttonVariants } from "@/shared/ui/button";
 import { Container } from "@/shared/ui/container";
 import { cn } from "@/shared/lib/cn";
 import { CitySelector } from "@/features/geo-search/ui/CitySelector";
+import { getCookie } from "@/shared/lib/cookies";
 
 const POPULAR_QUERIES = [
   "Уборка квартиры",
@@ -39,7 +39,12 @@ export function HeroSection() {
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = query.trim();
-    const cityId = searchParams.get("cityId");
+    
+    // Пытаемся взять cityId из URL или из кук
+    let cityId = searchParams.get("cityId");
+    if (!cityId) {
+      cityId = getCookie("cityId");
+    }
     
     const params = new URLSearchParams();
     if (trimmed) params.set("search", trimmed);
@@ -138,37 +143,40 @@ export function HeroSection() {
                 Часто ищут:
               </span>
               {POPULAR_QUERIES.map((q) => (
-                <Link
+                <button
                   key={q}
-                  href={`/orders?search=${encodeURIComponent(q)}`}
-                  className="rounded-full border border-border/60 bg-surface px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
+                  onClick={() => {
+                    setQuery(q);
+                    // Trigger search
+                    const params = new URLSearchParams();
+                    params.set("search", q);
+                    const cityId = getCookie("cityId");
+                    if (cityId) params.set("cityId", cityId);
+                    router.push(`/orders?${params.toString()}`);
+                  }}
+                  className="rounded-full bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                   {q}
-                </Link>
+                </button>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* Trust badges */}
           <motion.div
             variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="mx-auto mt-16 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3"
+            className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3"
           >
-            {TRUST_BADGES.map(({ icon: Icon, label, sub }) => (
+            {TRUST_BADGES.map((badge, i) => (
               <motion.div
-                key={label}
+                key={i}
                 variants={staggerItem}
-                className="flex items-center gap-3 rounded-xl border border-border/60 bg-surface/80 p-4 backdrop-blur-sm"
+                className="flex flex-col items-center justify-center rounded-2xl border border-border/50 bg-card/30 p-6 backdrop-blur-xs transition-colors hover:bg-card/50"
               >
-                <div className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <Icon className="size-5" />
+                <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <badge.icon className="size-6" />
                 </div>
-                <div className="text-left">
-                  <p className="text-lg font-bold leading-tight">{label}</p>
-                  <p className="text-xs text-muted-foreground">{sub}</p>
-                </div>
+                <div className="text-2xl font-bold">{badge.label}</div>
+                <div className="text-sm text-muted-foreground">{badge.sub}</div>
               </motion.div>
             ))}
           </motion.div>

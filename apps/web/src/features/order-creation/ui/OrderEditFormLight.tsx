@@ -93,14 +93,14 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-normal text-foreground px-1">
+              <FormLabel className="text-sm font-medium text-muted-foreground">
                 Заголовок
               </FormLabel>
               <FormControl>
                 <Input 
                   {...field} 
                   placeholder="Кратко опишите задачу" 
-                  className="h-12 rounded-xl border-border/60 bg-surface focus:ring-primary/20"
+                  className="rounded-[var(--ui-radius-premium)]"
                 />
               </FormControl>
               <FormMessage />
@@ -113,7 +113,7 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
           name="description"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-normal text-foreground px-1">
+              <FormLabel className="text-sm font-medium text-muted-foreground">
                 Описание
               </FormLabel>
               <FormControl>
@@ -121,7 +121,7 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
                   {...field}
                   rows={5}
                   placeholder="Подробности, требования, сроки..."
-                  className="min-h-[120px] rounded-xl border-border/60 bg-surface focus:ring-primary/20"
+                  className="rounded-[var(--ui-radius-premium)]"
                 />
               </FormControl>
               <FormMessage />
@@ -135,12 +135,12 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
             name="categoryId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-normal text-foreground px-1">
+                <FormLabel className="text-sm font-medium text-muted-foreground">
                   Категория
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="h-12 rounded-xl border-border/60 bg-surface focus:ring-primary/20">
+                    <SelectTrigger className="rounded-[var(--ui-radius-premium)]">
                       <SelectValue placeholder="Выберите категорию" />
                     </SelectTrigger>
                   </FormControl>
@@ -162,7 +162,7 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
             name="budget"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-sm font-normal text-foreground px-1">
+                <FormLabel className="text-sm font-medium text-muted-foreground">
                   Бюджет (₽)
                 </FormLabel>
                 <FormControl>
@@ -174,7 +174,7 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
                     onKeyDown={(e) => {
                       if (e.key === "-" || e.key === "e" || e.key === "E") e.preventDefault();
                     }}
-                    className="h-12 rounded-xl border-border/60 bg-surface focus:ring-primary/20"
+                    className="rounded-[var(--ui-radius-premium)]"
                   />
                 </FormControl>
                 <FormMessage />
@@ -189,8 +189,8 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
           type="submit"
           disabled={isPending}
           className={cn(
-            "mt-2 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm",
-            "transition-all hover:brightness-110 disabled:opacity-50"
+            "mt-4 inline-flex h-[56px] items-center justify-center gap-2 rounded-[var(--ui-radius-premium)] bg-primary px-8 text-sm font-bold uppercase tracking-widest text-primary-foreground shadow-lg shadow-primary/20",
+            "transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
           )}
         >
           {isPending ? <Loader2 className="size-4 animate-spin" /> : <SaveIcon className="size-4" />}
