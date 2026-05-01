@@ -117,8 +117,6 @@ export function AddressField({ form }: AddressFieldProps) {
                             name: cityName,
                             fiasId: s.data.city_fias_id || s.data.settlement_fias_id,
                             region: regionName,
-                            lat: s.data.geo_lat && !isNaN(parseFloat(s.data.geo_lat)) ? parseFloat(s.data.geo_lat) : null,
-                            lng: s.data.geo_lon && !isNaN(parseFloat(s.data.geo_lon)) ? parseFloat(s.data.geo_lon) : null,
                           });
 
                           form.setValue("cityId", id, { shouldValidate: true });

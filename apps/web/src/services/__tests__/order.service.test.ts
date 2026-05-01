@@ -18,6 +18,8 @@ const mockDb = {
   providerProfile: { findUnique: vi.fn() },
   proposal: { findUnique: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
   $transaction: vi.fn(),
+  $executeRaw: vi.fn(),
+  $queryRaw: vi.fn(),
 };
 
 vi.mock("@/shared/lib/db", () => ({ db: mockDb }));

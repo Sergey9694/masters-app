@@ -4,6 +4,9 @@ import type { OrderCardData } from "@/shared/types/domain";
 import { DEFAULT_PAGE_SIZE } from "@/shared/lib/constants";
 import { Prisma } from "@prisma/client";
 import { slugify } from "@/shared/lib/slugify";
+import { geocodeOrderAddress } from "@/shared/lib/geocoding";
+import { normalizeRadiusKm, toGeoPoint, type GeoPoint } from "@/shared/lib/geo-utils";
+import { syncOrderLocation } from "@/shared/lib/order-location";
 
 export type OrderWithDetails = Prisma.OrderGetPayload<{
   include: {
@@ -32,7 +35,10 @@ export type OrderWithDetails = Prisma.OrderGetPayload<{
       };
     };
   };
-}>;
+}> & {
+  lat: number | null;
+  lng: number | null;
+};
 
 export interface CreateOrderInput {
   categoryId: string;
@@ -41,6 +47,8 @@ export interface CreateOrderInput {
   description: string;
   budget?: string | null;
   address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   images?: string[];
 }
 
@@ -53,6 +61,122 @@ export interface OrderListParams {
   sort?: OrderSort;
   cursor?: string;
   pageSize?: number;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+}
+
+export interface OrderMapPoint {
+  id: string;
+  orderNumber: number;
+  slug: string | null;
+  title: string;
+  budget: number | null;
+  lat: number;
+  lng: number;
+  distanceMeters: number | null;
+  href: string;
+  city: {
+    name: string;
+    slug: string;
+  };
+  category: {
+    name: string;
+    slug: string;
+  };
+}
+
+interface OrderMapParams {
+  categoryId?: string;
+  cityId?: string;
+  search?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+}
+
+interface RawOrderRow {
+  id: string;
+  orderNumber: number;
+  slug: string | null;
+  title: string;
+  description: string;
+  images: string[];
+  budget: number | null;
+  address: string | null;
+  status: string;
+  createdAt: Date;
+  distanceMeters: number;
+  proposalCount: number;
+  categoryName: string;
+  categorySlug: string;
+  clientFirstName: string;
+  clientAvatar: string | null;
+  cityName: string;
+  citySlug: string;
+}
+
+interface RawCountRow {
+  count: number;
+}
+
+interface RawOrderMapRow {
+  id: string;
+  orderNumber: number;
+  slug: string | null;
+  title: string;
+  budget: number | null;
+  lat: number;
+  lng: number;
+  distanceMeters: number | null;
+  categoryName: string;
+  categorySlug: string;
+  cityName: string;
+  citySlug: string;
+}
+
+interface RawOrderCoordinates {
+  lat: number | null;
+  lng: number | null;
+}
+
+function orderHref(row: Pick<RawOrderMapRow, "citySlug" | "categorySlug" | "slug" | "id">) {
+  return `/orders/${row.citySlug}/${row.categorySlug}/${row.slug || row.id}`;
+}
+
+async function resolveOrderPoint(
+  address: string | null | undefined, 
+  cityId: string,
+  lat?: number | null,
+  lng?: number | null
+) {
+  if (lat != null && lng != null) {
+    return { lat, lng };
+  }
+
+  if (!address?.trim()) {
+    return null;
+  }
+
+  const city = await db.city.findUnique({
+    where: { id: cityId },
+    select: { name: true },
+  });
+
+  return geocodeOrderAddress(address, city?.name);
+}
+
+function pointSql(point: GeoPoint) {
+  return Prisma.sql`ST_SetSRID(ST_MakePoint(${point.lng}, ${point.lat}), 4326)`;
+}
+
+function parseNearbyCursor(cursor: string | undefined) {
+  if (!cursor?.startsWith("geo:")) {
+    return 0;
+  }
+
+  const offset = Number(cursor.slice(4));
+  return Number.isInteger(offset) && offset > 0 ? offset : 0;
 }
 
 export const orderService = {
@@ -60,6 +184,8 @@ export const orderService = {
    * Create a new order
    */
   async create(data: CreateOrderInput, userId: string) {
+    const point = await resolveOrderPoint(data.address, data.cityId, data.lat, data.lng);
+
     const order = await db.order.create({
       data: {
         clientId: userId,
@@ -69,10 +195,14 @@ export const orderService = {
         description: data.description,
         budget: data.budget ? parseFloat(data.budget) : null,
         address: data.address,
+        lat: point?.lat,
+        lng: point?.lng,
         images: data.images || [],
         status: "OPEN",
-      },
+      } as any,
     });
+
+    await syncOrderLocation(order.id, point);
 
     // Generate SEO slug: title-orderNumber
     const slug = `${slugify(data.title)}-${order.orderNumber}`;
@@ -101,6 +231,11 @@ export const orderService = {
    */
   async list(params: OrderListParams, userId?: string) {
     const { categoryId, cityId, search, sort = "new", cursor, pageSize = DEFAULT_PAGE_SIZE } = params;
+    const nearbyPoint = toGeoPoint(params.lat, params.lng);
+
+    if (nearbyPoint) {
+      return orderService.listNearby(params, userId, nearbyPoint);
+    }
 
     const where: Prisma.OrderWhereInput = { status: "OPEN" };
 
@@ -214,11 +349,237 @@ export const orderService = {
     return { orders, nextCursor, totalCount };
   },
 
+  async listNearby(params: OrderListParams, userId: string | undefined, point: GeoPoint) {
+    const { categoryId, cityId, search, pageSize = DEFAULT_PAGE_SIZE } = params;
+    const offset = parseNearbyCursor(params.cursor);
+    const radiusKm = normalizeRadiusKm(params.radiusKm);
+    const radiusMeters = radiusKm * 1000;
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`o."status" = 'OPEN'`,
+      Prisma.sql`o."lat" IS NOT NULL`,
+      Prisma.sql`o."lng" IS NOT NULL`,
+      Prisma.sql`ST_DWithin(
+        COALESCE(o."orderLocation", ST_SetSRID(ST_MakePoint(o."lng", o."lat"), 4326))::geography,
+        ${pointSql(point)}::geography,
+        ${radiusMeters}
+      )`,
+    ];
+
+    if (cityId) {
+      conditions.push(Prisma.sql`o."cityId" = ${cityId}`);
+    }
+
+    if (categoryId && categoryId !== "all") {
+      conditions.push(Prisma.sql`o."categoryId" = ${categoryId}`);
+    } else if (!categoryId && userId) {
+      const userWithProvider = await db.user.findUnique({
+        where: { id: userId },
+        select: { providerProfile: { select: { id: true } } },
+      });
+
+      if (userWithProvider?.providerProfile) {
+        const providerCategories = await db.providerCategory.findMany({
+          where: { providerId: userWithProvider.providerProfile.id },
+          select: { categoryId: true },
+        });
+        const categoryIds = providerCategories.map((item) => item.categoryId);
+        if (categoryIds.length > 0) {
+          conditions.push(Prisma.sql`o."categoryId" IN (${Prisma.join(categoryIds)})`);
+        }
+      }
+    }
+
+    if (search && search.trim().length >= 2) {
+      const pattern = `%${search.trim()}%`;
+      conditions.push(Prisma.sql`(o."title" ILIKE ${pattern} OR o."description" ILIKE ${pattern})`);
+    }
+
+    const whereSql = Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}`;
+    const countRows = await db.$queryRaw<RawCountRow[]>`
+      SELECT COUNT(*)::int AS "count"
+      FROM "Order" o
+      ${whereSql}
+    `;
+    const totalCount = countRows[0]?.count ?? 0;
+
+    const rows = await db.$queryRaw<RawOrderRow[]>`
+      SELECT
+        o."id",
+        o."orderNumber",
+        o."slug",
+        o."title",
+        o."description",
+        o."images",
+        o."budget",
+        o."address",
+        o."status",
+        o."createdAt",
+        ST_Distance(
+          COALESCE(o."orderLocation", ST_SetSRID(ST_MakePoint(o."lng", o."lat"), 4326))::geography,
+          ${pointSql(point)}::geography
+        )::float AS "distanceMeters",
+        (
+          SELECT COUNT(*)::int
+          FROM "Proposal" p
+          WHERE p."orderId" = o."id"
+        ) AS "proposalCount",
+        cat."name" AS "categoryName",
+        cat."slug" AS "categorySlug",
+        c."firstName" AS "clientFirstName",
+        c."avatar" AS "clientAvatar",
+        city."name" AS "cityName",
+        city."slug" AS "citySlug"
+      FROM "Order" o
+      JOIN "Category" cat ON cat."id" = o."categoryId"
+      JOIN "User" c ON c."id" = o."clientId"
+      JOIN "City" city ON city."id" = o."cityId"
+      ${whereSql}
+      ORDER BY "distanceMeters" ASC, o."createdAt" DESC
+      LIMIT ${pageSize + 1}
+      OFFSET ${offset}
+    `;
+
+    const hasMore = rows.length > pageSize;
+    const pageRows = hasMore ? rows.slice(0, pageSize) : rows;
+
+    let proposedOrderIds = new Set<string>();
+    if (userId && pageRows.length > 0) {
+      const providerProfile = await db.providerProfile.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+
+      if (providerProfile) {
+        const existing = await db.proposal.findMany({
+          where: {
+            providerId: providerProfile.id,
+            orderId: { in: pageRows.map((row) => row.id) },
+          },
+          select: { orderId: true },
+        });
+        proposedOrderIds = new Set(existing.map((proposal) => proposal.orderId));
+      }
+    }
+
+    const orders: OrderCardData[] = pageRows.map((row) => ({
+      id: row.id,
+      orderNumber: row.orderNumber,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      images: row.images,
+      budget: row.budget,
+      address: row.address,
+      createdAt: row.createdAt,
+      status: row.status,
+      category: {
+        name: row.categoryName,
+        slug: row.categorySlug,
+      },
+      client: {
+        firstName: row.clientFirstName,
+        avatar: row.clientAvatar,
+      },
+      city: {
+        name: row.cityName,
+        slug: row.citySlug,
+      },
+      proposalCount: row.proposalCount,
+      hasProposal: proposedOrderIds.has(row.id),
+      distance: row.distanceMeters,
+    }));
+
+    return { orders, nextCursor: hasMore ? `geo:${offset + pageSize}` : null, totalCount };
+  },
+
+  async listMapPoints(params: OrderMapParams): Promise<OrderMapPoint[]> {
+    const point = toGeoPoint(params.lat, params.lng);
+    const radiusKm = normalizeRadiusKm(params.radiusKm);
+    const radiusMeters = radiusKm * 1000;
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`o."status" = 'OPEN'`,
+      Prisma.sql`o."lat" IS NOT NULL`,
+      Prisma.sql`o."lng" IS NOT NULL`,
+    ];
+
+    if (params.cityId) {
+      conditions.push(Prisma.sql`o."cityId" = ${params.cityId}`);
+    }
+
+    if (params.categoryId && params.categoryId !== "all") {
+      conditions.push(Prisma.sql`o."categoryId" = ${params.categoryId}`);
+    }
+
+    if (params.search && params.search.trim().length >= 2) {
+      const pattern = `%${params.search.trim()}%`;
+      conditions.push(Prisma.sql`(o."title" ILIKE ${pattern} OR o."description" ILIKE ${pattern})`);
+    }
+
+    if (point) {
+      conditions.push(Prisma.sql`ST_DWithin(
+        COALESCE(o."orderLocation", ST_SetSRID(ST_MakePoint(o."lng", o."lat"), 4326))::geography,
+        ${pointSql(point)}::geography,
+        ${radiusMeters}
+      )`);
+    }
+
+    const distanceSql = point
+      ? Prisma.sql`ST_Distance(
+          COALESCE(o."orderLocation", ST_SetSRID(ST_MakePoint(o."lng", o."lat"), 4326))::geography,
+          ${pointSql(point)}::geography
+        )::float`
+      : Prisma.sql`NULL::float`;
+
+    const rows = await db.$queryRaw<RawOrderMapRow[]>`
+      SELECT
+        o."id",
+        o."orderNumber",
+        o."slug",
+        o."title",
+        o."budget",
+        o."lat",
+        o."lng",
+        ${distanceSql} AS "distanceMeters",
+        cat."name" AS "categoryName",
+        cat."slug" AS "categorySlug",
+        city."name" AS "cityName",
+        city."slug" AS "citySlug"
+      FROM "Order" o
+      JOIN "Category" cat ON cat."id" = o."categoryId"
+      JOIN "City" city ON city."id" = o."cityId"
+      WHERE ${Prisma.join(conditions, " AND ")}
+      ORDER BY
+        "distanceMeters" ASC NULLS LAST,
+        o."createdAt" DESC
+      LIMIT 500
+    `;
+
+    return rows.map((row) => ({
+      id: row.id,
+      orderNumber: row.orderNumber,
+      slug: row.slug,
+      title: row.title,
+      budget: row.budget,
+      lat: row.lat,
+      lng: row.lng,
+      distanceMeters: row.distanceMeters,
+      href: orderHref(row),
+      city: {
+        name: row.cityName,
+        slug: row.citySlug,
+      },
+      category: {
+        name: row.categoryName,
+        slug: row.categorySlug,
+      },
+    }));
+  },
+
   /**
    * Get single order by ID or Slug
    */
   async getById(idOrSlug: string): Promise<OrderWithDetails | null> {
-    return db.order.findFirst({
+    const order = await db.order.findFirst({
       where: {
         OR: [
           { id: idOrSlug },
@@ -255,6 +616,23 @@ export const orderService = {
         },
       },
     });
+
+    if (!order) {
+      return null;
+    }
+
+    const [coordinates] = await db.$queryRaw<RawOrderCoordinates[]>`
+      SELECT "lat", "lng"
+      FROM "Order"
+      WHERE "id" = ${order.id}
+      LIMIT 1
+    `;
+
+    return {
+      ...order,
+      lat: coordinates?.lat ?? null,
+      lng: coordinates?.lng ?? null,
+    };
   },
 
   /**
@@ -286,14 +664,26 @@ export const orderService = {
   async update(id: string, data: Partial<CreateOrderInput>, userId: string) {
     const order = await db.order.findUnique({
       where: { id },
-      select: { clientId: true, status: true },
+      select: { clientId: true, status: true, address: true, cityId: true },
     });
 
     if (!order) throw new Error("Заявка не найдена");
     if (order.clientId !== userId) throw new Error("Вы не являетесь автором заявки");
     if (order.status !== "OPEN") throw new Error("Заявку можно изменить только в статусе OPEN");
 
-    return db.order.update({
+    const nextAddress = data.address !== undefined ? data.address : order.address;
+    const nextCityId = data.cityId !== undefined ? data.cityId : order.cityId;
+    const shouldRefreshPoint = 
+      data.address !== undefined || 
+      data.cityId !== undefined || 
+      data.lat !== undefined || 
+      data.lng !== undefined;
+
+    const point = shouldRefreshPoint 
+      ? await resolveOrderPoint(nextAddress, nextCityId, data.lat, data.lng) 
+      : undefined;
+
+    const updatedOrder = await db.order.update({
       where: { id },
       data: {
         ...(data.title !== undefined && { title: data.title }),
@@ -302,13 +692,20 @@ export const orderService = {
         ...(data.cityId !== undefined && { cityId: data.cityId }),
         ...(data.budget !== undefined && { budget: data.budget ? parseFloat(data.budget) : null }),
         ...(data.address !== undefined && { address: data.address }),
+        ...(point !== undefined && { lat: point?.lat, lng: point?.lng }),
         ...(data.images !== undefined && { images: data.images }),
-      },
+      } as any,
       include: { 
         category: { select: { slug: true } },
         city: { select: { slug: true } }
       },
     });
+
+    if (point !== undefined) {
+      await syncOrderLocation(id, point);
+    }
+
+    return updatedOrder;
   },
 
   /**

@@ -2,9 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition, useState, useEffect } from "react";
-import { Search, X } from "lucide-react";
+import { List, Loader2, Map, Navigation, Search, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/shared/lib/cn";
+import { useLocation } from "@/shared/lib/hooks/use-location";
+import type { OrdersViewMode } from "@/shared/lib/orders-query";
 
 interface Option {
   id: string;
@@ -18,6 +21,10 @@ interface OrdersFiltersProps {
   isProvider?: boolean;
   initialCityId?: string;
   initialCategoryId?: string;
+  initialView?: OrdersViewMode;
+  initialLat?: number;
+  initialLng?: number;
+  initialRadiusKm?: number;
 }
 
 const SORT_OPTIONS = [
@@ -31,16 +38,26 @@ export function OrdersFilters({
   cities, 
   isProvider,
   initialCityId,
-  initialCategoryId 
+  initialCategoryId,
+  initialView,
+  initialLat,
+  initialLng,
+  initialRadiusKm,
 }: OrdersFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
+  const { detect, isLocating } = useLocation();
 
   const currentCategory = initialCategoryId || searchParams.get("categoryId") || "";
   const currentCity = initialCityId || searchParams.get("cityId") || "";
   const currentSort = searchParams.get("sort") || "new";
   const currentSearch = searchParams.get("search") || "";
+  const currentView: OrdersViewMode = initialView || (searchParams.get("view") === "map" ? "map" : "list");
+  const currentLat = initialLat ?? Number(searchParams.get("lat") || NaN);
+  const currentLng = initialLng ?? Number(searchParams.get("lng") || NaN);
+  const currentRadiusKm = initialRadiusKm ?? Number(searchParams.get("radiusKm") || 25);
+  const hasGeoFilter = Number.isFinite(currentLat) && Number.isFinite(currentLng);
 
   const [searchDraft, setSearchDraft] = useState(currentSearch);
 
@@ -62,9 +79,10 @@ export function OrdersFilters({
       let newPath = "/orders";
       const finalParams = new URLSearchParams();
 
-      // Preservation of search and sort
-      if (params.get("search")) finalParams.set("search", params.get("search")!);
-      if (params.get("sort")) finalParams.set("sort", params.get("sort")!);
+      ["search", "sort", "view", "lat", "lng", "radiusKm"].forEach((paramKey) => {
+        const current = params.get(paramKey);
+        if (current) finalParams.set(paramKey, current);
+      });
       
       if (city) {
         newPath += `/${city.slug}`;
@@ -102,13 +120,48 @@ export function OrdersFilters({
     });
   };
 
+  const updateParams = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === "") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+
+    startTransition(() => {
+      const query = params.toString();
+      router.replace(query ? `?${query}` : window.location.pathname, { scroll: false });
+    });
+  };
+
+  const applyNearby = async () => {
+    const result = await detect();
+    if (!result.coords) {
+      toast.error(result.error || "Не удалось получить координаты");
+      return;
+    }
+
+    updateParams({
+      lat: result.coords.lat.toFixed(6),
+      lng: result.coords.lng.toFixed(6),
+      radiusKm: String(Number.isFinite(currentRadiusKm) ? currentRadiusKm : 25),
+    });
+  };
+
+  const clearNearby = () => {
+    updateParams({ lat: null, lng: null, radiusKm: null });
+  };
+
   const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updateParam("search", searchDraft.trim() || null);
   };
 
   const hasActiveFilters =
-    currentCategory || currentCity || currentSearch || currentSort !== "new";
+    currentCategory || currentCity || currentSearch || currentSort !== "new" || currentView === "map" || hasGeoFilter;
 
   const resetAll = () => {
     startTransition(() => {
@@ -132,6 +185,67 @@ export function OrdersFilters({
           )}
         />
       </form>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="inline-flex rounded-xl border border-border bg-background p-1">
+          <button
+            type="button"
+            onClick={() => updateParam("view", null)}
+            className={cn(
+              "inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors",
+              currentView === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <List className="size-4" />
+            Список
+          </button>
+          <button
+            type="button"
+            onClick={() => updateParam("view", "map")}
+            className={cn(
+              "inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors",
+              currentView === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Map className="size-4" />
+            Карта
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={Number.isFinite(currentRadiusKm) ? currentRadiusKm : 25}
+            onChange={(event) => updateParam("radiusKm", event.target.value)}
+            className="h-9 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10"
+            aria-label="Радиус"
+          >
+            {[5, 10, 25, 50, 100].map((radius) => (
+              <option key={radius} value={radius}>
+                {radius} км
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={applyNearby}
+            disabled={isLocating}
+            className="inline-flex h-9 items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 text-sm font-medium text-primary transition-colors hover:bg-primary/15 disabled:opacity-60"
+          >
+            {isLocating ? <Loader2 className="size-4 animate-spin" /> : <Navigation className="size-4" />}
+            Рядом
+          </button>
+          {hasGeoFilter && (
+            <button
+              type="button"
+              onClick={clearNearby}
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-background px-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <X className="size-4" />
+              Сброс
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <FilterSelect

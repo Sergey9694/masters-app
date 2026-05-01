@@ -26,32 +26,34 @@ export default async function OrderEditPage({ params }: PageProps) {
   const user = await getCurrentUser();
   if (!user) redirect("/");
 
-  const [order, categories] = await Promise.all([
-    db.order.findFirst({
-      where: { OR: [{ slug: orderSlug }, { id: orderSlug }] },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        description: true,
-        categoryId: true,
-        cityId: true,
-        budget: true,
-        address: true,
-        clientId: true,
-        status: true,
-        category: { select: { slug: true } },
-        city: { select: { slug: true } },
-      },
-    }),
-    db.category.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const orderData = await db.order.findFirst({
+    where: { OR: [{ slug: orderSlug }, { id: orderSlug }] },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      categoryId: true,
+      cityId: true,
+      budget: true,
+      address: true,
+      lat: true,
+      lng: true,
+      clientId: true,
+      status: true,
+      category: { select: { slug: true } },
+      city: { select: { slug: true } },
+    },
+  } as any);
 
-  if (!order) notFound();
+  const categories = await db.category.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
+  if (!orderData) notFound();
+  const order = orderData as any;
   
   const currentOrderSlug = order.slug || order.id;
   const canonicalUrl = `/orders/${order.city.slug}/${order.category.slug}/${currentOrderSlug}`;
@@ -90,6 +92,8 @@ export default async function OrderEditPage({ params }: PageProps) {
             cityId: order.cityId,
             budget: order.budget != null ? String(order.budget) : "",
             address: order.address ?? "",
+            lat: order.lat,
+            lng: order.lng,
           }}
         />
       </section>

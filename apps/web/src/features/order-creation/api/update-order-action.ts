@@ -18,6 +18,8 @@ const updateOrderSchema = z.object({
       message: "Бюджет не может быть отрицательным",
     }),
   address: z.string().min(5, "Адрес слишком короткий").optional().or(z.literal("")),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
 });
 
 export const updateOrderAction = authActionClient

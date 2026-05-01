@@ -19,6 +19,9 @@ interface Props {
   cityId?: string;
   search?: string;
   sort?: OrderSort;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
   totalLabel: string;
   isDefaultFilter?: boolean;
 }
@@ -30,6 +33,9 @@ export function OrderFeedClient({
   cityId,
   search,
   sort,
+  lat,
+  lng,
+  radiusKm,
   totalLabel,
   isDefaultFilter = false,
 }: Props) {
@@ -44,7 +50,7 @@ export function OrderFeedClient({
     if (!cursor || isPending) return;
     startTransition(async () => {
       try {
-        const res = await loadOrdersAction({ categoryId, cityId, search, sort, cursor });
+        const res = await loadOrdersAction({ categoryId, cityId, search, sort, cursor, lat, lng, radiusKm });
         setOrders((prev) => {
           const existingIds = new Set(prev.map((t) => t.id));
           return [...prev, ...res.orders.filter((t) => !existingIds.has(t.id))];
@@ -74,7 +80,7 @@ export function OrderFeedClient({
       observer.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cursor, isPending, categoryId, cityId, search, sort]);
+  }, [cursor, isPending, categoryId, cityId, search, sort, lat, lng, radiusKm]);
 
   if (orders.length === 0) {
     return (

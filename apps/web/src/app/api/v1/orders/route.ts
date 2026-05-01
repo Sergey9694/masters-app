@@ -3,6 +3,7 @@ import { orderService, OrderListParams } from "@/services/order.service";
 import { apiSuccess, apiUnauthorized, apiError } from "@/shared/lib/api-helpers";
 import { getSessionFromRequest } from "@/shared/lib/auth";
 import { createOrderSchema } from "@uslugi/validation";
+import { parseGeoQuery, parseOptionalNumber } from "@/shared/lib/orders-query";
 
 /**
  * GET /api/v1/orders?categoryId=...&search=...&cursor=...
@@ -15,11 +16,20 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = request.nextUrl;
+    const geo = parseGeoQuery(
+      searchParams.get("lat") || undefined,
+      searchParams.get("lng") || undefined,
+      searchParams.get("radiusKm") || undefined
+    );
     const params: OrderListParams = {
       categoryId: searchParams.get("categoryId") || undefined,
+      cityId: searchParams.get("cityId") || undefined,
       search: searchParams.get("search") || undefined,
       cursor: searchParams.get("cursor") || undefined,
-      pageSize: searchParams.get("pageSize") ? parseInt(searchParams.get("pageSize")!) : undefined,
+      pageSize: parseOptionalNumber(searchParams.get("pageSize") || undefined),
+      lat: geo.lat,
+      lng: geo.lng,
+      radiusKm: geo.radiusKm,
     };
 
     const result = await orderService.list(params, userId);

@@ -39,7 +39,7 @@ import { orderSchema, type OrderFormValues } from "../model/order-schema";
 import { createOrderAction } from "../api/create-order-action";
 import { uploadImagesAction } from "../api/upload-action";
 import { PhotoUploadField } from "./PhotoUploadField";
-import { AddressField } from "./AddressField";
+import { AddressPicker } from "./AddressPicker";
 
 interface OrderCreateFormProps {
   categories: { id: string; name: string }[];
@@ -61,6 +61,8 @@ export function OrderCreateForm({ categories, defaultCityId }: OrderCreateFormPr
       cityId: defaultCityId || "",
       budget: "",
       address: "",
+      lat: null as number | null,
+      lng: null as number | null,
       images: [],
     },
   });
@@ -209,7 +211,7 @@ export function OrderCreateForm({ categories, defaultCityId }: OrderCreateFormPr
             />
 
             {/* Address Field Extracted */}
-            <AddressField form={form} />
+            <AddressPicker form={form} />
           </div>
 
           <motion.button

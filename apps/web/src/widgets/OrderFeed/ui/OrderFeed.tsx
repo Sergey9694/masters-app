@@ -8,13 +8,16 @@ interface OrderFeedProps {
   cityId?: string;
   search?: string;
   sort?: OrderSort;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }
 
-export async function OrderFeed({ categoryId, cityId, search, sort }: OrderFeedProps) {
+export async function OrderFeed({ categoryId, cityId, search, sort, lat, lng, radiusKm }: OrderFeedProps) {
   const user = await getCurrentUser();
 
   const { orders, nextCursor, totalCount } = await orderService.list(
-    { categoryId, cityId, search, sort },
+    { categoryId, cityId, search, sort, lat, lng, radiusKm },
     user?.id
   );
 
@@ -22,13 +25,16 @@ export async function OrderFeed({ categoryId, cityId, search, sort }: OrderFeedP
 
   return (
     <OrderFeedClient
-      key={`${categoryId ?? "all"}-${cityId ?? ""}-${search ?? ""}-${sort ?? "new"}-${totalCount}`}
+      key={`${categoryId ?? "all"}-${cityId ?? ""}-${search ?? ""}-${sort ?? "new"}-${lat ?? ""}-${lng ?? ""}-${radiusKm ?? ""}-${totalCount}`}
       initialTasks={orders}
       initialCursor={nextCursor}
       categoryId={categoryId}
       cityId={cityId}
       search={search}
       sort={sort}
+      lat={lat}
+      lng={lng}
+      radiusKm={radiusKm}
       totalLabel={`${totalCount} ${pluralize(totalCount, ["заказ", "заказа", "заказов"])}`}
       isDefaultFilter={isDefaultFilter}
     />

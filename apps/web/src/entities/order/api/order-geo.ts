@@ -9,6 +9,8 @@ import type { NearbyOrderCard } from "@/shared/types/domain";
 
 interface RawNearbyOrder {
   id: string;
+  orderNumber: number;
+  slug: string | null;
   title: string;
   description: string;
   budget: number | null;
@@ -42,6 +44,8 @@ export async function getOrdersNearby(
       Prisma.sql`
       SELECT 
         t.id, 
+        t."orderNumber",
+        t.slug,
         t.title, 
         t.description, 
         t.budget, 
@@ -57,7 +61,7 @@ export async function getOrdersNearby(
         city.slug as "citySlug",
         (SELECT COUNT(*)::int FROM "Proposal" p WHERE p."orderId" = t.id) as "proposalCount",
         ST_Distance(
-          t."orderLocation"::geography, 
+          COALESCE(t."orderLocation", ST_SetSRID(ST_MakePoint(t."lng", t."lat"), 4326))::geography,
           ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
         ) as distance
       FROM "Order" t
@@ -66,8 +70,10 @@ export async function getOrdersNearby(
       JOIN "City" city ON t."cityId" = city.id
       WHERE 
         t.status = 'OPEN' 
+        AND t."lat" IS NOT NULL
+        AND t."lng" IS NOT NULL
         AND ST_DWithin(
-          t."orderLocation"::geography, 
+          COALESCE(t."orderLocation", ST_SetSRID(ST_MakePoint(t."lng", t."lat"), 4326))::geography,
           ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography, 
           ${radiusMeters}
         )
@@ -78,6 +84,8 @@ export async function getOrdersNearby(
 
     return orders.map((t: RawNearbyOrder) => ({
       id: t.id,
+      orderNumber: t.orderNumber,
+      slug: t.slug,
       title: t.title,
       description: t.description,
       budget: t.budget ? Number(t.budget) : null,

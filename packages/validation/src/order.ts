@@ -19,6 +19,8 @@ export const createOrderSchema = z.object({
       { message: "Бюджет не может быть отрицательным" }
     ),
   address: z.string().min(5, "Адрес слишком короткий").optional(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
   images: z.array(z.string()).optional(),
 });
 

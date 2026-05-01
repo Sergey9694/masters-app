@@ -1,18 +1,33 @@
 "use client";
 
 import { useTransition } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, SaveIcon } from "lucide-react";
 import { z } from "zod";
 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/shared/ui/form";
+import { Input } from "@/shared/ui/input";
+import { Textarea } from "@/shared/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/ui/select";
 import { cn } from "@/shared/lib/cn";
 import { updateOrderAction } from "../api/update-order-action";
-import { ensureCityAction } from "@/shared/lib/ensure-city-action";
-import { GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
-import { DadataAddressInput } from "@/shared/ui/DadataAddressInput";
+import { AddressPicker } from "./AddressPicker";
 
 const schema = z.object({
   title: z.string().min(5, "Не менее 5 символов").max(100, "Слишком длинный"),
@@ -26,6 +41,8 @@ const schema = z.object({
       message: "Бюджет не может быть отрицательным",
     }),
   address: z.string().optional(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -40,18 +57,20 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      ...defaultValues,
+      lat: defaultValues.lat ?? null,
+      lng: defaultValues.lng ?? null,
+    },
+  });
+
   const {
     register,
-    control,
     handleSubmit,
-    setValue,
-    setError,
-    clearErrors,
     formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
-    defaultValues,
-  });
+  } = form;
 
   const onSubmit = (vals: FormValues) => {
     startTransition(async () => {
@@ -67,132 +86,118 @@ export function OrderEditFormLight({ orderId, defaultValues, categories }: Props
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      <Field label="Заголовок" error={errors.title?.message}>
-        <input
-          {...register("title")}
-          placeholder="Кратко опишите задачу"
-          className={inputCls(!!errors.title)}
-        />
-      </Field>
-
-      <Field label="Описание" error={errors.description?.message}>
-        <textarea
-          {...register("description")}
-          rows={5}
-          placeholder="Подробности, требования, сроки..."
-          className={cn(
-            "w-full resize-y rounded-xl border bg-background p-3 text-sm",
-            "focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10",
-            errors.description ? "border-destructive" : "border-border"
-          )}
-        />
-      </Field>
-
-      <Field label="Категория" error={errors.categoryId?.message}>
-        <select {...register("categoryId")} className={inputCls(!!errors.categoryId)}>
-          <option value="">Выберите...</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Бюджет (₽)" hint="Оставьте пустым, если не определились" error={errors.budget?.message}>
-        <input
-          type="number"
-          min={0}
-          onKeyDown={(e) => {
-            if (e.key === "-" || e.key === "e" || e.key === "E") e.preventDefault();
-          }}
-          {...register("budget")}
-          placeholder="Например: 5000"
-          className={inputCls(!!errors.budget)}
-        />
-      </Field>
-
-      <Field label="Адрес" hint="Где нужно выполнить работу" error={errors.address?.message}>
-        <Controller
-          control={control}
-          name="address"
+    <Form {...form}>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+        <FormField
+          control={form.control}
+          name="title"
           render={({ field }) => (
-            <DadataAddressInput
-              value={field.value ?? ""}
-              onChange={field.onChange}
-              onSelect={async (s) => {
-                const cityName = s.data.city || s.data.settlement || s.data.city_with_type;
-                const regionName = s.data.region_with_type || s.data.region;
-
-                if (cityName && regionName) {
-                  try {
-                    const { id } = await ensureCityAction({
-                      name: cityName,
-                      fiasId: s.data.city_fias_id || s.data.settlement_fias_id,
-                      region: regionName,
-                      lat: s.data.geo_lat && !isNaN(parseFloat(s.data.geo_lat)) ? parseFloat(s.data.geo_lat) : null,
-                      lng: s.data.geo_lon && !isNaN(parseFloat(s.data.geo_lon)) ? parseFloat(s.data.geo_lon) : null,
-                    });
-
-                    setValue("cityId", id, { shouldValidate: true });
-                    clearErrors("address");
-                  } catch (error) {
-                    console.error("[CITY_ERROR]", error);
-                    setError("address", { 
-                      type: "manual", 
-                      message: GEO_LIMIT_MESSAGE
-                    });
-                  }
-                }
-              }}
-              onBlur={() => {}} // Remove onBlur to prevent clearing manual errors
-              hasError={!!errors.address}
-            />
+            <FormItem>
+              <FormLabel className="text-sm font-normal text-foreground px-1">
+                Заголовок
+              </FormLabel>
+              <FormControl>
+                <Input 
+                  {...field} 
+                  placeholder="Кратко опишите задачу" 
+                  className="h-12 rounded-xl border-border/60 bg-surface focus:ring-primary/20"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
           )}
         />
-      </Field>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className={cn(
-          "mt-2 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm",
-          "transition-all hover:brightness-110 disabled:opacity-50"
-        )}
-      >
-        {isPending ? <Loader2 className="size-4 animate-spin" /> : <SaveIcon className="size-4" />}
-        Сохранить изменения
-      </button>
-    </form>
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-sm font-normal text-foreground px-1">
+                Описание
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  rows={5}
+                  placeholder="Подробности, требования, сроки..."
+                  className="min-h-[120px] rounded-xl border-border/60 bg-surface focus:ring-primary/20"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-normal text-foreground px-1">
+                  Категория
+                </FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger className="h-12 rounded-xl border-border/60 bg-surface focus:ring-primary/20">
+                      <SelectValue placeholder="Выберите категорию" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="budget"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-sm font-normal text-foreground px-1">
+                  Бюджет (₽)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    min={0}
+                    placeholder="Например: 5000"
+                    onKeyDown={(e) => {
+                      if (e.key === "-" || e.key === "e" || e.key === "E") e.preventDefault();
+                    }}
+                    className="h-12 rounded-xl border-border/60 bg-surface focus:ring-primary/20"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <AddressPicker form={form} />
+
+        <button
+          type="submit"
+          disabled={isPending}
+          className={cn(
+            "mt-2 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm",
+            "transition-all hover:brightness-110 disabled:opacity-50"
+          )}
+        >
+          {isPending ? <Loader2 className="size-4 animate-spin" /> : <SaveIcon className="size-4" />}
+          Сохранить изменения
+        </button>
+      </form>
+    </Form>
   );
 }
 
-function Field({
-  label,
-  hint,
-  error,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-xs font-medium text-muted-foreground">{label}</span>
-      {children}
-      {hint && !error && <span className="text-xs text-muted-foreground/80">{hint}</span>}
-      {error && <span className="text-xs text-destructive">{error}</span>}
-    </label>
-  );
-}
-
-function inputCls(hasError: boolean) {
-  return cn(
-    "h-11 w-full rounded-xl border bg-background px-3 text-sm",
-    "focus:border-primary/60 focus:outline-none focus:ring-4 focus:ring-primary/10",
-    hasError ? "border-destructive" : "border-border"
-  );
-}

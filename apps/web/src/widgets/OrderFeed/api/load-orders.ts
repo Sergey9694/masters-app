@@ -10,6 +10,9 @@ interface LoadOrdersParams {
   search?: string;
   sort?: OrderSort;
   cursor?: string; // id of last order
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }
 
 interface LoadOrdersResult {

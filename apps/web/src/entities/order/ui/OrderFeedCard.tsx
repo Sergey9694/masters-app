@@ -60,7 +60,9 @@ export function OrderFeedCard({ order, href, variant = "feed", price, isChosen, 
             {!isMy && (
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="size-3" />
-                {order.city.name}
+                {order.distance !== undefined
+                  ? `${(order.distance / 1000).toFixed(order.distance < 10000 ? 1 : 0)} км`
+                  : order.city.name}
               </span>
             )}
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">

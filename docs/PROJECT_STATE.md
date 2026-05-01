@@ -3,7 +3,29 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-30 (Deploy CI gate)
+> 🕓 Последнее обновление: 2026-05-01 (Yandex Maps CSP & Coordinate Fix)
+
+---
+
+## Обновление 2026-05-01 (Yandex Maps & Form Stabilization)
+- **Form Context Fix**: Исправлена критическая ошибка `TypeError: Cannot destructure property 'getFieldState' of 'useFormContext()'` в `OrderEditFormLight.tsx`. Теперь форма обернута в провайдер `<Form />` из `shared/ui/form`, что обеспечивает корректную работу `AddressPicker` и других компонентов, использующих `useFormField`.
+- **Coordinate Order Fix**: В `shared/lib/yandex-maps.ts` добавлен параметр `coordorder: "longlat"` при загрузке API. Это исправило проблему некорректного отображения точек на карте (путаница Latitude/Longitude), так как проект использует формат `[lng, lat]`.
+- **CSP Stabilization**: Исправлены ошибки блокировки ресурсов Yandex Maps (img-src, connect-src). Добавлены домены `yastatic.net`, `yandex.ru`, `yandex.net`, а также `*.api-maps.yandex.ru` в белый список Content Security Policy. Устранена блокировка курсоров и логов.
+- **Verification**: `tsc` — PASS. Runtime ошибки в форме редактирования заказа устранены. Карта отображается корректно и центрируется на правильных координатах.
+
+---
+
+## Обновление 2026-05-01 (Phase 10 Geo + Yandex Maps Stabilization)
+- **Yandex Maps v3 Stabilization**: Исправлены критические ошибки инициализации карт (runtime error при цепочечном вызове `addChild`). Компоненты `YandexOrderMap`, `YandexOrdersMap` и `AddressPicker` переведены на пошаговую регистрацию слоев.
+- **Initialization Resilience**: В `YandexOrderMap` внедрен механизм предотвращения повторной инициализации через проверку `mapRef`. Теперь при изменении координат карта плавно перемещается через `setLocation` вместо пересоздания инстанса.
+- **Coordinate Persistence**: Подтверждена и стабилизирована логика сохранения координат. `OrderService` корректно обрабатывает `lat/lng` из форм, а `syncOrderLocation` синхронизирует их с PostGIS-полем `orderLocation`.
+- **Access Control Verification**: Подтверждено, что ошибка 401 на эндпоинте `/api/v1/orders/map-points` является ожидаемым поведением для неавторизованных пользователей (защита точных координат заказов). Для гостей в ленте отображается соответствующая заглушка.
+- **Verification**: `tsc` — PASS. UI-стабильность проверена (карты в ленте, в карточке заказа и в форме создания).
+
+---
+
+## Обновление 2026-05-01 (Phase 10 Geo + Yandex Maps)
+- **Geo architecture verdict**: прежнее решение было неполным: `orderLocation` не заполнялся, `lat/lng` у заказов отсутствовали, фильтр `lat/lng` не доходил до `orderService.list`. Это исправлено.
 
 ---
 
@@ -103,7 +125,7 @@
 | 7.1| Security Audit & Remediation (Enterprise Gate) | ✅ Завершена |
 | 8 | Тесты и CI/CD | 🟡 Базовый контур завершён |
 | 9 | React Native (Expo) | ❌ Не начата |
-| 10 | Geo-поиск и карты | ❌ Не начата |
+| 10 | Geo-поиск и карты | ✅ Завершена (Web) |
 | 11–12 | Полировка, Монетизация | ❌ Не начата |
 
 ---

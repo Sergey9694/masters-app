@@ -10,6 +10,7 @@ const citySchema = z.object({
   region: z.string().optional().nullable(),
   lat: z.number().optional().nullable(),
   lng: z.number().optional().nullable(),
+  isCityCenter: z.boolean().optional(),
 });
 
 /**
@@ -17,12 +18,16 @@ const citySchema = z.object({
  * Если населенного пункта нет, создает его (только для регионов ЮФО).
  * Автоматически привязывает все активные категории к новому пункту.
  */
-export async function ensureCityAction(data: z.infer<typeof citySchema>) {
+export async function ensureCityAction(input: z.infer<typeof citySchema>) {
+  const data = citySchema.parse(input);
+
   if (!isRegionSupported(data.region)) {
     throw new Error(GEO_LIMIT_MESSAGE);
   }
 
   const slug = generateSlug(data.name);
+  const canUseCoordinates =
+    data.isCityCenter === true && typeof data.lat === "number" && typeof data.lng === "number";
 
   const existingCity = await db.city.findFirst({
     where: {
@@ -34,7 +39,7 @@ export async function ensureCityAction(data: z.infer<typeof citySchema>) {
   });
 
   if (existingCity) {
-    if ((!existingCity.fiasId && data.fiasId) || (!existingCity.lat && data.lat)) {
+    if ((!existingCity.fiasId && data.fiasId) || (!existingCity.lat && canUseCoordinates)) {
       await db.city.update({
         where: { id: existingCity.id },
         data: {
@@ -53,8 +58,8 @@ export async function ensureCityAction(data: z.infer<typeof citySchema>) {
       slug: `${slug}-${Math.random().toString(36).slice(2, 5)}`,
       fiasId: data.fiasId,
       region: data.region,
-      lat: data.lat,
-      lng: data.lng,
+      lat: canUseCoordinates ? data.lat : null,
+      lng: canUseCoordinates ? data.lng : null,
       isActive: true,
     }
   });

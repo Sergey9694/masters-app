@@ -245,6 +245,8 @@ model Order {
   images      String[]
   budget      Float?
   address     String?
+  lat         Float?
+  lng         Float?
   status      OrderStatus @default(OPEN)
 
   orderLocation Unsupported("geometry(Point, 4326)")?
@@ -254,6 +256,10 @@ model Order {
   conversations Conversation[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  @@index([cityId, categoryId, status])
+  @@index([status, createdAt])
+  @@index([lat, lng])
 }
 
 enum OrderStatus {

@@ -17,8 +17,8 @@ import Script from "next/script";
 import { db } from "@/shared/lib/db";
 import { getCurrentUser } from "@/shared/lib/get-user";
 import { cn } from "@/shared/lib/cn";
-import { getMapUrl } from "@/shared/lib/maps";
 import { formatSmartDate } from "@/shared/lib/date";
+import { YandexOrderMap } from "@/shared/ui/YandexOrderMap";
 
 import { OrderGalleryLight } from "@/features/order-view/ui/OrderGalleryLight";
 import { RespondFormLight } from "@/features/proposal/ui/RespondFormLight";
@@ -238,22 +238,10 @@ export default async function OrderDetailPage({ params }: PageProps) {
                     : "Договорная"}
                 </span>
               </div>
-              {order.address ? (
-                <a
-                  href={getMapUrl(order.address)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex max-w-full items-center gap-1.5 text-primary underline-offset-4 hover:underline"
-                >
-                  <MapPin className="size-4 shrink-0" />
-                  <span className="wrap-anywhere min-w-0">{order.address}</span>
-                </a>
-              ) : (
-                <div className="inline-flex items-center gap-1.5 text-muted-foreground">
-                  <MapPin className="size-4" />
-                  {order.city.name}
-                </div>
-              )}
+              <div className="inline-flex max-w-full items-center gap-1.5 text-muted-foreground">
+                <MapPin className="size-4 shrink-0" />
+                <span className="wrap-anywhere min-w-0">{order.address || order.city.name}</span>
+              </div>
               <div className="inline-flex items-center gap-1.5 text-muted-foreground">
                 <MessageSquare className="size-4" />
                 {order.proposals.length} откликов
@@ -267,6 +255,17 @@ export default async function OrderDetailPage({ params }: PageProps) {
             {order.images.length > 0 && (
               <div className="mt-6">
                 <OrderGalleryLight images={order.images} title={order.title} />
+              </div>
+            )}
+
+            {(order.address || order.lat !== null || order.lng !== null) && (
+              <div className="mt-6">
+                <YandexOrderMap
+                  lat={order.lat}
+                  lng={order.lng}
+                  address={order.address}
+                  cityName={order.city.name}
+                />
               </div>
             )}
           </header>

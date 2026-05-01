@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { MapPin, ChevronDown, Loader2, Navigation, Search } from "lucide-react";
 import { Button } from "@/shared/ui/button";
 import { useLocation } from "@/shared/lib/hooks/use-location";
-import { detectCityAction, getCityByName, getAllCities } from "../actions";
+import { detectCityAction, getAllCities } from "../actions";
 import { cn } from "@/shared/lib/cn";
 import { toast } from "sonner";
 import { setCookie, getCookie } from "@/shared/lib/cookies";
@@ -79,12 +79,11 @@ export function CitySelector() {
       if (urlCityId && await loadInitialCity(urlCityId)) return;
       if (savedCityId && await loadInitialCity(savedCityId)) return;
       
-      // 3. Автоопределение если ничего не найдено
-      handleAutoDetect(true);
+      setIsInitialLoading(false);
     };
 
     init();
-  }, [handleAutoDetect]);
+  }, []);
 
   // Загрузка списка городов при открытии
   useEffect(() => {

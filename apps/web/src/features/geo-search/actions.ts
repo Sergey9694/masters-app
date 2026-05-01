@@ -1,25 +1,63 @@
 "use server";
 
-import { db } from "@/shared/lib/db";
-import { City } from "@prisma/client";
-import { detectCityByIp, geolocate } from "@/shared/lib/dadata";
+import { headers } from "next/headers";
+import { Prisma } from "@prisma/client";
 
-/**
- * Находит ближайший город в базе данных по координатам.
- * Использует PostGIS raw query.
- */
-export async function detectClosestCity(lat: number, lng: number): Promise<City | null> {
+import { db } from "@/shared/lib/db";
+import { detectCityByIp } from "@/shared/lib/dadata";
+import { checkRateLimit } from "@/shared/lib/rate-limit";
+import { toGeoPoint } from "@/shared/lib/geo-utils";
+
+const citySelect = {
+  id: true,
+  name: true,
+  slug: true,
+  fiasId: true,
+  region: true,
+  lat: true,
+  lng: true,
+  isActive: true,
+} satisfies Prisma.CitySelect;
+
+export type GeoCity = Prisma.CityGetPayload<{ select: typeof citySelect }>;
+
+function targetPointSql(lat: number, lng: number) {
+  return Prisma.sql`ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)`;
+}
+
+function parseNumber(value: string | undefined) {
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export async function detectClosestCity(lat: number, lng: number): Promise<GeoCity | null> {
+  const point = toGeoPoint(lat, lng);
+  if (!point) {
+    return null;
+  }
+
   try {
-    // Поиск ближайшего активного города в радиусе 100км
-    const cities = await db.$queryRawUnsafe<City[]>(
-      `SELECT id, name, slug, region, "isActive", "createdAt"
-       FROM "City"
-       WHERE "isActive" = true
-       ORDER BY location <-> ST_SetSRID(ST_MakePoint($1, $2), 4326)
-       LIMIT 1`,
-      lng, // ST_MakePoint(lng, lat)
-      lat
-    );
+    const cities = await db.$queryRaw<GeoCity[]>`
+      SELECT
+        id,
+        name,
+        slug,
+        "fiasId",
+        region,
+        lat,
+        lng,
+        "isActive"
+      FROM "City"
+      WHERE
+        "isActive" = true
+        AND (
+          "location" IS NOT NULL
+          OR ("lat" IS NOT NULL AND "lng" IS NOT NULL)
+        )
+      ORDER BY COALESCE("location", ST_SetSRID(ST_MakePoint("lng", "lat"), 4326)) <-> ${targetPointSql(point.lat, point.lng)}
+      LIMIT 1
+    `;
 
     return cities[0] || null;
   } catch (error) {
@@ -28,85 +66,77 @@ export async function detectClosestCity(lat: number, lng: number): Promise<City 
   }
 }
 
-/**
- * Получает город по его названию (для фолбека от IP-API или DaData)
- */
-export async function getCityByName(name: string): Promise<City | null> {
+export async function getCityByName(name: string): Promise<GeoCity | null> {
   return db.city.findFirst({
     where: {
       name: { contains: name, mode: "insensitive" },
       isActive: true,
     },
+    select: citySelect,
   });
 }
 
-/**
- * Возвращает список всех активных городов
- */
-export async function getAllCities(): Promise<City[]> {
+export async function getAllCities(): Promise<GeoCity[]> {
   return db.city.findMany({
     where: { isActive: true },
+    select: citySelect,
     orderBy: { name: "asc" },
   });
 }
-export async function detectCityAction(lat?: number, lng?: number): Promise<City | null> {
-  try {
-    console.log(`[GEO_ACTION] Detecting city for: lat=${lat}, lng=${lng}`);
 
-    // Если есть координаты, используем PostGIS поиск как самый точный
+export async function detectCityAction(lat?: number, lng?: number): Promise<GeoCity | null> {
+  try {
+    const headerList = await headers();
+    const ip =
+      headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      headerList.get("x-real-ip")?.trim() ||
+      "unknown";
+
+    const rl = await checkRateLimit({ key: `geo-detect:${ip}`, limit: 20, windowSec: 60 });
+    if (!rl.allowed) {
+      return null;
+    }
+
     if (lat !== undefined && lng !== undefined) {
       const closest = await detectClosestCity(lat, lng);
       if (closest) {
-        console.log(`[GEO_ACTION] Closest city found via PostGIS: ${closest.name}`);
         return closest;
       }
     }
 
-    // Если координат нет или PostGIS не нашел, пробуем через DaData по IP
     const res = await detectCityByIp();
     const cityName = res?.data?.city;
     const fiasId = res?.data?.city_fias_id;
-    const ipLat = res?.data?.geo_lat ? parseFloat(res.data.geo_lat) : undefined;
-    const ipLng = res?.data?.geo_lon ? parseFloat(res.data.geo_lon) : undefined;
-    
-    console.log(`[GEO_ACTION] DaData IP detect result:`, { cityName, fiasId, ipLat, ipLng });
+    const ipLat = parseNumber(res?.data?.geo_lat);
+    const ipLng = parseNumber(res?.data?.geo_lon);
 
-    // 1. Приоритетный поиск по fiasId (самый точный)
     if (fiasId) {
       const city = await db.city.findFirst({
-        where: { fiasId, isActive: true }
+        where: { fiasId, isActive: true },
+        select: citySelect,
       });
       if (city) {
-        console.log(`[GEO_ACTION] City found in DB by fiasId: ${city.name}`);
         return city;
       }
     }
 
-    // 2. Фолбек по названию
     if (cityName) {
       const city = await db.city.findFirst({
-        where: { 
-          name: { contains: cityName, mode: "insensitive" }, 
-          isActive: true 
-        }
+        where: {
+          name: { contains: cityName, mode: "insensitive" },
+          isActive: true,
+        },
+        select: citySelect,
       });
       if (city) {
-        console.log(`[GEO_ACTION] City found in DB by name: ${city.name}`);
         return city;
       }
     }
 
-    // Фолбек: если по имени не нашли, но есть координаты от IP - ищем ближайший
     if (ipLat !== undefined && ipLng !== undefined) {
-      console.log(`[GEO_ACTION] Falling back to nearest city via IP coordinates...`);
-      const closest = await detectClosestCity(ipLat, ipLng);
-      if (closest) {
-        console.log(`[GEO_ACTION] Found nearest city as fallback: ${closest.name}`);
-        return closest;
-      }
+      return detectClosestCity(ipLat, ipLng);
     }
 
-    console.warn(`[GEO_ACTION] No city found in DB for cityName: ${cityName}`);
     return null;
   } catch (error) {
     console.error("[GEO_ACTION] Detect city failed:", error);

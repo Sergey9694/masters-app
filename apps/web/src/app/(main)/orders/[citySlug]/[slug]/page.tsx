@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { db } from "@/shared/lib/db";
 import { OrderFeed } from "@/widgets/OrderFeed/ui/OrderFeed";
 import { OrdersFilters } from "@/widgets/OrdersFilters";
+import { YandexOrdersMap } from "@/widgets/OrdersMap";
 import { cityService } from "@/services/city.service";
 import { categoryService } from "@/services/category.service";
 import type { OrderSort } from "@/services/order.service";
 import { getCurrentUser } from "@/shared/lib/get-user";
+import { parseGeoQuery, parseOrdersViewMode } from "@/shared/lib/orders-query";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,10 @@ interface CategoryCityPageProps {
   searchParams: Promise<{
     search?: string;
     sort?: string;
+    view?: string;
+    lat?: string;
+    lng?: string;
+    radiusKm?: string;
   }>;
 }
 
@@ -35,7 +41,7 @@ export async function generateMetadata({ params }: CategoryCityPageProps) {
 
 export default async function CategoryCityPage({ params, searchParams }: CategoryCityPageProps) {
   const { citySlug, slug } = await params;
-  const { search, sort } = await searchParams;
+  const { search, sort, view, lat, lng, radiusKm } = await searchParams;
   
   const [city, category] = await Promise.all([
     cityService.getBySlug(citySlug),
@@ -45,6 +51,8 @@ export default async function CategoryCityPage({ params, searchParams }: Categor
   if (!city || !category) notFound();
 
   const user = await getCurrentUser();
+  const viewMode = parseOrdersViewMode(view);
+  const geo = parseGeoQuery(lat, lng, radiusKm);
 
   const [categories, cities] = await Promise.all([
     db.category.findMany({
@@ -54,7 +62,7 @@ export default async function CategoryCityPage({ params, searchParams }: Categor
     }),
     db.city.findMany({
       where: { isActive: true },
-      select: { id: true, name: true, slug: true },
+      select: { id: true, name: true, slug: true, lat: true, lng: true },
       orderBy: { name: "asc" },
     }),
   ]);
@@ -79,10 +87,14 @@ export default async function CategoryCityPage({ params, searchParams }: Categor
         isProvider={!!user?.providerProfile}
         initialCityId={city.id}
         initialCategoryId={category.id}
+        initialView={viewMode}
+        initialLat={geo.lat}
+        initialLng={geo.lng}
+        initialRadiusKm={geo.radiusKm}
       />
 
       <Suspense
-        key={`${city.id}-${category.id}-${search ?? ""}-${sort ?? ""}`}
+        key={`${city.id}-${category.id}-${search ?? ""}-${sort ?? ""}-${viewMode}-${geo.lat ?? ""}-${geo.lng ?? ""}-${geo.radiusKm ?? ""}`}
         fallback={
           <div className="flex flex-col gap-4">
             {[0, 1, 2].map((i) => (
@@ -94,12 +106,27 @@ export default async function CategoryCityPage({ params, searchParams }: Categor
           </div>
         }
       >
-        <OrderFeed
-          categoryId={category.id}
-          cityId={city.id}
-          search={search}
-          sort={normalizedSort}
-        />
+        {viewMode === "map" ? (
+          <YandexOrdersMap
+            categoryId={category.id}
+            cityId={city.id}
+            search={search}
+            lat={geo.lat}
+            lng={geo.lng}
+            radiusKm={geo.radiusKm}
+            initialCenter={city.lat !== null && city.lng !== null ? { lat: city.lat, lng: city.lng } : undefined}
+          />
+        ) : (
+          <OrderFeed
+            categoryId={category.id}
+            cityId={city.id}
+            search={search}
+            sort={normalizedSort}
+            lat={geo.lat}
+            lng={geo.lng}
+            radiusKm={geo.radiusKm}
+          />
+        )}
       </Suspense>
     </div>
   );
