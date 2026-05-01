@@ -2954,6 +2954,7 @@ SSR:            Leaflet только через dynamic import с ssr: false
 
 [ ] A.6  Deploy reliability:
          - держать cache-to type=gha non-blocking, чтобы падение cache export не блокировало прод-деплой;
+         - deploy-gate добавлен: build/deploy ждут успешный CI workflow для того же commit SHA;
          - добавить post-deploy healthcheck /api/health и, позже, staging/canary перед production rollout.
 
 [~] A.7  CI services for integration tests:

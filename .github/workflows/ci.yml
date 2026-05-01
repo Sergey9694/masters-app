@@ -13,6 +13,8 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Fake CI-only values. Do not use production secrets here.
+# Production secrets live in GitHub Secrets and the VPS .env consumed by docker-compose.yml.
 env:
   NODE_VERSION: "20"
   NEXT_TELEMETRY_DISABLED: "1"

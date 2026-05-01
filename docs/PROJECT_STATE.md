@@ -3,7 +3,16 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-04-30 (CI E2E healthcheck)
+> 🕓 Последнее обновление: 2026-04-30 (Deploy CI gate)
+
+---
+
+## Обновление 2026-04-30 (Deploy CI gate)
+- **Deploy after CI**: `.github/workflows/deploy.yml` получил job `wait-for-ci`, который ждёт успешный push-run workflow `CI` для того же branch + commit SHA и блокирует `verify/build/deploy`, если CI ещё идёт или завершился неуспешно.
+- **Branch deploy compatibility**: deploy workflow пока остаётся на `push`, потому что чистый `workflow_run` зависит от наличия workflow-файла на default branch (`master`); gate гарантирует, что реальные deploy jobs не начнутся до зелёного CI.
+- **CI env comments**: в `ci.yml` и `deploy.yml` добавлены комментарии, что видимые env-значения являются fake CI-only placeholders, а production secrets должны оставаться в GitHub Secrets и VPS `.env`.
+- **Notification**: Telegram notify теперь показывает `CI gate` вместе с `verify/build/deploy` статусами.
+- **Security verdict**: PASS_WITH_NOTES. Runtime-код и secrets не менялись; изменения ограничены GitHub Actions orchestration и документацией.
 
 ---
 

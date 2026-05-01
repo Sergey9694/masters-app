@@ -1,10 +1,13 @@
 name: Deploy → Production (Master)
 
 on:
+  # Branch deploys still start on push, but wait-for-ci blocks verify/build/deploy
+  # until the CI workflow for the same commit finishes successfully.
   push:
     branches: ["master", "refactor/uslugi-ryadom"]
 
 permissions:
+  actions: read
   contents: read
 
 env:
@@ -14,8 +17,60 @@ env:
   TARGET_DIR: masters_app
 
 jobs:
+  wait-for-ci:
+    name: Wait for CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI workflow success
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SOURCE_BRANCH: ${{ github.ref_name }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          echo "Waiting for CI workflow on ${SOURCE_BRANCH}/${SOURCE_SHA}..."
+
+          for attempt in {1..90}; do
+            if ! RESPONSE="$(curl -fsSL \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "https://api.github.com/repos/${REPO}/actions/workflows/ci.yml/runs?event=push&per_page=20")"; then
+              echo "GitHub API is temporarily unavailable. Attempt ${attempt}/90."
+              sleep 20
+              continue
+            fi
+
+            RUN_INFO="$(printf '%s' "$RESPONSE" | node -e 'const fs = require("node:fs"); const data = JSON.parse(fs.readFileSync(0, "utf8")); const run = (data.workflow_runs || []).find((item) => item.head_sha === process.env.SOURCE_SHA && item.head_branch === process.env.SOURCE_BRANCH && item.event === "push"); if (run) process.stdout.write([run.id, run.status, run.conclusion || "", run.html_url].join("|"));')"
+
+            if [ -z "$RUN_INFO" ]; then
+              echo "CI workflow run is not visible yet. Attempt ${attempt}/90."
+              sleep 20
+              continue
+            fi
+
+            IFS='|' read -r CI_RUN_ID CI_STATUS CI_CONCLUSION CI_URL <<< "$RUN_INFO"
+            echo "CI run ${CI_RUN_ID}: status=${CI_STATUS}, conclusion=${CI_CONCLUSION:-pending}"
+
+            if [ "$CI_STATUS" = "completed" ] && [ "$CI_CONCLUSION" = "success" ]; then
+              echo "CI workflow passed: ${CI_URL}"
+              exit 0
+            fi
+
+            if [ "$CI_STATUS" = "completed" ]; then
+              echo "::error::CI workflow finished with conclusion=${CI_CONCLUSION}. Deploy is blocked. ${CI_URL}"
+              exit 1
+            fi
+
+            sleep 20
+          done
+
+          echo "::error::Timed out waiting for CI workflow success."
+          exit 1
+
   verify:
     runs-on: ubuntu-latest
+    needs: wait-for-ci
     services:
       redis:
         image: redis:7-alpine
@@ -26,6 +81,8 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    # Fake CI-only values for verify. Do not use production secrets here.
+    # Production secrets come from GitHub Secrets and the VPS .env consumed by docker-compose.yml.
     env:
       NEXT_TELEMETRY_DISABLED: "1"
       AUTH_SECRET: "ci_auth_secret_32_chars_minimum_value"
@@ -141,7 +198,7 @@ jobs:
 
   notify:
     runs-on: ubuntu-latest
-    needs: [verify, build-and-push, deploy]
+    needs: [wait-for-ci, verify, build-and-push, deploy]
     if: always()
     steps:
       - name: Telegram Notification
@@ -152,8 +209,9 @@ jobs:
           VERIFY_STATUS="${{ needs.verify.result }}"
           BUILD_STATUS="${{ needs.build-and-push.result }}"
           DEPLOY_STATUS="${{ needs.deploy.result }}"
+          CI_GATE_STATUS="${{ needs.wait-for-ci.result }}"
 
-          if [[ "$VERIFY_STATUS" == "success" && "$BUILD_STATUS" == "success" && "$DEPLOY_STATUS" == "success" ]]; then
+          if [[ "$CI_GATE_STATUS" == "success" && "$VERIFY_STATUS" == "success" && "$BUILD_STATUS" == "success" && "$DEPLOY_STATUS" == "success" ]]; then
             ICON="✅"
             STATUS_TEXT="Masters App: Деплой успешен 🚀"
           else
@@ -164,6 +222,7 @@ jobs:
           MESSAGE="${ICON} *${{ env.DOCKER_IMAGE_NAME }}*
           ${STATUS_TEXT}
 
+          ✅ CI gate: \`${CI_GATE_STATUS}\`
           🧪 Проверки: \`${VERIFY_STATUS}\`
           📦 Ветка: \`${{ github.ref_name }}\`
           🔨 Коммит: \`${{ github.sha }}\`

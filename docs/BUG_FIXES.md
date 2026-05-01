@@ -4,6 +4,22 @@
 
 ---
 
+## [2026-04-30] Deploy мог стартовать при красном CI
+
+**Симптом:** `Deploy → Production` запускался параллельно с workflow `CI`. Из-за этого production deploy мог пройти, даже если отдельная job `CI / E2E Smoke` завершалась с ошибкой.
+
+**Причина:** `deploy.yml` слушал `push` напрямую и имел собственный `verify`, но не зависел от результата workflow `CI`. GitHub Actions workflows по умолчанию независимы друг от друга.
+
+**Решение:**
+- В `deploy.yml` добавлен job `wait-for-ci`, который через GitHub Actions API ждёт push-run workflow `CI` для того же `head_sha` и `head_branch`.
+- `verify` теперь зависит от `wait-for-ci`, поэтому `build-and-push` и `deploy` не начнутся, пока CI не завершится `success`.
+- Telegram notify теперь показывает отдельный статус `CI gate`.
+- В `ci.yml` и `deploy.yml` добавлены комментарии: видимые env-значения являются fake CI-only placeholders, production secrets остаются только в GitHub Secrets и VPS `.env`.
+
+**Security verdict:** PASS_WITH_NOTES — runtime-код и secrets не менялись; добавлен CI/CD orchestration gate.
+
+---
+
 ## [2026-04-30] CI/CD E2E: Playwright webServer ждал `/` вместо healthcheck
 
 **Симптом:** свежий CI run `25183625449` на коммите `d838449` падал только в job `E2E Smoke`; шаг `npm run test:e2e --workspace=@uslugi/web` завершался примерно через 120 секунд.
