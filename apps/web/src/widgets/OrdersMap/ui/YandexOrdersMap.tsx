@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, MapPin, SearchX } from "lucide-react";
+import { createYandexLayouts } from "../lib/YandexMapsLayouts";
 
 import { cn } from "@/shared/lib/cn";
 import {
@@ -80,22 +81,36 @@ export function YandexOrdersMap({
   const [points, setPoints] = useState<OrderMapPoint[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "empty" | "unauthorized" | "error">("loading");
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [viewport, setViewport] = useState<{
+    minLat: number;
+    minLng: number;
+    maxLat: number;
+    maxLng: number;
+  } | null>(null);
+  const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
     if (categoryId && categoryId !== "all") params.set("categoryId", categoryId);
     if (cityId) params.set("cityId", cityId);
     if (search) params.set("search", search);
-    if (lat !== undefined && lng !== undefined) {
-      params.set("lat", String(lat));
-      params.set("lng", String(lng));
-      params.set("radiusKm", String(radiusKm ?? 25));
+    
+    if (viewport) {
+      params.set("minLat", viewport.minLat.toFixed(6));
+      params.set("minLng", viewport.minLng.toFixed(6));
+      params.set("maxLat", viewport.maxLat.toFixed(6));
+      params.set("maxLng", viewport.maxLng.toFixed(6));
+    } else if (typeof lat === "number" && typeof lng === "number") {
+      params.set("lat", lat.toString());
+      params.set("lng", lng.toString());
+      params.set("radiusKm", (radiusKm ?? 25).toString());
     }
     return params.toString();
-  }, [categoryId, cityId, lat, lng, radiusKm, search]);
+  }, [categoryId, cityId, lat, lng, radiusKm, search, viewport]);
 
   // 1. Fetch points
   useEffect(() => {
+    const controller = new AbortController();
     let disposed = false;
 
     async function loadPoints() {
@@ -107,25 +122,46 @@ export function YandexOrdersMap({
       try {
         const response = await fetch(`/api/v1/orders/map-points?${queryString}`, {
           cache: "no-store",
+          signal: controller.signal,
         });
 
-        if (!response.ok) throw new Error("Failed to fetch map points");
+        if (!response.ok) {
+          // If aborted, don't set error state
+          if (response.status === 0) return;
+          
+          const errorData = await response.json().catch(() => ({}));
+          console.error("[ORDERS_MAP] API Error:", response.status, errorData);
+          
+          // Specifically handle 429 to avoid annoying UI if it happens during rapid movement
+          if (response.status === 429) {
+            console.warn("[ORDERS_MAP] Rate limited, ignoring update");
+            return;
+          }
+          
+          throw new Error(`Failed to fetch map points: ${response.status}`);
+        }
 
         const payload = await response.json();
         if (!isMapPointsResponse(payload)) throw new Error("Invalid map points response");
 
         if (!disposed) {
           setPoints(payload.points);
-          setStatus(payload.points.length > 0 ? "ready" : "empty");
+          setStatus("ready");
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.name === "AbortError") {
+          return;
+        }
         console.error("[ORDERS_MAP] Failed to load points:", error);
         if (!disposed) setStatus("error");
       }
     }
 
     loadPoints();
-    return () => { disposed = true; };
+    return () => { 
+      disposed = true;
+      controller.abort();
+    };
   }, [queryString]);
 
   // 2. Initialize Map instance once
@@ -149,6 +185,22 @@ export function YandexOrdersMap({
 
         mapRef.current = map;
         setIsMapLoaded(true);
+
+        // Listen for viewport changes
+        let boundsTimeout: NodeJS.Timeout;
+        map.events.add("boundschange", (e: any) => {
+          clearTimeout(boundsTimeout);
+          boundsTimeout = setTimeout(() => {
+            const bounds = e.get("newBounds");
+            // CoordOrder: longlat -> [[lngMin, latMin], [lngMax, latMax]]
+            setViewport({
+              minLng: bounds[0][0],
+              minLat: bounds[0][1],
+              maxLng: bounds[1][0],
+              maxLat: bounds[1][1],
+            });
+          }, 500); // 500ms debounce for stability
+        });
         
         // Initial features update
         if (points.length > 0) {
@@ -186,14 +238,27 @@ export function YandexOrdersMap({
     if (!mapRef.current || !isMapLoaded) return;
     
     async function refreshFeatures() {
-      const ymaps3 = await loadYandexMaps();
+      const ymaps = await loadYandexMaps();
       if (mapRef.current) {
-        updateFeatures(mapRef.current, points, ymaps3);
+        updateFeatures(mapRef.current, points, ymaps);
       }
     }
     
     refreshFeatures();
-  }, [points, isMapLoaded]);
+  }, [points, isMapLoaded, selectedPointId]);
+
+  // 5. Sync BBox to URL
+  useEffect(() => {
+    if (!viewport) return;
+    
+    const params = new URLSearchParams(window.location.search);
+    params.set("minLat", viewport.minLat.toFixed(6));
+    params.set("minLng", viewport.minLng.toFixed(6));
+    params.set("maxLat", viewport.maxLat.toFixed(6));
+    params.set("maxLng", viewport.maxLng.toFixed(6));
+    
+    router.replace(`${window.location.pathname}?${params.toString()}`, { scroll: false });
+  }, [viewport, router]);
 
   async function updateFeatures(
     map: YMaps2Instance, 
@@ -207,25 +272,68 @@ export function YandexOrdersMap({
 
     if (newPoints.length === 0) return;
 
-    // Create custom cluster icons
+    const { PlacemarkLayout, ClusterLayout } = createYandexLayouts(ymaps);
+
+    // Create and configure clusterer
     const clusterer = new ymaps.Clusterer({
-      preset: "islands#invertedVioletClusterIcons",
+      clusterIconLayout: ClusterLayout,
+      clusterIconShape: {
+        type: "Rectangle",
+        coordinates: [[-60, -20], [60, 20]],
+      },
       groupByCoordinates: false,
       clusterDisableClickZoom: false,
       clusterHideIconOnBalloonOpen: false,
       geoObjectHideIconOnBalloonOpen: false,
+      gridSize: 80, // Larger grid for better performance and aggregation
+    });
+
+    // Enriched Cluster properties: calculate minPrice
+    // In v2.1, we listen to the data-layer changes of the clusterer
+    clusterer.events.add("datachange", () => {
+      const clusters = clusterer.getClusters();
+      clusters.forEach((cluster: any) => {
+        const objects = cluster.getGeoObjects();
+        let minPrice = Infinity;
+        
+        objects.forEach((obj: any) => {
+          const pointId = obj.properties.get("id");
+          const point = newPoints.find(p => p.id === pointId);
+          if (point?.budget && point.budget < minPrice) {
+            minPrice = point.budget;
+          }
+        });
+
+        const minPriceLabel = minPrice === Infinity 
+          ? "дог." 
+          : minPrice >= 1000 
+            ? `${(minPrice / 1000).toFixed(minPrice % 1000 === 0 ? 0 : 1)}к` 
+            : `${minPrice}`;
+            
+        cluster.properties.set("minPriceLabel", minPriceLabel);
+      });
     });
 
     const placemarks = newPoints.map((point) => {
+      const budgetLabel = point.budget 
+        ? point.budget >= 1000 
+          ? `${(point.budget / 1000).toFixed(point.budget % 1000 === 0 ? 0 : 1)}к ₽` 
+          : `${point.budget} ₽`
+        : "дог.";
+
       const placemark = new ymaps.Placemark(
         [point.lng, point.lat],
         {
+          id: point.id, // Store ID for reference in cluster aggregation
+          budgetLabel,
+          activeStatus: selectedPointId === point.id ? "active" : "",
           balloonContentHeader: point.title,
           balloonContentBody: `
-            <div class="p-2">
-              <div class="mb-2 text-xs text-muted-foreground uppercase font-bold tracking-wider">${point.city.name}</div>
-              <div class="mb-3 font-bold text-lg">${formatBudget(point.budget)}</div>
-              <a href="${point.href}" class="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors">
+            <div class="p-2 min-w-[200px]">
+              <div class="mb-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">${point.city.name} • ${point.category.name}</div>
+              <div class="mb-3 font-bold text-xl text-primary">${formatBudget(point.budget)}</div>
+              <div class="mb-3 text-sm line-clamp-2">${point.title}</div>
+              <a href="${point.href}" class="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
                 Открыть заказ
               </a>
             </div>
@@ -233,13 +341,19 @@ export function YandexOrdersMap({
           hintContent: point.title,
         },
         {
-          preset: "islands#violetDotIcon",
+          iconLayout: PlacemarkLayout,
+          iconShape: {
+            type: "Rectangle",
+            coordinates: [[-35, -35], [35, 0]],
+          },
+          hasBalloon: true,
+          hideIconOnBalloonOpen: false,
+          openBalloonOnClick: true,
         }
       );
 
-      placemark.events.add("click", (e: any) => {
-        // Option to navigate immediately or rely on balloon
-        // router.push(point.href);
+      placemark.events.add("click", () => {
+        setSelectedPointId(point.id);
       });
 
       return placemark;
@@ -307,17 +421,7 @@ export function YandexOrdersMap({
         )}
 
 
-        {status === "empty" && points.length === 0 && (
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm">
-            <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
-              <SearchX className="size-6 text-muted-foreground" />
-            </div>
-            <h3 className="text-base font-semibold">Нет заказов в этой области</h3>
-            <p className="mt-1 max-w-xs text-center text-sm text-muted-foreground">
-              Попробуйте изменить фильтры или увеличить радиус поиска.
-            </p>
-          </div>
-        )}
+        {/* Empty state is handled silently by showing an empty map, as per user request for continuous browsing */}
 
         {status === "error" && (
           <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm">

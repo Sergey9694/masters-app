@@ -26,5 +26,24 @@ export const createOrderSchema = z.object({
 
 export const updateOrderSchema = createOrderSchema.partial();
 
+export const bboxSchema = z.object({
+  minLat: z.number(),
+  minLng: z.number(),
+  maxLat: z.number(),
+  maxLng: z.number(),
+});
+
+export const orderMapParamsSchema = z.object({
+  categoryId: z.string().optional(),
+  cityId: z.string().optional(),
+  search: z.string().optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  radiusKm: z.number().optional(),
+  bbox: bboxSchema.optional(),
+});
+
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 export type UpdateOrderInput = z.infer<typeof updateOrderSchema>;
+export type OrderMapParams = z.infer<typeof orderMapParamsSchema>;
+export type BBox = z.infer<typeof bboxSchema>;

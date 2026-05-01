@@ -38,6 +38,7 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith("/auth") ||
       pathname.startsWith("/api/auth") ||
       isPublicV1AuthRoute ||
+      pathname === "/api/v1/orders/map-points" ||
       pathname.startsWith("/api/uploads") ||
       pathname.startsWith("/orders/v") ||
       pathname.startsWith("/_next") ||

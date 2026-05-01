@@ -51,6 +51,13 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const normalizedSort: OrderSort | undefined =
     sort === "budget_desc" || sort === "budget_asc" ? sort : undefined;
 
+  const effectiveCityId = cityId || user?.cityId;
+  const initialCity = cities.find((c) => c.id === effectiveCityId);
+  const initialCenter =
+    initialCity?.lat && initialCity?.lng
+      ? { lat: initialCity.lat, lng: initialCity.lng }
+      : undefined;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="page-section">
@@ -93,6 +100,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             lat={geo.lat}
             lng={geo.lng}
             radiusKm={geo.radiusKm}
+            initialCenter={initialCenter}
           />
         ) : (
           <OrderFeed

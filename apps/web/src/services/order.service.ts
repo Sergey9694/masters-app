@@ -86,13 +86,21 @@ export interface OrderMapPoint {
   };
 }
 
-interface OrderMapParams {
+export interface BBox {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
+}
+
+export interface OrderMapParams {
   categoryId?: string;
   cityId?: string;
   search?: string;
   lat?: number;
   lng?: number;
   radiusKm?: number;
+  bbox?: BBox;
 }
 
 interface RawOrderRow {
@@ -502,7 +510,7 @@ export const orderService = {
       Prisma.sql`o."lng" IS NOT NULL`,
     ];
 
-    if (params.cityId) {
+    if (params.cityId && !params.bbox) {
       conditions.push(Prisma.sql`o."cityId" = ${params.cityId}`);
     }
 
@@ -515,7 +523,13 @@ export const orderService = {
       conditions.push(Prisma.sql`(o."title" ILIKE ${pattern} OR o."description" ILIKE ${pattern})`);
     }
 
-    if (point) {
+    if (params.bbox) {
+      const { minLat, minLng, maxLat, maxLng } = params.bbox;
+      conditions.push(Prisma.sql`ST_Intersects(
+        COALESCE(o."orderLocation", ST_SetSRID(ST_MakePoint(o."lng", o."lat"), 4326)),
+        ST_MakeEnvelope(${minLng}, ${minLat}, ${maxLng}, ${maxLat}, 4326)
+      )`);
+    } else if (point) {
       conditions.push(Prisma.sql`ST_DWithin(
         COALESCE(o."orderLocation", ST_SetSRID(ST_MakePoint(o."lng", o."lat"), 4326))::geography,
         ${pointSql(point)}::geography,
