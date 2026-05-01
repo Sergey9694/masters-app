@@ -74,6 +74,7 @@ export function YandexOrdersMap({
   const clustererRef = useRef<any>(null);
   
   const [points, setPoints] = useState<OrderMapPoint[]>([]);
+  const placemarksRef = useRef<Map<string, any>>(new Map());
   const [status, setStatus] = useState<"loading" | "ready" | "empty" | "unauthorized" | "error">("loading");
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [viewport, setViewport] = useState<{
@@ -141,9 +142,13 @@ export function YandexOrdersMap({
 
         if (!disposed) {
           setPoints(current => {
-            // Быстрая проверка по ID, чтобы избежать лишних ререндеров и мерцания
-            if (current.length === payload.points.length && 
-                current.every((p, i) => p.id === payload.points[i].id)) {
+            if (current.length !== payload.points.length) return payload.points;
+            
+            // Сортируем для стабильного сравнения наборов данных
+            const currentIds = current.map(p => p.id).sort().join(',');
+            const newIds = payload.points.map(p => p.id).sort().join(',');
+            
+            if (currentIds === newIds) {
               return current;
             }
             return payload.points;
@@ -330,61 +335,92 @@ export function YandexOrdersMap({
         clusterDisableClickZoom: false,
         clusterHideIconOnBalloonOpen: false,
         geoObjectHideIconOnBalloonOpen: false,
+        // Увеличиваем размер сетки для стабильности при масштабировании
+        gridSize: 128,
         // Оптимизация для предотвращения залипания курсора
-        interactivityModel: 'default#opaque'
+        interactivityModel: 'default#opaque',
+        // Плавное появление объектов
+        hasHint: true
       });
       map.geoObjects.add(clusterer);
       clustererRef.current = clusterer;
     }
 
     const clusterer = clustererRef.current;
+    const currentPlacemarks = placemarksRef.current;
     
-    // Clear existing objects without destroying the clusterer itself
-    clusterer.removeAll();
-
-    if (newPoints.length === 0) return;
-
-    const placemarks = newPoints.map((point) => {
-      const isSelected = selectedPointId === point.id;
-      const placemark = new ymaps.Placemark(
-        [point.lng, point.lat],
-        {
-          id: point.id,
-          balloonContentHeader: point.title,
-          balloonContentBody: `
-            <div class="p-2 min-w-[200px]">
-              <div class="mb-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">${point.city.name} • ${point.category.name}</div>
-              <div class="mb-3 font-bold text-xl text-primary">${formatMapBudget(point.budget)}</div>
-              <div class="mb-3 text-sm line-clamp-2">${point.title}</div>
-              <a href="${point.href}" class="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                Открыть заказ
-              </a>
-            </div>
-          `,
-          hintContent: point.title,
-        },
-        {
-          preset: isSelected ? 'islands#redIcon' : 'islands#violetIcon',
-          // Используем стандартную модель для меток
-          interactivityModel: 'default#geoObject',
-          openBalloonOnClick: true
-        }
-      );
-
-      placemark.events.add("balloonopen", () => {
-        placemark.options.set('preset', 'islands#redIcon');
-        setSelectedPointId(point.id);
-      });
-
-      placemark.events.add("balloonclose", () => {
-        placemark.options.set('preset', 'islands#violetIcon');
-        setSelectedPointId(null);
-      });
-
-      return placemark;
+    // 1. Identify points to remove
+    const newPointIds = new Set(newPoints.map(p => p.id));
+    const toRemove: any[] = [];
+    
+    currentPlacemarks.forEach((placemark, id) => {
+      if (!newPointIds.has(id)) {
+        toRemove.push(placemark);
+        currentPlacemarks.delete(id);
+      }
     });
 
-    clusterer.add(placemarks);
+    if (toRemove.length > 0) {
+      toRemove.forEach(p => clusterer.remove(p));
+    }
+
+    // 2. Identify and create new points
+    const toAdd: any[] = [];
+    newPoints.forEach((point) => {
+      if (!currentPlacemarks.has(point.id)) {
+        const isSelected = selectedPointId === point.id;
+        const placemark = new ymaps.Placemark(
+          [point.lng, point.lat],
+          {
+            id: point.id,
+            balloonContentHeader: point.title,
+            balloonContentBody: `
+              <div class="p-2 min-w-[200px]">
+                <div class="mb-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">${point.city.name} • ${point.category.name}</div>
+                <div class="mb-3 font-bold text-xl text-primary">${formatMapBudget(point.budget)}</div>
+                <div class="mb-3 text-sm line-clamp-2">${point.title}</div>
+                <a href="${point.href}" class="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                  Открыть заказ
+                </a>
+              </div>
+            `,
+            hintContent: point.title,
+          },
+          {
+            preset: isSelected ? 'islands#redIcon' : 'islands#violetIcon',
+            interactivityModel: 'default#geoObject',
+            openBalloonOnClick: true
+          }
+        );
+
+        placemark.events.add("balloonopen", () => {
+          placemark.options.set('preset', 'islands#redIcon');
+          setSelectedPointId(point.id);
+        });
+
+        placemark.events.add("balloonclose", () => {
+          placemark.options.set('preset', 'islands#violetIcon');
+          setSelectedPointId(null);
+        });
+
+        currentPlacemarks.set(point.id, placemark);
+        toAdd.push(placemark);
+      } else {
+        // Update existing placemark options if needed (e.g. selection state changed)
+        const placemark = currentPlacemarks.get(point.id);
+        const isSelected = selectedPointId === point.id;
+        const currentPreset = placemark.options.get('preset');
+        const targetPreset = isSelected ? 'islands#redIcon' : 'islands#violetIcon';
+        
+        if (currentPreset !== targetPreset) {
+          placemark.options.set('preset', targetPreset);
+        }
+      }
+    });
+
+    if (toAdd.length > 0) {
+      clusterer.add(toAdd);
+    }
   }
 
   function getMapLocation(
