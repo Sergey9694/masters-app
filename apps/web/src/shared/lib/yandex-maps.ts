@@ -41,6 +41,14 @@ export interface YMaps2Instance {
   };
   getCenter: () => LngLat;
   getZoom: () => number;
+  getBounds: () => LngLat[];
+  balloon: {
+    isOpen: () => boolean;
+    close: () => void;
+    events: {
+      add: (name: string, callback: (e: any) => void) => void;
+    };
+  };
   cursors?: {
     push: (cursorName: string) => void;
   };
