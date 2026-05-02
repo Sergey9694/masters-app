@@ -52,6 +52,15 @@ interface YandexOrdersMapProps {
   };
 }
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function isMapPointsResponse(value: unknown): value is MapPointsResponse {
   return (
     value !== null &&
@@ -373,18 +382,18 @@ export function YandexOrdersMap({
           [point.lng, point.lat],
           {
             id: point.id,
-            balloonContentHeader: point.title,
+            balloonContentHeader: escapeHtml(point.title),
             balloonContentBody: `
               <div class="p-2 min-w-[200px]">
-                <div class="mb-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">${point.city.name} • ${point.category.name}</div>
+                <div class="mb-2 text-[10px] text-muted-foreground uppercase font-bold tracking-wider">${escapeHtml(point.city.name)} • ${escapeHtml(point.category.name)}</div>
                 <div class="mb-3 font-bold text-xl text-primary">${formatMapBudget(point.budget)}</div>
-                <div class="mb-3 text-sm line-clamp-2">${point.title}</div>
-                <a href="${point.href}" class="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                <div class="mb-3 text-sm line-clamp-2">${escapeHtml(point.title)}</div>
+                <a href="${encodeURI(point.href)}" class="w-full inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
                   Открыть заказ
                 </a>
               </div>
             `,
-            hintContent: point.title,
+            hintContent: escapeHtml(point.title),
           },
           {
             preset: isSelected ? 'islands#redIcon' : 'islands#violetIcon',

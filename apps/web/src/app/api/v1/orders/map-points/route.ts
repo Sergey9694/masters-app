@@ -34,14 +34,21 @@ const querySchema = z.object({
   maxLng: optionalNumber.pipe(z.number().min(-180).max(180).optional()),
 }).refine((data) => {
   const hasLatLong = data.lat !== undefined && data.lng !== undefined;
-  const hasBBox = 
-    data.minLat !== undefined && 
-    data.minLng !== undefined && 
-    data.maxLat !== undefined && 
+  const hasBBox =
+    data.minLat !== undefined &&
+    data.minLng !== undefined &&
+    data.maxLat !== undefined &&
     data.maxLng !== undefined;
 
   if (data.minLat !== undefined && data.maxLat !== undefined && data.minLat >= data.maxLat) {
     return false;
+  }
+
+  // Limit BBox area to prevent full-table PostGIS scans (DoS protection: max ~20°lat × 30°lng)
+  if (hasBBox) {
+    const latSpan = (data.maxLat ?? 0) - (data.minLat ?? 0);
+    const lngSpan = Math.abs((data.maxLng ?? 0) - (data.minLng ?? 0));
+    if (latSpan > 20 || lngSpan > 30) return false;
   }
 
   // Valid if either point+radius OR bbox is provided, or neither
@@ -93,7 +100,11 @@ export async function GET(request: NextRequest) {
         : undefined
     };
     const points = await orderService.listMapPoints(serviceParams);
-    return apiSuccess({ points });
+    // Guests receive coordinates rounded to ~111m precision to protect PII (exact home addresses)
+    const safePoints = userId
+      ? points
+      : points.map((p) => ({ ...p, lat: +p.lat.toFixed(3), lng: +p.lng.toFixed(3) }));
+    return apiSuccess({ points: safePoints });
   } catch (error) {
     console.error("[API/ORDERS/MAP_POINTS] Error:", error);
     return apiError("Failed to fetch order map points", 500);

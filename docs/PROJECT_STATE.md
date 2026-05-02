@@ -3,7 +3,17 @@
 > ⚡ Этот файл — быстрый снапшот для агентов. Читай его первым.
 > 📖 Полный план со всеми деталями: `DEVELOPMENT_PLAN.md`
 
-> 🕓 Последнее обновление: 2026-05-01 (Map Interaction Optimized)
+> 🕓 Последнее обновление: 2026-05-02 (Map Security & DoS Protection)
+
+---
+
+## Обновление 2026-05-02 (Map Security & DoS Protection)
+- **CRITICAL: Stored XSS устранён**: В `YandexOrdersMap.tsx` добавлен `escapeHtml()` — все пользовательские строки (`point.title`, `point.city.name`, `point.category.name`) теперь экранируются перед вставкой в HTML balloon. `point.href` обёрнут в `encodeURI()`. Вектор атаки через заголовок заказа полностью закрыт.
+- **CRITICAL: Гость → /auth/login устранён**: В `proxy.ts` маршрут `/orders/v` расширен до `/orders` — все страницы каталога заказов теперь доступны гостям. Защита страниц (кнопки откликов, предложения) по-прежнему выполняется на уровне Server Components.
+- **MEDIUM: DoS-защита BBox**: В `route.ts` добавлена проверка площади BBox (max 20°lat × 30°lng). Запросы с bbox охватывающим всю таблицу возвращают 400.
+- **MEDIUM: Приватность координат гостей**: В `route.ts` координаты точек округляются до 3 знаков (~111м) для неавторизованных пользователей. Авторизованные получают полную точность.
+- **Verification**: `tsc` — PASS (0 ошибок). Vitest — 49/49 PASS.
+- **OWNER_DECISION (без изменений)**: CSP `unsafe-eval`+`unsafe-inline` (#4) и Referer-restriction для Yandex API ключа (#5) требуют отдельного решения владельца.
 
 ---
 

@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
       isPublicV1AuthRoute ||
       pathname === "/api/v1/orders/map-points" ||
       pathname.startsWith("/api/uploads") ||
-      pathname.startsWith("/orders/v") ||
+      pathname.startsWith("/orders") ||
       pathname.startsWith("/_next") ||
       pathname === "/favicon.ico";
 
