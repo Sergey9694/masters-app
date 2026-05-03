@@ -36,13 +36,31 @@ export function CitySelector() {
     }
 
     const currentPath = window.location.pathname;
-
-    // Если мы на главной или на страницах заказов, переходим в ленту нового города
-    if (currentPath === "/" || currentPath.startsWith("/orders")) {
-      window.location.href = `/orders/${city.slug}`;
-    } else {
+    
+    // 1. Если на главной — просто перезагружаем (страница обновит контент под город)
+    if (currentPath === "/") {
       window.location.reload();
+      return;
     }
+
+    // 2. Если в ленте заказов (/orders/[city]/...)
+    const pathParts = currentPath.split("/").filter(Boolean);
+    if (pathParts[0] === "orders") {
+      // Если это список по городу (минимум 2 части: orders и slug)
+      // При этом исключаем роуты типа /orders/v (деталка)
+      if (pathParts.length >= 2 && pathParts[1] !== "v") {
+        pathParts[1] = city.slug;
+        window.location.href = "/" + pathParts.join("/");
+        return;
+      }
+      
+      // Если это деталка (/orders/v/...) или просто /orders — идем в общую ленту города
+      window.location.href = `/orders/${city.slug}`;
+      return;
+    }
+
+    // 3. Во всех остальных случаях — перезагрузка
+    window.location.reload();
   }, []);
 
   const handleAutoDetect = useCallback(async (silent = false) => {
