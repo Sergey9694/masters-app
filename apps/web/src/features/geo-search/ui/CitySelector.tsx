@@ -133,6 +133,7 @@ export function CitySelector() {
   return (
     <div className="relative">
       <Button
+        type="button"
         variant="ghost"
         size="sm"
         onClick={() => setIsOpen(true)}
@@ -156,6 +157,7 @@ export function CitySelector() {
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold">Выберите город</h3>
               <button 
+                type="button"
                 onClick={() => setIsOpen(false)}
                 className="rounded-full p-2 hover:bg-muted transition-colors"
               >
@@ -164,6 +166,7 @@ export function CitySelector() {
             </div>
 
             <Button
+              type="button"
               variant="outline"
               onClick={() => handleAutoDetect()}
               disabled={isLocating}
@@ -191,6 +194,7 @@ export function CitySelector() {
             <div className="max-h-60 overflow-y-auto space-y-1 pr-2 scrollbar-thin">
               {filteredCities.map(city => (
                 <button
+                  type="button"
                   key={city.id}
                   onClick={() => selectCity(city)}
                   className={cn(
