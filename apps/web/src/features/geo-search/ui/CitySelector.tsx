@@ -27,7 +27,8 @@ export function CitySelector() {
   // Сохраняет город в стейт и куки — без какой-либо навигации
   const saveCity = useCallback((city: City) => {
     setCurrentCity(city);
-    setCookie("cityId", city.id, 30); // 30 дней
+    setCookie("cityId", city.id, 30);     // для серверной фильтрации
+    setCookie("citySlug", city.slug, 30); // для slug-based URL (/orders/[slug])
     setIsOpen(false);
   }, []);
 

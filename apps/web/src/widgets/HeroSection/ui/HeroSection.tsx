@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, Sparkles, TrendingUp, Users, Shield } from "lucide-react";
 
@@ -33,24 +33,21 @@ const TRUST_BADGES = [
  */
 export function HeroSection() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmed = query.trim();
     
-    // Пытаемся взять cityId из URL или из кук
-    let cityId = searchParams.get("cityId");
-    if (!cityId) {
-      cityId = getCookie("cityId");
-    }
+    // Берём slug города из куки (сохраняется в CitySelector)
+    const citySlug = getCookie("citySlug");
     
     const params = new URLSearchParams();
     if (trimmed) params.set("search", trimmed);
-    if (cityId) params.set("cityId", cityId);
     
-    const url = params.toString() ? `/orders?${params.toString()}` : "/orders";
+    // Строим slug-based URL: /orders/[citySlug]?search=...
+    const base = citySlug ? `/orders/${citySlug}` : "/orders";
+    const url = params.toString() ? `${base}?${params.toString()}` : base;
     router.push(url);
   };
 
@@ -145,14 +142,14 @@ export function HeroSection() {
               {POPULAR_QUERIES.map((q) => (
                 <button
                   key={q}
+                  type="button"
                   onClick={() => {
                     setQuery(q);
-                    // Trigger search
+                    const citySlug = getCookie("citySlug");
                     const params = new URLSearchParams();
                     params.set("search", q);
-                    const cityId = getCookie("cityId");
-                    if (cityId) params.set("cityId", cityId);
-                    router.push(`/orders?${params.toString()}`);
+                    const base = citySlug ? `/orders/${citySlug}` : "/orders";
+                    router.push(`${base}?${params.toString()}`);
                   }}
                   className="rounded-full bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 >
