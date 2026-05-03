@@ -44,11 +44,12 @@ const querySchema = z.object({
     return false;
   }
 
-  // Limit BBox area to prevent full-table PostGIS scans (DoS protection: max ~20°lat × 30°lng)
+  // Limit BBox area to prevent full-table PostGIS scans (DoS protection: max ~30°lat × 60°lng)
+  // Russia spans ~170° longitude, so 60° covers typical regional views without full-world scans
   if (hasBBox) {
     const latSpan = (data.maxLat ?? 0) - (data.minLat ?? 0);
     const lngSpan = Math.abs((data.maxLng ?? 0) - (data.minLng ?? 0));
-    if (latSpan > 20 || lngSpan > 30) return false;
+    if (latSpan > 30 || lngSpan > 60) return false;
   }
 
   // Valid if either point+radius OR bbox is provided, or neither

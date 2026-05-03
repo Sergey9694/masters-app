@@ -151,7 +151,8 @@ interface RawOrderCoordinates {
 }
 
 function orderHref(row: Pick<RawOrderMapRow, "citySlug" | "categorySlug" | "slug" | "id">) {
-  return `/orders/${row.citySlug}/${row.categorySlug}/${row.slug || row.id}`;
+  // Use the redirect route so links survive slug changes and work for guests
+  return `/orders/v/${row.slug || row.id}`;
 }
 
 async function resolveOrderPoint(

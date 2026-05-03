@@ -64,7 +64,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function OrderDetailPage({ params }: PageProps) {
   const { citySlug, slug: categorySlug, orderSlug } = await params;
   const user = await getCurrentUser();
-  if (!user) redirect("/");
+  if (!user) redirect("/auth/login");
 
   const { orderService } = await import("@/services/order.service");
   const order = await orderService.getById(orderSlug);

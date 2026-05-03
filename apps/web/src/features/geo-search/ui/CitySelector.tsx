@@ -24,17 +24,19 @@ export function CitySelector() {
 
   const { detect, isLocating } = useLocation();
 
-  const selectCity = useCallback((city: City, shouldToast = true) => {
+  const selectCity = useCallback((city: City, shouldToast = true, noRedirect = false) => {
     setCurrentCity(city);
     setCookie("cityId", city.id, 30); // 30 дней
     setIsOpen(false);
+
+    if (noRedirect) return;
 
     if (shouldToast) {
       sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
     }
 
     const currentPath = window.location.pathname;
-    
+
     // Если мы на главной или на страницах заказов, переходим в ленту нового города
     if (currentPath === "/" || currentPath.startsWith("/orders")) {
       window.location.href = `/orders/${city.slug}`;
@@ -85,12 +87,26 @@ export function CitySelector() {
     const init = async () => {
       if (urlCityId && await loadInitialCity(urlCityId)) return;
       if (savedCityId && await loadInitialCity(savedCityId)) return;
-      
+
+      // Нет сохранённого города — тихое автоопределение без редиректа
+      try {
+        const result = await detect();
+        if (result.coords) {
+          const city = await detectCityAction(result.coords.lat, result.coords.lng);
+          if (city) {
+            setCurrentCity(city);
+            setCookie("cityId", city.id, 30);
+          }
+        }
+      } catch {
+        // Геолокация недоступна или отклонена — пользователь выберет вручную
+      }
+
       setIsInitialLoading(false);
     };
 
     init();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Загрузка списка городов при открытии
   useEffect(() => {

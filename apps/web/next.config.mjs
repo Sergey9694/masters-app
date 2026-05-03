@@ -35,7 +35,7 @@ const nextConfig = {
             "style-src 'self' 'unsafe-inline' blob:",
             "img-src 'self' data: blob: https://t.me https://*.telegram.org https://*.telesco.pe https://*.maps.yandex.net https://yandex.ru https://*.yandex.ru https://yandex.net https://*.yandex.net https://api-maps.yandex.ru https://*.api-maps.yandex.ru https://yastatic.net https://*.yastatic.net",
             "font-src 'self' data: https://*.telegram.org https://fonts.gstatic.com",
-            "connect-src 'self' ws: wss: https://telegram.org https://*.telegram.org https://api-maps.yandex.ru https://*.api-maps.yandex.ru https://*.maps.yandex.net https://yandex.ru https://*.yandex.ru https://yandex.net https://*.yandex.net https://geocode-maps.yandex.ru https://suggest-maps.yandex.ru https://yastatic.net https://*.yastatic.net https://log.api-maps.yandex.ru",
+            "connect-src 'self' ws: wss: https://telegram.org https://*.telegram.org https://api-maps.yandex.ru https://*.api-maps.yandex.ru https://*.maps.yandex.net https://yandex.ru https://*.yandex.ru https://yandex.net https://*.yandex.net https://geocode-maps.yandex.ru https://suggest-maps.yandex.ru https://yastatic.net https://*.yastatic.net",
             "worker-src 'self' blob:",
             "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org",
           ].join("; "),
