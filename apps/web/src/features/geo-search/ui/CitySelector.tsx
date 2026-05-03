@@ -24,70 +24,50 @@ export function CitySelector() {
 
   const { detect, isLocating } = useLocation();
 
-  const selectCity = useCallback((city: City, shouldToast = true, noRedirect = false) => {
+  // Сохраняет город в стейт и куки — без какой-либо навигации
+  const saveCity = useCallback((city: City) => {
     setCurrentCity(city);
     setCookie("cityId", city.id, 30); // 30 дней
     setIsOpen(false);
-
-    if (noRedirect) return;
-
-    if (shouldToast) {
-      sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
-    }
-
-    const currentPath = window.location.pathname;
-    
-    // 1. Если на главной — просто перезагружаем (страница обновит контент под город)
-    if (currentPath === "/") {
-      window.location.reload();
-      return;
-    }
-
-    // 2. Если в ленте заказов (/orders/[city]/...)
-    const pathParts = currentPath.split("/").filter(Boolean);
-    if (pathParts[0] === "orders") {
-      // Если это список по городу (минимум 2 части: orders и slug)
-      // При этом исключаем роуты типа /orders/v (деталка)
-      if (pathParts.length >= 2 && pathParts[1] !== "v") {
-        pathParts[1] = city.slug;
-        window.location.href = "/" + pathParts.join("/");
-        return;
-      }
-      
-      // Если это деталка (/orders/v/...) или просто /orders — идем в общую ленту города
-      window.location.href = `/orders/${city.slug}`;
-      return;
-    }
-
-    // 3. Во всех остальных случаях — перезагрузка
-    window.location.reload();
   }, []);
 
-  const handleAutoDetect = useCallback(async (silent = false) => {
-    const result = await detect();
+  // Явный выбор города пользователем из списка — навигация только если нужно
+  const selectCity = useCallback((city: City) => {
+    saveCity(city);
 
-    // Пытаемся определить город через наш экшен (который теперь использует DaData)
+    sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
+
+    const currentPath = window.location.pathname;
+    const pathParts = currentPath.split("/").filter(Boolean);
+
+    // Если пользователь уже в ленте заказов — меняем город в URL
+    if (pathParts[0] === "orders" && pathParts.length >= 2 && pathParts[1] !== "v") {
+      pathParts[1] = city.slug;
+      window.location.href = "/" + pathParts.join("/");
+    }
+    // Во всех остальных случаях (главная, профиль и т.д.) — остаёмся на месте
+    // Куки уже обновлены, сервер при следующем запросе увидит новый город
+  }, [saveCity]);
+
+  // Кнопка "Определить автоматически" в модалке — определяем и закрываем, без навигации
+  const handleAutoDetect = useCallback(async () => {
+    const result = await detect();
     const city = await detectCityAction(result.coords?.lat, result.coords?.lng);
 
     if (city) {
-      if (!silent) {
-        sessionStorage.setItem("geo_toast_success", `Город определен: ${city.name}`);
-      }
-      selectCity(city, false);
-    } else if (!silent) {
+      saveCity(city);
+      sessionStorage.setItem("geo_toast_success", `Город определён: ${city.name}`);
+    } else {
       toast.error("Не удалось точно определить город в нашей базе");
     }
 
     setIsInitialLoading(false);
-  }, [detect, selectCity]);
+  }, [detect, saveCity]);
 
-  // Загрузка города из URL, Cookies или автоопределение
+  // Загрузка города из URL, Cookies или тихое автоопределение при первом визите
   useEffect(() => {
-    // 1. Приоритет URL
     const params = new URLSearchParams(window.location.search);
     const urlCityId = params.get("cityId");
-
-    // 2. Фолбек на Cookies
     const savedCityId = getCookie("cityId");
 
     const loadInitialCity = async (id: string) => {
@@ -106,7 +86,7 @@ export function CitySelector() {
       if (urlCityId && await loadInitialCity(urlCityId)) return;
       if (savedCityId && await loadInitialCity(savedCityId)) return;
 
-      // Нет сохранённого города — тихое автоопределение без редиректа
+      // Нет сохранённого города — тихое автоопределение по геолокации (без редиректа)
       try {
         const result = await detect();
         if (result.coords) {
