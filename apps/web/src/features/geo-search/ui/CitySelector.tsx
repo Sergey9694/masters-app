@@ -36,7 +36,8 @@ export function CitySelector() {
   const selectCity = useCallback((city: City) => {
     saveCity(city);
 
-    sessionStorage.setItem("geo_toast_success", `Город изменен на ${city.name}`);
+    // Тост показываем немедленно, без sessionStorage
+    toast.success(`Город изменён на ${city.name}`);
 
     const currentPath = window.location.pathname;
     const pathParts = currentPath.split("/").filter(Boolean);
@@ -57,7 +58,8 @@ export function CitySelector() {
 
     if (city) {
       saveCity(city);
-      sessionStorage.setItem("geo_toast_success", `Город определён: ${city.name}`);
+      // Тост показываем немедленно, без sessionStorage
+      toast.success(`Город определён: ${city.name}`);
     } else {
       toast.error("Не удалось точно определить город в нашей базе");
     }
