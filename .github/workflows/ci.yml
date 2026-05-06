@@ -26,7 +26,8 @@ env:
   ENCRYPTION_KEY: "a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4"
   NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3000"
   NEXT_PUBLIC_BOT_NAME: "ci_bot"
-  NEXT_PUBLIC_BOT_ID: "123456789"
+  TELEGRAM_BOT_ID: "123456789"
+  NEXT_PUBLIC_YANDEX_MAPS_API_KEY: "ci-yandex-maps-key"
   TELEGRAM_BOT_TOKEN: "ci:telegram-token"
 
 jobs:

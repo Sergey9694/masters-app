@@ -35,9 +35,9 @@ RUN prisma generate --schema=./apps/web/prisma/schema.prisma
 
 # Переменные окружения для билда
 ARG NEXT_PUBLIC_BOT_NAME
-ARG NEXT_PUBLIC_BOT_ID
+ARG NEXT_PUBLIC_YANDEX_MAPS_API_KEY
 ENV NEXT_PUBLIC_BOT_NAME="$NEXT_PUBLIC_BOT_NAME"
-ENV NEXT_PUBLIC_BOT_ID="$NEXT_PUBLIC_BOT_ID"
+ENV NEXT_PUBLIC_YANDEX_MAPS_API_KEY="$NEXT_PUBLIC_YANDEX_MAPS_API_KEY"
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Собираем только веб-приложение и подготавливаем имена файлов для прокси
