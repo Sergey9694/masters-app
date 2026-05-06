@@ -2,6 +2,10 @@
 
 export type LngLat = [number, number];
 
+export interface YMaps2Event {
+  get: (key: string) => unknown;
+}
+
 /**
  * Типизация для Yandex Maps API v2.1
  */
@@ -36,8 +40,8 @@ export interface YMaps2Instance {
   setZoom: (zoom: number, options?: Record<string, unknown>) => Promise<void>;
   geoObjects: YMaps2Collection;
   events: {
-    add: (name: string, callback: (e: any) => void) => void;
-    remove: (name: string, callback: (e: any) => void) => void;
+    add: (name: string, callback: (e: YMaps2Event) => void) => void;
+    remove: (name: string, callback: (e: YMaps2Event) => void) => void;
   };
   getCenter: () => LngLat;
   getZoom: () => number;
@@ -46,7 +50,7 @@ export interface YMaps2Instance {
     isOpen: () => boolean;
     close: () => void;
     events: {
-      add: (name: string, callback: (e: any) => void) => void;
+      add: (name: string, callback: (e: YMaps2Event) => void) => void;
     };
   };
   cursors?: {
@@ -68,24 +72,28 @@ export interface YMaps2Object {
     get: (key: string) => unknown;
   };
   events: {
-    add: (name: string, callback: (e: any) => void) => void;
+    add: (name: string, callback: (e: YMaps2Event) => void) => void;
   };
 }
 
+export type YMaps2CollectionObject = YMaps2Object | YMaps2Clusterer;
+
 export interface YMaps2Collection {
-  add: (object: any) => void;
-  remove: (object: any) => void;
+  add: (object: YMaps2CollectionObject | YMaps2Object[]) => void;
+  remove: (object: YMaps2CollectionObject) => void;
   removeAll: () => void;
 }
 
-export interface YMaps2Clusterer extends YMaps2Collection {
-  add: (objects: any | any[]) => void;
+export interface YMaps2Clusterer {
+  add: (object: YMaps2Object | YMaps2Object[]) => void;
+  remove: (object: YMaps2Object) => void;
+  removeAll: () => void;
 }
 
 export interface YMaps2GeoQuery {
   addTo: (map: YMaps2Instance) => YMaps2GeoQuery;
   remove: () => YMaps2GeoQuery;
-  get: (index: number) => any;
+  get: (index: number) => unknown;
   getLength: () => number;
 }
 
@@ -113,7 +121,7 @@ export async function loadYandexMaps(): Promise<YMaps2Global> {
     throw new Error("Yandex Maps can only be loaded in the browser");
   }
 
-  if (window.ymaps && (window.ymaps as any).Map) {
+  if (window.ymaps?.Map) {
     return window.ymaps;
   }
 

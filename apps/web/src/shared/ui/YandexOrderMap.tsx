@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
-import { hasYandexMapsApiKey, loadYandexMaps, type LngLat, type YMaps2Instance } from "@/shared/lib/yandex-maps";
+import { hasYandexMapsApiKey, loadYandexMaps, type LngLat, type YMaps2Instance, type YMaps2Object } from "@/shared/lib/yandex-maps";
 import { toGeoPoint } from "@/shared/lib/geo-utils";
 
 interface YandexOrderMapProps {
@@ -18,7 +18,7 @@ interface YandexOrderMapProps {
 export function YandexOrderMap({ lat, lng, address, cityName, className }: YandexOrderMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<YMaps2Instance | null>(null);
-  const markerRef = useRef<any>(null);
+  const markerRef = useRef<YMaps2Object | null>(null);
   const [error, setError] = useState<string | null>(null);
   const point = useMemo(() => toGeoPoint(lat, lng), [lat, lng]);
 

@@ -210,7 +210,7 @@ export const orderService = {
         lng: point?.lng,
         images: data.images || [],
         status: "OPEN",
-      } as any,
+      } satisfies Prisma.OrderUncheckedCreateInput,
     });
 
     await syncOrderLocation(order.id, point);
@@ -713,7 +713,7 @@ export const orderService = {
         ...(data.address !== undefined && { address: data.address }),
         ...(point !== undefined && { lat: point?.lat, lng: point?.lng }),
         ...(data.images !== undefined && { images: data.images }),
-      } as any,
+      } satisfies Prisma.OrderUncheckedUpdateInput,
       include: { 
         category: { select: { slug: true } },
         city: { select: { slug: true } }

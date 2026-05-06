@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { UseFormReturn } from "react-hook-form";
+import type { FieldPath, FieldValues, PathValue, UseFormReturn } from "react-hook-form";
 import { Loader2, MapPin, Search, X } from "lucide-react";
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/shared/ui/form";
@@ -19,13 +19,28 @@ import type { DadataSuggestion } from "@/shared/lib/dadata";
 import { ensureCityAction } from "@/shared/lib/ensure-city-action";
 import { GEO_LIMIT_MESSAGE } from "@/shared/config/geo";
 
-interface AddressPickerProps {
-  form: UseFormReturn<any>;
-  name?: string;
+interface AddressPickerProps<TFormValues extends AddressPickerFormValues> {
+  form: UseFormReturn<TFormValues>;
+  name?: FieldPath<TFormValues>;
   label?: string;
 }
 
-export function AddressPicker({ form, name = "address", label = "Где находится объект?" }: AddressPickerProps) {
+type AddressPickerFormValues = FieldValues & {
+  address?: string;
+  cityId?: string;
+  lat?: number | null;
+  lng?: number | null;
+};
+
+export function AddressPicker<TFormValues extends AddressPickerFormValues>({
+  form,
+  name,
+  label = "Где находится объект?",
+}: AddressPickerProps<TFormValues>) {
+  const fieldName = (name ?? "address") as FieldPath<TFormValues>;
+  const cityIdName = "cityId" as FieldPath<TFormValues>;
+  const latName = "lat" as FieldPath<TFormValues>;
+  const lngName = "lng" as FieldPath<TFormValues>;
   const [suggestions, setSuggestions] = useState<DadataSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -36,6 +51,25 @@ export function AddressPicker({ form, name = "address", label = "Где нахо
   const addressInputRef = useRef<HTMLInputElement>(null);
   const suggestAbortRef = useRef<AbortController | null>(null);
   const suggestDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const updateMarker = useCallback(async (map: YMaps2Instance, coordinates: LngLat, ymaps: YMaps2Global) => {
+    if (markerRef.current) {
+      map.geoObjects.remove(markerRef.current);
+    }
+
+    const marker = new ymaps.Placemark(coordinates, {}, {
+      preset: "islands#redDotIconWithCaption",
+      draggable: false,
+    });
+
+    map.geoObjects.add(marker);
+    markerRef.current = marker;
+    
+    map.setCenter(coordinates, 16, {
+      duration: 800,
+      checkZoomRange: true,
+    });
+  }, []);
 
   // Initialize Map
   useEffect(() => {
@@ -49,8 +83,8 @@ export function AddressPicker({ form, name = "address", label = "Где нахо
         if (!containerRef.current || disposed) return;
 
         // Default to Moscow or existing coordinates if any
-        const initialLat = form.getValues("lat");
-        const initialLng = form.getValues("lng");
+        const initialLat = form.getValues(latName);
+        const initialLng = form.getValues(lngName);
         const center: LngLat = initialLat && initialLng ? [initialLng, initialLat] : [37.6176, 55.7558];
 
         const map = new ymaps.Map(containerRef.current, {
@@ -79,25 +113,6 @@ export function AddressPicker({ form, name = "address", label = "Где нахо
         mapRef.current = null;
       }
     };
-  }, []);
-
-  const updateMarker = useCallback(async (map: YMaps2Instance, coordinates: LngLat, ymaps: YMaps2Global) => {
-    if (markerRef.current) {
-      map.geoObjects.remove(markerRef.current);
-    }
-
-    const marker = new ymaps.Placemark(coordinates, {}, {
-      preset: "islands#redDotIconWithCaption",
-      draggable: false,
-    });
-
-    map.geoObjects.add(marker);
-    markerRef.current = marker;
-    
-    map.setCenter(coordinates, 16, {
-      duration: 800,
-      checkZoomRange: true,
-    });
   }, []);
 
   const fetchAddressSuggest = (query: string) => {
@@ -132,14 +147,14 @@ export function AddressPicker({ form, name = "address", label = "Где нахо
   };
 
   const handleSelectSuggestion = async (s: DadataSuggestion) => {
-    form.setValue(name, s.value, { shouldValidate: true });
+    form.setValue(fieldName, s.value as PathValue<TFormValues, typeof fieldName>, { shouldValidate: true });
     
     const lat = s.data.geo_lat ? parseFloat(s.data.geo_lat) : null;
     const lng = s.data.geo_lon ? parseFloat(s.data.geo_lon) : null;
     
     if (lat && lng) {
-      form.setValue("lat", lat);
-      form.setValue("lng", lng);
+      form.setValue(latName, lat as PathValue<TFormValues, typeof latName>);
+      form.setValue(lngName, lng as PathValue<TFormValues, typeof lngName>);
       
       if (mapRef.current) {
         const ymaps = await loadYandexMaps();
@@ -158,11 +173,11 @@ export function AddressPicker({ form, name = "address", label = "Где нахо
           region: regionName,
         });
 
-        form.setValue("cityId", id, { shouldValidate: true });
-        form.clearErrors(name);
+        form.setValue(cityIdName, id as PathValue<TFormValues, typeof cityIdName>, { shouldValidate: true });
+        form.clearErrors(fieldName);
       } catch (error) {
         console.error("[CITY_ERROR]", error);
-        form.setError(name, { 
+        form.setError(fieldName, { 
           type: "manual", 
           message: GEO_LIMIT_MESSAGE
         });
@@ -177,7 +192,7 @@ export function AddressPicker({ form, name = "address", label = "Где нахо
     <div className="space-y-4">
       <FormField
         control={form.control}
-        name={name}
+        name={fieldName}
         render={({ field }) => (
           <FormItem className="relative">
             <FormLabel className="text-sm font-normal text-foreground px-1">
@@ -207,9 +222,9 @@ export function AddressPicker({ form, name = "address", label = "Где нахо
                   <button
                     type="button"
                     onClick={() => {
-                      form.setValue(name, "");
-                      form.setValue("lat", null);
-                      form.setValue("lng", null);
+                      form.setValue(fieldName, "" as PathValue<TFormValues, typeof fieldName>);
+                      form.setValue(latName, null as PathValue<TFormValues, typeof latName>);
+                      form.setValue(lngName, null as PathValue<TFormValues, typeof lngName>);
                       setSuggestions([]);
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"

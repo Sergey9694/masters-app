@@ -44,7 +44,7 @@ export default async function OrderEditPage({ params }: PageProps) {
       category: { select: { slug: true } },
       city: { select: { slug: true } },
     },
-  } as any);
+  });
 
   const categories = await db.category.findMany({
     where: { isActive: true },
@@ -53,7 +53,7 @@ export default async function OrderEditPage({ params }: PageProps) {
   });
 
   if (!orderData) notFound();
-  const order = orderData as any;
+  const order = orderData;
   
   const currentOrderSlug = order.slug || order.id;
   const canonicalUrl = `/orders/${order.city.slug}/${order.category.slug}/${currentOrderSlug}`;

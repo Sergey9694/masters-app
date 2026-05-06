@@ -43,7 +43,7 @@ export function TelegramLoginButton({ disabled, botId, label = "Войти че�
       }
 
       if (!botId) {
-        toast.error("NEXT_PUBLIC_BOT_ID не задан");
+        toast.error("TELEGRAM_BOT_ID не задан");
         setLoading(false);
         return;
       }

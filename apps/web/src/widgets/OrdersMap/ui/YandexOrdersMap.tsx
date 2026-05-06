@@ -11,7 +11,11 @@ import {
   hasYandexMapsApiKey,
   loadYandexMaps,
   type LngLat,
+  type YMaps2Clusterer,
+  type YMaps2Event,
+  type YMaps2Global,
   type YMaps2Instance,
+  type YMaps2Object,
 } from "@/shared/lib/yandex-maps";
 
 interface OrderMapPoint {
@@ -68,6 +72,24 @@ function isMapPointsResponse(value: unknown): value is MapPointsResponse {
     Array.isArray((value as { points?: unknown }).points)
   );
 }
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === "AbortError";
+}
+
+function isLngLatBounds(value: unknown): value is [LngLat, LngLat] {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    Array.isArray(value[0]) &&
+    Array.isArray(value[1]) &&
+    value[0].length === 2 &&
+    value[1].length === 2 &&
+    value[0].every((coord) => typeof coord === "number") &&
+    value[1].every((coord) => typeof coord === "number")
+  );
+}
+
 export function YandexOrdersMap({
   categoryId,
   cityId,
@@ -80,10 +102,10 @@ export function YandexOrdersMap({
   const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<YMaps2Instance | null>(null);
-  const clustererRef = useRef<any>(null);
+  const clustererRef = useRef<YMaps2Clusterer | null>(null);
   
   const [points, setPoints] = useState<OrderMapPoint[]>([]);
-  const placemarksRef = useRef<Map<string, any>>(new Map());
+  const placemarksRef = useRef<Map<string, YMaps2Object>>(new Map());
   const [status, setStatus] = useState<"loading" | "ready" | "empty" | "unauthorized" | "error">("loading");
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [viewport, setViewport] = useState<{
@@ -164,8 +186,8 @@ export function YandexOrdersMap({
           });
           setStatus("ready");
         }
-      } catch (error: any) {
-        if (error.name === "AbortError") {
+      } catch (error) {
+        if (isAbortError(error)) {
           return;
         }
         console.error("[ORDERS_MAP] Failed to load points:", error);
@@ -218,14 +240,15 @@ export function YandexOrdersMap({
 
         // Listen for viewport changes
         let boundsTimeout: NodeJS.Timeout;
-        map.events.add("boundschange", (e: any) => {
+        map.events.add("boundschange", (event: YMaps2Event) => {
           // Игнорируем изменения, вызванные авто-панорамированием балуна,
           // чтобы предотвратить цикл: открытие -> автопан -> рефетч -> removeAll -> закрытие балуна
           if (map.balloon.isOpen()) return;
 
           clearTimeout(boundsTimeout);
           boundsTimeout = setTimeout(() => {
-            const bounds = e.get("newBounds");
+            const bounds = event.get("newBounds");
+            if (!isLngLatBounds(bounds)) return;
             // CoordOrder: longlat -> [[lngMin, latMin], [lngMax, latMax]]
             setViewport({
               minLng: bounds[0][0],
@@ -334,7 +357,7 @@ export function YandexOrdersMap({
   async function updateFeatures(
     map: YMaps2Instance, 
     newPoints: OrderMapPoint[], 
-    ymaps: any
+    ymaps: YMaps2Global
   ) {
     // If no clusterer yet, create it
     if (!clustererRef.current) {
@@ -360,7 +383,7 @@ export function YandexOrdersMap({
     
     // 1. Identify points to remove
     const newPointIds = new Set(newPoints.map(p => p.id));
-    const toRemove: any[] = [];
+    const toRemove: YMaps2Object[] = [];
     
     currentPlacemarks.forEach((placemark, id) => {
       if (!newPointIds.has(id)) {
@@ -374,7 +397,7 @@ export function YandexOrdersMap({
     }
 
     // 2. Identify and create new points
-    const toAdd: any[] = [];
+    const toAdd: YMaps2Object[] = [];
     newPoints.forEach((point) => {
       if (!currentPlacemarks.has(point.id)) {
         const isSelected = selectedPointId === point.id;
@@ -417,6 +440,7 @@ export function YandexOrdersMap({
       } else {
         // Update existing placemark options if needed (e.g. selection state changed)
         const placemark = currentPlacemarks.get(point.id);
+        if (!placemark) return;
         const isSelected = selectedPointId === point.id;
         const currentPreset = placemark.options.get('preset');
         const targetPreset = isSelected ? 'islands#redIcon' : 'islands#violetIcon';
